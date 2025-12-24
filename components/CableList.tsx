@@ -3,7 +3,7 @@ import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, Play, FileSpreadsheet, Layers, Filter, FileText,
     FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder,
-    AlertTriangle
+    AlertTriangle, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { ExcelService } from '../services/excelService';
 
@@ -27,6 +27,21 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     // Filters
     const [filterName, setFilterName] = useState('');
     const [showMissingLength, setShowMissingLength] = useState(false);
+
+    // Sorting State
+    const [sortColumn, setSortColumn] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // Handle column header click for sorting
+    const handleSort = (columnKey: string) => {
+        if (sortColumn === columnKey) {
+            // Toggle direction
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(columnKey);
+            setSortDirection('asc');
+        }
+    };
 
     // Count cables with missing length (for badge)
     const missingLengthCount = useMemo(() =>
@@ -84,15 +99,39 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     ];
 
     const filteredCables = useMemo(() => {
-        let result = cables.filter(c =>
-            String(c.name || '').toLowerCase().includes(filterName.toLowerCase())
-        );
+        const searchTerm = filterName.toLowerCase();
+        let result = cables.filter(c => {
+            // Search across ALL fields
+            if (!searchTerm) return true;
+            return Object.values(c).some(val =>
+                String(val || '').toLowerCase().includes(searchTerm)
+            );
+        });
         // Apply missing length filter if active
         if (showMissingLength) {
             result = result.filter(c => !c.length || c.length === 0);
         }
+        // Apply sorting
+        if (sortColumn) {
+            result = [...result].sort((a, b) => {
+                const aVal = a[sortColumn] ?? '';
+                const bVal = b[sortColumn] ?? '';
+                // Numeric comparison for number fields
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                // String comparison
+                const aStr = String(aVal).toLowerCase();
+                const bStr = String(bVal).toLowerCase();
+                if (sortDirection === 'asc') {
+                    return aStr.localeCompare(bStr);
+                } else {
+                    return bStr.localeCompare(aStr);
+                }
+            });
+        }
         return result;
-    }, [cables, filterName, showMissingLength]);
+    }, [cables, filterName, showMissingLength, sortColumn, sortDirection]);
 
     // Selection Logic
     const handleRowMouseDown = (e: React.MouseEvent, id: string, index: number) => {
@@ -187,10 +226,10 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 <button
                     onClick={() => setShowMissingLength(!showMissingLength)}
                     className={`relative flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded mx-1 transition-all ${showMissingLength
-                            ? 'bg-red-600 text-white'
-                            : missingLengthCount > 0
-                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-400'
-                                : 'bg-gray-100 text-gray-500'
+                        ? 'bg-red-600 text-white'
+                        : missingLengthCount > 0
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-400'
+                            : 'bg-gray-100 text-gray-500'
                         }`}
                     title={showMissingLength ? "Show All Cables" : "Show Only Missing Length"}
                 >
@@ -212,13 +251,14 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     <div className="p-2 border-b border-gray-200 bg-gray-50">
                         <div className="text-[10px] font-bold text-gray-500 mb-1">Search</div>
                         <div className="flex gap-1">
-                            <select className="text-[10px] border border-gray-300 rounded px-1 w-20 bg-white">
-                                <option>Cable Name</option>
+                            <select className="text-[10px] border border-gray-300 rounded px-1 w-20 bg-gray-700 text-white">
+                                <option>All Fields</option>
                             </select>
                             <input
-                                className="flex-1 border border-gray-300 rounded px-1 text-[10px]"
+                                className="flex-1 border border-gray-400 rounded px-2 py-1 text-[11px] bg-gray-800 text-white placeholder-gray-400"
                                 value={filterName}
                                 onChange={e => setFilterName(e.target.value)}
+                                placeholder="Search all..."
                             />
                         </div>
                         <button className="w-full mt-1 bg-gray-200 border border-gray-300 text-[10px] text-gray-700 font-bold py-0.5 rounded hover:bg-gray-300">
@@ -358,8 +398,20 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                         />
                                     </th>
                                     {FIXED_COLUMNS.map(col => (
-                                        <th key={col.key} className={`px-1 font-bold border-r border-gray-300 border-b uppercase whitespace-nowrap ${col.width} text-center`}>
-                                            {col.label}
+                                        <th
+                                            key={col.key}
+                                            className={`px-1 font-bold border-r border-gray-300 border-b uppercase whitespace-nowrap ${col.width} text-center cursor-pointer hover:bg-gray-300 select-none`}
+                                            onClick={() => handleSort(col.key)}
+                                            title={`Sort by ${col.label}`}
+                                        >
+                                            <div className="flex items-center justify-center gap-0.5">
+                                                {col.label}
+                                                {sortColumn === col.key && (
+                                                    sortDirection === 'asc'
+                                                        ? <ChevronUp size={12} className="text-blue-600" />
+                                                        : <ChevronDown size={12} className="text-blue-600" />
+                                                )}
+                                            </div>
                                         </th>
                                     ))}
                                     <th className="px-1 w-8 font-bold text-center border-b border-gray-300">3D</th>

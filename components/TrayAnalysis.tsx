@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Cable, Node } from '../types';
-import { AlertTriangle, CheckCircle, Layers } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Layers, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface TrayAnalysisProps {
     cables: Cable[];
@@ -80,6 +80,48 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     const overfilledCount = nodeAnalysis.filter(n => n.isOverfilled).length;
     const maxFillRatio = nodeAnalysis.length > 0 ? nodeAnalysis[0].fillRatio : 0;
 
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<keyof NodeFillData>('fillRatio');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    const handleSort = (column: keyof NodeFillData) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('desc');
+        }
+    };
+
+    const sortedData = useMemo(() => {
+        return [...nodeAnalysis].sort((a, b) => {
+            const aVal = a[sortColumn];
+            const bVal = b[sortColumn];
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+            const aStr = String(aVal).toLowerCase();
+            const bStr = String(bVal).toLowerCase();
+            return sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+        });
+    }, [nodeAnalysis, sortColumn, sortDirection]);
+
+    const SortHeader = ({ column, label, align = 'left' }: { column: keyof NodeFillData, label: string, align?: string }) => (
+        <th
+            className={`p-2 text-${align} cursor-pointer hover:bg-seastar-700 select-none`}
+            onClick={() => handleSort(column)}
+        >
+            <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : ''}`}>
+                {label}
+                {sortColumn === column && (
+                    sortDirection === 'asc'
+                        ? <ChevronUp size={12} className="text-seastar-cyan" />
+                        : <ChevronDown size={12} className="text-seastar-cyan" />
+                )}
+            </div>
+        </th>
+    );
+
     return (
         <div className="flex flex-col h-full bg-seastar-900 p-4 overflow-hidden">
             {/* Header with Summary */}
@@ -127,22 +169,22 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                     <thead className="bg-seastar-800 sticky top-0">
                         <tr className="text-gray-400 text-xs">
                             <th className="p-2 text-left">Status</th>
-                            <th className="p-2 text-left">Node Name</th>
-                            <th className="p-2 text-right">Tray Width (mm)</th>
-                            <th className="p-2 text-right">Tray Capacity (mm²)</th>
-                            <th className="p-2 text-right">Cable Count</th>
-                            <th className="p-2 text-right">Total Cable Area (mm²)</th>
-                            <th className="p-2 text-right">Fill Ratio</th>
+                            <SortHeader column="nodeName" label="Node Name" />
+                            <SortHeader column="trayWidth" label="Tray Width (mm)" align="right" />
+                            <SortHeader column="trayCapacity" label="Tray Capacity (mm²)" align="right" />
+                            <SortHeader column="cableCount" label="Cable Count" align="right" />
+                            <SortHeader column="totalCableArea" label="Total Cable Area (mm²)" align="right" />
+                            <SortHeader column="fillRatio" label="Fill Ratio" align="right" />
                             <th className="p-2 text-left">Cables</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {nodeAnalysis.map((node, idx) => (
+                        {sortedData.map((node, idx) => (
                             <tr
                                 key={node.nodeName}
                                 className={`border-b border-seastar-700 ${node.isOverfilled
-                                        ? 'bg-red-900/30 hover:bg-red-900/50'
-                                        : 'hover:bg-seastar-800'
+                                    ? 'bg-red-900/30 hover:bg-red-900/50'
+                                    : 'hover:bg-seastar-800'
                                     }`}
                             >
                                 <td className="p-2">
@@ -158,10 +200,10 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                                 <td className="p-2 text-right text-white font-bold">{node.cableCount}</td>
                                 <td className="p-2 text-right text-gray-300">{node.totalCableArea.toFixed(1)}</td>
                                 <td className={`p-2 text-right font-bold ${node.fillRatio > 40
-                                        ? 'text-red-400'
-                                        : node.fillRatio > 30
-                                            ? 'text-yellow-400'
-                                            : 'text-green-400'
+                                    ? 'text-red-400'
+                                    : node.fillRatio > 30
+                                        ? 'text-yellow-400'
+                                        : 'text-green-400'
                                     }`}>
                                     {node.fillRatio.toFixed(1)}%
                                     {/* Visual bar */}
