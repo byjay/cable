@@ -2,7 +2,8 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, Play, FileSpreadsheet, Layers, Filter, FileText,
-    FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder
+    FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder,
+    AlertTriangle
 } from 'lucide-react';
 import { ExcelService } from '../services/excelService';
 
@@ -25,6 +26,12 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
     // Filters
     const [filterName, setFilterName] = useState('');
+    const [showMissingLength, setShowMissingLength] = useState(false);
+
+    // Count cables with missing length (for badge)
+    const missingLengthCount = useMemo(() =>
+        cables.filter(c => !c.length || c.length === 0).length,
+        [cables]);
 
     // Refs for Drag Selection
     const isDragging = useRef(false);
@@ -77,10 +84,15 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     ];
 
     const filteredCables = useMemo(() => {
-        return cables.filter(c =>
+        let result = cables.filter(c =>
             String(c.name || '').toLowerCase().includes(filterName.toLowerCase())
         );
-    }, [cables, filterName]);
+        // Apply missing length filter if active
+        if (showMissingLength) {
+            result = result.filter(c => !c.length || c.length === 0);
+        }
+        return result;
+    }, [cables, filterName, showMissingLength]);
 
     // Selection Logic
     const handleRowMouseDown = (e: React.MouseEvent, id: string, index: number) => {
@@ -169,6 +181,28 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 <IconBtn icon={Printer} label="Print" color="text-gray-600" />
                 <Divider />
                 <IconBtn icon={FileSpreadsheet} label="Export" onClick={onExport} color="text-green-600" />
+
+                {/* Missing Length Filter Button with Badge */}
+                <Divider />
+                <button
+                    onClick={() => setShowMissingLength(!showMissingLength)}
+                    className={`relative flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded mx-1 transition-all ${showMissingLength
+                            ? 'bg-red-600 text-white'
+                            : missingLengthCount > 0
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-400'
+                                : 'bg-gray-100 text-gray-500'
+                        }`}
+                    title={showMissingLength ? "Show All Cables" : "Show Only Missing Length"}
+                >
+                    <AlertTriangle size={12} />
+                    {showMissingLength ? 'SHOW ALL' : 'NO LENGTH'}
+                    {missingLengthCount > 0 && (
+                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${showMissingLength ? 'bg-white text-red-600' : 'bg-red-500 text-white'
+                            }`}>
+                            {missingLengthCount}
+                        </span>
+                    )}
+                </button>
             </div>
 
             <div className="flex flex-1 overflow-hidden">

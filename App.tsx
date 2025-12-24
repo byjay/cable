@@ -285,8 +285,11 @@ const App: React.FC = () => {
             });
 
             setCables(updatedCables);
+            // Auto-save after Route All
+            const dataToSave = { cables: updatedCables, nodes, cableTypes, deckHeights };
+            localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
             setIsLoading(false);
-            alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
+            alert(`Route Generation Complete. ${calculatedCount} routes updated. (Auto-saved)`);
         }, 100);
     };
 
@@ -375,13 +378,66 @@ const App: React.FC = () => {
                 const fileType = ExcelService.detectFileType(headers);
 
                 if (fileType === 'CABLE') {
-                    const mappedCables = ExcelService.mapRawToCable(rawData);
-                    setCables(mappedCables);
+                    const newCables = ExcelService.mapRawToCable(rawData);
+
+                    // Change Detection: Compare with existing cables
+                    const oldCableMap = new Map<string, Cable>(cables.map(c => [c.name, c]));
+                    let resetCount = 0;
+                    let preservedCount = 0;
+
+                    const mergedCables = newCables.map(newCable => {
+                        const oldCable = oldCableMap.get(newCable.name);
+                        if (oldCable) {
+                            // Check if routing-related fields changed
+                            const nodeChanged =
+                                oldCable.fromNode !== newCable.fromNode ||
+                                oldCable.toNode !== newCable.toNode ||
+                                oldCable.checkNode !== newCable.checkNode;
+
+                            if (nodeChanged) {
+                                // Reset route/length data for changed cables
+                                resetCount++;
+                                return {
+                                    ...newCable,
+                                    calculatedPath: undefined,
+                                    calculatedLength: undefined,
+                                    length: 0,
+                                    path: ''
+                                };
+                            }
+                            // Preserve existing route data for unchanged cables
+                            preservedCount++;
+                            return {
+                                ...newCable,
+                                calculatedPath: oldCable.calculatedPath,
+                                calculatedLength: oldCable.calculatedLength,
+                                length: oldCable.length || newCable.length,
+                                path: oldCable.path || newCable.path
+                            };
+                        }
+                        return newCable; // New cable, no previous data
+                    });
+
+                    setCables(mergedCables);
                     // PERSIST TO SHIP DATA
-                    const dataToSave = { cables: mappedCables, nodes, cableTypes, deckHeights };
+                    const dataToSave = { cables: mergedCables, nodes, cableTypes, deckHeights };
                     localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
                     setCurrentView(MainView.SCHEDULE);
-                    alert(`Imported ${mappedCables.length} Cables successfully and saved to Ship DB.`);
+
+                    // Show detailed import message
+                    let msg = `Imported ${mergedCables.length} Cables.`;
+                    if (resetCount > 0) {
+                        msg += `\n⚠️ ${resetCount} cable(s) had node changes - route data RESET!`;
+                    }
+                    if (preservedCount > 0) {
+                        msg += `\n✅ ${preservedCount} cable(s) route data preserved.`;
+                    }
+                    // Check for missing lengths
+                    const missingLength = mergedCables.filter(c => !c.length || c.length === 0).length;
+                    if (missingLength > 0) {
+                        msg += `\n⚠️ ${missingLength} cable(s) have NO length calculated!`;
+                    }
+                    alert(msg);
                 } else if (fileType === 'NODE') {
                     const mappedNodes = ExcelService.mapRawToNode(rawData);
                     setNodes(mappedNodes);
