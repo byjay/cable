@@ -9,6 +9,7 @@ import GenericGrid from './components/GenericGrid';
 import CableTypeManager from './components/CableTypeManager';
 import NodeManager from './components/NodeManager';
 import CableRequirementReport from './components/CableRequirementReport';
+import TrayAnalysis from './components/TrayAnalysis';
 import Dashboard from './components/Dashboard';
 import { initialCables, initialNodes, initialCableTypes } from './services/mockData';
 import { RoutingService } from './services/routingService';
@@ -94,7 +95,8 @@ const MENU_STRUCTURE: MenuGroup[] = [
         id: 'report', title: 'Report', items: [
             { label: "Cable List", action: "Cable List" },
             { label: "Node List", action: "Node List" },
-            { label: "Cable Requirement", action: "Cable Requirement" }, // New
+            { label: "Cable Requirement", action: "Cable Requirement" },
+            { label: "Tray Analysis", action: "Tray Analysis" },
             { label: "Cable Drum Inquiry", action: "Cable Drum Inquiry" },
             { label: "Terminal Qty", action: "Terminal Qty", disabled: true }
         ]
@@ -543,6 +545,7 @@ const App: React.FC = () => {
             case "Schedule": setCurrentView(MainView.SCHEDULE); break;
             case "Node List": setCurrentView(MainView.REPORT_NODE); break;
             case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
+            case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
             case "Cable Drum Inquiry":
                 const drums = cables.reduce((acc, curr) => {
                     const key = `${curr.type}-DRUM-AUTO`;
@@ -665,6 +668,10 @@ const App: React.FC = () => {
 
                     {currentView === MainView.REPORT_BOM && (
                         <CableRequirementReport cables={cables} />
+                    )}
+
+                    {currentView === MainView.TRAY_ANALYSIS && (
+                        <TrayAnalysis cables={cables} nodes={nodes} />
                     )}
 
                     {currentView === MainView.GENERIC_GRID && (

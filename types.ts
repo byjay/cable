@@ -74,7 +74,8 @@ export enum MainView {
   SHIP_DEF = 'Ship Definition',
   REPORT_DRUM = 'Drum Schedule',
   REPORT_NODE = 'Node List',
-  REPORT_BOM = 'Cable Requirement', // New Report
+  REPORT_BOM = 'Cable Requirement',
+  TRAY_ANALYSIS = 'Tray Analysis', // New: Fill Ratio Analysis
   THREE_D = '3D Visualization',
-  GENERIC_GRID = 'Generic Grid' // For dynamic views
+  GENERIC_GRID = 'Generic Grid'
 }
