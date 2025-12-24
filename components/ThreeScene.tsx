@@ -134,16 +134,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
     dirLight.position.set(50, 200, 50);
     scene.add(dirLight);
 
-    // Deck Planes (Visual Reference)
-    Object.entries(deckHeights).forEach(([name, level]) => {
-      const y = (level as number) * 20;
-      const grid = new THREE.GridHelper(400, 20, 0x334155, 0x1e293b);
-      grid.position.y = y;
-      scene.add(grid);
-
-      // Deck Label
-      // (TextSprite logic omitted for brevity, simpler approach below)
-    });
+    // Deck Planes (Visual Reference) - REMOVED for cleaner view
+    // Only show a simple ground plane
+    const groundPlane = new THREE.GridHelper(500, 50, 0x334155, 0x1e293b);
+    groundPlane.position.y = 0;
+    scene.add(groundPlane);
 
     // Initial Draw
     drawGraph();
@@ -209,7 +204,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
     // Re-calculate positions in case nodes changed
     generateNodePositions();
 
-    const nodeGeometry = new THREE.BoxGeometry(2, 2, 2); // Boxes look more like equipment/panels
+    const nodeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3); // Much smaller nodes!
     const nodeMaterial = new THREE.MeshStandardMaterial({
       color: 0x06b6d4,
       roughness: 0.3,
@@ -235,8 +230,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
       objectsRef.current.push(mesh);
     });
 
-    // Draw Connections (Edges)
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x475569, opacity: 0.4, transparent: true });
+    // Draw Connections - ONLY for highlighted path (remove cluttering relation lines)
     const routeLineMaterial = new THREE.LineBasicMaterial({ color: 0x00f3ff, linewidth: 3 });
 
     const renderedEdges = new Set<string>();
@@ -258,6 +252,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
           const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
           // Check if this edge is part of the highlighted path
+          // Only draw edges that are part of the highlighted route path
           let isRouteEdge = false;
           if (highlightPath && highlightPath.length > 1) {
             for (let i = 0; i < highlightPath.length - 1; i++) {
@@ -269,9 +264,12 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
             }
           }
 
-          const line = new THREE.Line(geometry, isRouteEdge ? routeLineMaterial : lineMaterial);
-          scene.add(line);
-          objectsRef.current.push(line);
+          // Only render if it's a route edge (removes cluttering lines)
+          if (isRouteEdge) {
+            const line = new THREE.Line(geometry, routeLineMaterial);
+            scene.add(line);
+            objectsRef.current.push(line);
+          }
         }
       });
     });

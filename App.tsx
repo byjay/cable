@@ -268,10 +268,15 @@ const App: React.FC = () => {
                     const result = routingService!.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
                     if (result.path.length > 0) {
                         calculatedCount++;
+                        // Add FROM_REST + TO_REST to total length
+                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
+                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
+                        const totalLength = result.distance + fromRest + toRest;
                         return {
                             ...cable,
                             calculatedPath: result.path,
-                            calculatedLength: result.distance,
+                            calculatedLength: totalLength,
+                            length: totalLength, // Also update the length field
                             path: result.path.join(',') // Populate the CABLE_PATH column
                         };
                     }
@@ -282,6 +287,49 @@ const App: React.FC = () => {
             setCables(updatedCables);
             setIsLoading(false);
             alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
+        }, 100);
+    };
+
+    // Handle routing for selected cables only
+    const handleCalculateSelected = (selectedCables: Cable[]) => {
+        if (!routingService) {
+            alert("Routing Engine not ready.");
+            return;
+        }
+        if (selectedCables.length === 0) {
+            alert("No cables selected.");
+            return;
+        }
+        setIsLoading(true);
+
+        setTimeout(() => {
+            let calculatedCount = 0;
+            const selectedIds = new Set(selectedCables.map(c => c.id));
+
+            const updatedCables = cables.map(cable => {
+                if (selectedIds.has(cable.id) && cable.fromNode && cable.toNode) {
+                    const result = routingService!.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
+                    if (result.path.length > 0) {
+                        calculatedCount++;
+                        // Add FROM_REST + TO_REST to total length
+                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
+                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
+                        const totalLength = result.distance + fromRest + toRest;
+                        return {
+                            ...cable,
+                            calculatedPath: result.path,
+                            calculatedLength: totalLength,
+                            length: totalLength, // Also update the length field
+                            path: result.path.join(',')
+                        };
+                    }
+                }
+                return cable;
+            });
+
+            setCables(updatedCables);
+            setIsLoading(false);
+            alert(`Selected Route Generation Complete. ${calculatedCount} of ${selectedCables.length} routes updated.`);
         }, 100);
     };
 
@@ -544,6 +592,7 @@ const App: React.FC = () => {
                             onSelectCable={() => { }}
                             onCalculateRoute={handleCalculateRoute}
                             onCalculateAll={handleCalculateAllRoutes}
+                            onCalculateSelected={handleCalculateSelected}
                             onView3D={handleView3D}
                             triggerImport={triggerFileUpload}
                             onExport={handleExport}

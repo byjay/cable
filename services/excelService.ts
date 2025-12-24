@@ -12,12 +12,14 @@ const CABLE_COLUMNS: { [key: string]: string[] } = {
 
   // Critical: User specified FROM_ROOM = Deck
   fromDeck: ['FROM_ROOM', 'FROM_DECK', 'F_Deck', 'DECK_F'],
+  fromRoom: ['FROM_ROOM', 'F_Room', 'ROOM_F'],  // Also map separately
   fromNode: ['FROM_NODE', 'From Node', 'FROM', 'F_Node', 'NODE_F'],
   fromEquip: ['FROM_EQUIP', 'From Equipment', 'F_Equip', 'EQUIP_F'],
   fromRest: ['FROM_REST', 'FROM_RES', 'F_Res', 'REST_F'],
 
   // To Side
   toDeck: ['TO_ROOM', 'TO_DECK', 'T_Deck', 'DECK_T'],
+  toRoom: ['TO_ROOM', 'T_Room', 'ROOM_T'],  // Also map separately
   toNode: ['TO_NODE', 'To Node', 'TO', 'T_Node', 'NODE_T'],
   toEquip: ['TO_EQUIP', 'To Equipment', 'T_Equip', 'EQUIP_T'],
   toRest: ['TO_REST', 'TO_RES', 'T_Res', 'REST_T'],
@@ -155,11 +157,13 @@ export const ExcelService = {
         page: getStr('page'),
 
         fromDeck: getStr('fromDeck'),
+        fromRoom: getStr('fromRoom') || getStr('fromDeck'),  // Use fromRoom or fallback to fromDeck
         fromNode: getStr('fromNode'),
         fromEquip: getStr('fromEquip'),
         fromRest: getStr('fromRest'),
 
         toDeck: getStr('toDeck'),
+        toRoom: getStr('toRoom') || getStr('toDeck'),  // Use toRoom or fallback to toDeck
         toNode: getStr('toNode'),
         toEquip: getStr('toEquip'),
         toRest: getStr('toRest'),
