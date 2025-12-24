@@ -204,31 +204,132 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
     // Re-calculate positions in case nodes changed
     generateNodePositions();
 
-    const nodeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3); // Much smaller nodes!
+    // Geometries for different node types
+    const smallNodeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3); // Regular nodes
+    const routeNodeGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2); // Route nodes (bigger!)
+    const endNodeGeometry = new THREE.SphereGeometry(1.5, 16, 16); // FROM/TO nodes (spheres)
+
+    // Materials
     const nodeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x06b6d4,
+      color: 0x06b6d4, // Cyan for regular nodes
       roughness: 0.3,
-      metalness: 0.8
+      metalness: 0.8,
+      transparent: true,
+      opacity: 0.6
     });
 
-    const highlightMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf472b6, // Pink
-      emissive: 0xf472b6,
+    const routeMaterial = new THREE.MeshStandardMaterial({
+      color: 0xfbbf24, // Yellow for route middle nodes
+      emissive: 0xfbbf24,
+      emissiveIntensity: 0.3
+    });
+
+    const fromMaterial = new THREE.MeshStandardMaterial({
+      color: 0x22c55e, // Green for FROM node
+      emissive: 0x22c55e,
       emissiveIntensity: 0.5
     });
 
-    // Draw Nodes
+    const toMaterial = new THREE.MeshStandardMaterial({
+      color: 0xef4444, // Red for TO node  
+      emissive: 0xef4444,
+      emissiveIntensity: 0.5
+    });
+
+    // Helper: Create text sprite
+    const createTextSprite = (text: string, color: string = '#ffffff') => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d')!;
+      canvas.width = 256;
+      canvas.height = 64;
+
+      context.fillStyle = 'rgba(0,0,0,0.7)';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.strokeRect(0, 0, canvas.width, canvas.height);
+
+      context.font = 'bold 28px Arial';
+      context.fillStyle = color;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(8, 2, 1);
+      return sprite;
+    };
+
+    // Determine if this is a route visualization mode
+    const hasRoute = highlightPath && highlightPath.length > 1;
+    const fromNode = hasRoute ? highlightPath[0] : null;
+    const toNode = hasRoute ? highlightPath[highlightPath.length - 1] : null;
+
+    // Draw ALL nodes (smaller) or only route nodes if route is selected
     nodes.forEach(node => {
       const pos = processedNodes.current.get(node.name);
       if (!pos) return;
 
-      const isHighlighted = highlightPath?.includes(node.name);
-      const mesh = new THREE.Mesh(nodeGeometry, isHighlighted ? highlightMaterial : nodeMaterial);
-      mesh.position.set(pos.x, pos.y, pos.z);
+      const isInRoute = highlightPath?.includes(node.name);
+      const isFrom = node.name === fromNode;
+      const isTo = node.name === toNode;
 
-      scene.add(mesh);
-      objectsRef.current.push(mesh);
+      // If route is active, only show route nodes prominently
+      if (hasRoute) {
+        if (isInRoute) {
+          // Route nodes: bigger with labels
+          let mesh: THREE.Mesh;
+          if (isFrom || isTo) {
+            mesh = new THREE.Mesh(endNodeGeometry, isFrom ? fromMaterial : toMaterial);
+          } else {
+            mesh = new THREE.Mesh(routeNodeGeometry, routeMaterial);
+          }
+          mesh.position.set(pos.x, pos.y, pos.z);
+          scene.add(mesh);
+          objectsRef.current.push(mesh);
+
+          // Add text label above node
+          const label = createTextSprite(node.name, isFrom ? '#22c55e' : isTo ? '#ef4444' : '#fbbf24');
+          label.position.set(pos.x, pos.y + 3, pos.z);
+          scene.add(label);
+          objectsRef.current.push(label);
+        }
+        // Skip non-route nodes when route is active for cleaner view
+      } else {
+        // No route selected: show all nodes small
+        const mesh = new THREE.Mesh(smallNodeGeometry, nodeMaterial);
+        mesh.position.set(pos.x, pos.y, pos.z);
+        scene.add(mesh);
+        objectsRef.current.push(mesh);
+      }
     });
+
+    // Draw DIRECT route line connecting path nodes in order
+    if (hasRoute && highlightPath.length > 1) {
+      const routePoints: THREE.Vector3[] = [];
+      highlightPath.forEach(nodeName => {
+        const pos = processedNodes.current.get(nodeName);
+        if (pos) {
+          routePoints.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+        }
+      });
+
+      if (routePoints.length > 1) {
+        // Create tube geometry for visible route
+        const curve = new THREE.CatmullRomCurve3(routePoints);
+        const tubeGeometry = new THREE.TubeGeometry(curve, routePoints.length * 10, 0.3, 8, false);
+        const tubeMaterial = new THREE.MeshStandardMaterial({
+          color: 0x00f3ff,
+          emissive: 0x00f3ff,
+          emissiveIntensity: 0.5
+        });
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        scene.add(tube);
+        objectsRef.current.push(tube);
+      }
+    }
 
     // Draw Connections - ONLY for highlighted path (remove cluttering relation lines)
     const routeLineMaterial = new THREE.LineBasicMaterial({ color: 0x00f3ff, linewidth: 3 });
