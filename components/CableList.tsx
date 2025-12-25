@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, Play, FileSpreadsheet, Layers, Filter, FileText,
@@ -19,10 +19,19 @@ interface CableListProps {
     onExport: () => void;
 }
 
+// Virtual scrolling constants
+const ROW_HEIGHT = 24; // pixels per row
+const VISIBLE_ROWS = 30; // number of rows to render at once
+const BUFFER_ROWS = 10; // extra rows above/below viewport
+
 const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport }) => {
     // Selection State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+    // Virtual scrolling state
+    const [scrollTop, setScrollTop] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Filters
     const [filterName, setFilterName] = useState('');
@@ -383,80 +392,102 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                         </div>
                     </div>
 
-                    {/* --- DATA GRID --- */}
-                    <div className="flex-1 overflow-auto bg-white border-t border-gray-300 relative custom-scrollbar select-none">
-                        <table className="w-full text-left border-collapse min-w-max">
-                            <thead className="bg-[#e2e8f0] text-gray-700 sticky top-0 z-10 shadow-sm h-7 text-[10px]">
-                                <tr>
-                                    <th className="px-1 w-8 font-bold text-center border-b border-r border-gray-300">
-                                        <input
-                                            type="checkbox"
-                                            title="Select All"
-                                            checked={filteredCables.length > 0 && selectedIds.size === filteredCables.length}
-                                            onChange={(e) => handleToggleAll(e.target.checked)}
-                                            className="w-3 h-3 cursor-pointer"
-                                        />
-                                    </th>
-                                    {FIXED_COLUMNS.map(col => (
-                                        <th
-                                            key={col.key}
-                                            className={`px-1 font-bold border-r border-gray-300 border-b uppercase whitespace-nowrap ${col.width} text-center cursor-pointer hover:bg-gray-300 select-none`}
-                                            onClick={() => handleSort(col.key)}
-                                            title={`Sort by ${col.label}`}
-                                        >
-                                            <div className="flex items-center justify-center gap-0.5">
-                                                {col.label}
-                                                {sortColumn === col.key && (
-                                                    sortDirection === 'asc'
-                                                        ? <ChevronUp size={12} className="text-blue-600" />
-                                                        : <ChevronDown size={12} className="text-blue-600" />
-                                                )}
-                                            </div>
+                    {/* --- DATA GRID with Virtual Scrolling --- */}
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex-1 overflow-auto bg-white border-t border-gray-300 relative custom-scrollbar select-none"
+                        onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+                    >
+                        {/* Virtual scroll container */}
+                        <div style={{ height: filteredCables.length * ROW_HEIGHT + 28, position: 'relative' }}>
+                            <table className="w-full text-left border-collapse min-w-max">
+                                <thead className="bg-[#e2e8f0] text-gray-700 sticky top-0 z-10 shadow-sm h-7 text-[10px]">
+                                    <tr>
+                                        <th className="px-1 w-8 font-bold text-center border-b border-r border-gray-300">
+                                            <input
+                                                type="checkbox"
+                                                title="Select All"
+                                                checked={filteredCables.length > 0 && selectedIds.size === filteredCables.length}
+                                                onChange={(e) => handleToggleAll(e.target.checked)}
+                                                className="w-3 h-3 cursor-pointer"
+                                            />
                                         </th>
-                                    ))}
-                                    <th className="px-1 w-8 font-bold text-center border-b border-gray-300">3D</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {filteredCables.map((cable, idx) => {
-                                    const isSelected = selectedIds.has(cable.id);
-                                    return (
-                                        <tr
-                                            key={cable.id}
-                                            onMouseDown={(e) => handleRowMouseDown(e, cable.id, idx)}
-                                            onMouseEnter={() => handleRowMouseEnter(idx)}
-                                            onClick={() => {
-                                                onSelectCable(cable);
-                                            }}
-                                            className={`
-                                        cursor-pointer text-[11px] h-6
-                                        ${isSelected ? 'bg-[#0078d7] text-white' : 'text-gray-800 hover:bg-blue-50 odd:bg-white even:bg-[#f8fafc]'}
-                                    `}
-                                        >
-                                            <td className="px-1 w-8 text-center border-r border-gray-200">
-                                                <input
-                                                    type="checkbox"
-                                                    title={`Select ${cable.name}`}
-                                                    checked={isSelected}
-                                                    onChange={() => { }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="w-3 h-3 cursor-pointer"
-                                                />
-                                            </td>
-                                            {FIXED_COLUMNS.map(col => (
-                                                <td key={`${cable.id}-${col.key}`} className={`px-1 border-r border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${!isSelected && col.bg ? 'bg-opacity-50 ' + col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
-                                                    {/* If selected, override text color to white, else use col.color or default */}
-                                                    <span className={isSelected ? 'text-white' : (col.color || 'text-gray-800')}>{cable[col.key]}</span>
-                                                </td>
-                                            ))}
-                                            <td className="px-1 border-l border-gray-200 text-center sticky right-0 bg-inherit z-10">
-                                                <button title="View 3D" onClick={(e) => { e.stopPropagation(); onView3D(cable); }} className={`hover:text-seastar-pink ${isSelected ? 'text-white' : 'text-gray-500'}`}><Eye size={12} /></button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                        {FIXED_COLUMNS.map(col => (
+                                            <th
+                                                key={col.key}
+                                                className={`px-1 font-bold border-r border-gray-300 border-b uppercase whitespace-nowrap ${col.width} text-center cursor-pointer hover:bg-gray-300 select-none`}
+                                                onClick={() => handleSort(col.key)}
+                                                title={`Sort by ${col.label}`}
+                                            >
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    {col.label}
+                                                    {sortColumn === col.key && (
+                                                        sortDirection === 'asc'
+                                                            ? <ChevronUp size={12} className="text-blue-600" />
+                                                            : <ChevronDown size={12} className="text-blue-600" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                        ))}
+                                        <th className="px-1 w-8 font-bold text-center border-b border-gray-300">3D</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white">
+                                    {/* Virtual scrolling: only render visible rows */}
+                                    {(() => {
+                                        const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
+                                        const endIdx = Math.min(filteredCables.length, startIdx + VISIBLE_ROWS + BUFFER_ROWS * 2);
+                                        const visibleCables = filteredCables.slice(startIdx, endIdx);
+
+                                        return (
+                                            <>
+                                                {/* Spacer for rows above */}
+                                                {startIdx > 0 && (
+                                                    <tr style={{ height: startIdx * ROW_HEIGHT }}><td colSpan={FIXED_COLUMNS.length + 2}></td></tr>
+                                                )}
+                                                {visibleCables.map((cable, localIdx) => {
+                                                    const idx = startIdx + localIdx;
+                                                    const isSelected = selectedIds.has(cable.id);
+                                                    return (
+                                                        <tr
+                                                            key={cable.id}
+                                                            onMouseDown={(e) => handleRowMouseDown(e, cable.id, idx)}
+                                                            onMouseEnter={() => handleRowMouseEnter(idx)}
+                                                            onClick={() => onSelectCable(cable)}
+                                                            style={{ height: ROW_HEIGHT }}
+                                                            className={`cursor-pointer text-[11px] ${isSelected ? 'bg-[#0078d7] text-white' : 'text-gray-800 hover:bg-blue-50 odd:bg-white even:bg-[#f8fafc]'}`}
+                                                        >
+                                                            <td className="px-1 w-8 text-center border-r border-gray-200">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    title={`Select ${cable.name}`}
+                                                                    checked={isSelected}
+                                                                    onChange={() => { }}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="w-3 h-3 cursor-pointer"
+                                                                />
+                                                            </td>
+                                                            {FIXED_COLUMNS.map(col => (
+                                                                <td key={`${cable.id}-${col.key}`} className={`px-1 border-r border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${!isSelected && col.bg ? 'bg-opacity-50 ' + col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
+                                                                    <span className={isSelected ? 'text-white' : (col.color || 'text-gray-800')}>{cable[col.key]}</span>
+                                                                </td>
+                                                            ))}
+                                                            <td className="px-1 border-l border-gray-200 text-center sticky right-0 bg-inherit z-10">
+                                                                <button title="View 3D" onClick={(e) => { e.stopPropagation(); onView3D(cable); }} className={`hover:text-seastar-pink ${isSelected ? 'text-white' : 'text-gray-500'}`}><Eye size={12} /></button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                                {/* Spacer for rows below */}
+                                                {endIdx < filteredCables.length && (
+                                                    <tr style={{ height: (filteredCables.length - endIdx) * ROW_HEIGHT }}><td colSpan={FIXED_COLUMNS.length + 2}></td></tr>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
