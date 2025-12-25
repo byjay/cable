@@ -155,6 +155,8 @@ const App: React.FC = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [cableListFilter, setCableListFilter] = useState<'missingLength' | 'unrouted' | null>(null);
+
     useEffect(() => {
         loadShipData(shipId);
     }, [shipId]);
@@ -676,6 +678,78 @@ const App: React.FC = () => {
         </div>
     );
 
+    const handleViewUnrouted = (type: 'missingLength' | 'unrouted') => {
+        setCableListFilter(type);
+        setCurrentView(MainView.SCHEDULE);
+    };
+
+    const renderContent = () => {
+        switch (currentView) {
+            case MainView.DASHBOARD:
+                return <Dashboard cables={cables} nodes={nodes} onViewUnrouted={handleViewUnrouted} />;
+            case MainView.SCHEDULE:
+                return (
+                    <CableList
+                        cables={cables}
+                        isLoading={isLoading}
+                        onSelectCable={() => { }}
+                        onCalculateRoute={handleCalculateRoute}
+                        onCalculateAll={() => handleCalculateAllRoutes()}
+                        onCalculateSelected={(selected) => handleCalculateSelected(selected)}
+                        onView3D={handleView3D}
+                        triggerImport={triggerFileUpload}
+                        onExport={handleExport}
+                        initialFilter={cableListFilter}
+                    />
+                );
+            case MainView.CABLE_TYPE:
+                return <CableTypeManager data={cableTypes} />;
+            case MainView.REPORT_NODE:
+                return <NodeManager nodes={nodes} cables={cables} onUpdateNodes={handleUpdateNodes} triggerImport={triggerFileUpload} onExport={handleExport} />;
+            case MainView.REPORT_BOM:
+                return <CableRequirementReport cables={cables} />;
+            case MainView.TRAY_ANALYSIS:
+                return <TrayAnalysis cables={cables} nodes={nodes} />;
+            case MainView.GENERIC_GRID:
+                return <GenericGrid title={genericTitle} data={genericData} />;
+            case MainView.THREE_D:
+                return (
+                    <div className="flex-1 border border-seastar-700 rounded-lg overflow-hidden relative shadow-2xl">
+                        <ThreeScene nodes={nodes} highlightPath={routePath} deckHeights={deckHeights} />
+                    </div>
+                );
+            case 'MASTER_DATA':
+                return <MasterData cables={cables} nodes={nodes} cableTypes={cableTypes} />;
+            case 'USER_MGMT':
+                return <UserManagement currentRole={userRole} onRoleChange={setUserRole} />;
+            case 'SHIP_DEF':
+                return <ShipDefinition currentShipId={shipId} onShipChange={setShipId} />;
+            case 'DRUM_SCHEDULE':
+                return <DrumScheduleReport cables={cables} />;
+            case 'NODE_LIST_REPORT':
+                return <NodeListReport nodes={nodes} />;
+            case 'HISTORY':
+                return (
+                    <HistoryViewer
+                        projectId={shipId}
+                        onRestore={(restoredCables, restoredNodes, restoredCableTypes) => {
+                            setCables(restoredCables);
+                            setNodes(restoredNodes);
+                            setCableTypes(restoredCableTypes);
+                        }}
+                    />
+                );
+            case 'SETTINGS':
+                return <Settings />;
+            case 'CABLE_GROUP':
+                return <CableGroup cables={cables} />;
+            case 'IMPORT':
+                return <ImportPanel onImportFiles={(files) => handleFileChange({ target: { files } } as any)} isLoading={isLoading} />;
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 overflow-hidden font-sans">
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="hidden" />
@@ -714,92 +788,7 @@ const App: React.FC = () => {
             {/* MAIN WORKSPACE */}
             <main className="flex-1 flex flex-col overflow-hidden bg-seastar-900 relative">
                 <div className="flex-1 p-2 overflow-hidden flex flex-col">
-                    {currentView === MainView.DASHBOARD && (
-                        <Dashboard cables={cables} nodes={nodes} />
-                    )}
-
-                    {currentView === MainView.SCHEDULE && (
-                        <CableList
-                            cables={cables}
-                            isLoading={isLoading}
-                            onSelectCable={() => { }}
-                            onCalculateRoute={handleCalculateRoute}
-                            onCalculateAll={handleCalculateAllRoutes}
-                            onCalculateSelected={handleCalculateSelected}
-                            onView3D={handleView3D}
-                            triggerImport={triggerFileUpload}
-                            onExport={handleExport}
-                        />
-                    )}
-
-                    {currentView === MainView.CABLE_TYPE && (
-                        <CableTypeManager data={cableTypes} />
-                    )}
-
-                    {currentView === MainView.REPORT_NODE && (
-                        <NodeManager nodes={nodes} cables={cables} onUpdateNodes={handleUpdateNodes} triggerImport={triggerFileUpload} onExport={handleExport} />
-                    )}
-
-                    {currentView === MainView.REPORT_BOM && (
-                        <CableRequirementReport cables={cables} />
-                    )}
-
-                    {currentView === MainView.TRAY_ANALYSIS && (
-                        <TrayAnalysis cables={cables} nodes={nodes} />
-                    )}
-
-                    {currentView === MainView.GENERIC_GRID && (
-                        <GenericGrid title={genericTitle} data={genericData} />
-                    )}
-
-                    {currentView === MainView.THREE_D && (
-                        <div className="flex-1 border border-seastar-700 rounded-lg overflow-hidden relative shadow-2xl">
-                            <ThreeScene nodes={nodes} highlightPath={routePath} deckHeights={deckHeights} />
-                        </div>
-                    )}
-
-                    {currentView === 'MASTER_DATA' && (
-                        <MasterData cables={cables} nodes={nodes} cableTypes={cableTypes} />
-                    )}
-
-                    {currentView === 'USER_MGMT' && (
-                        <UserManagement currentRole={userRole} onRoleChange={setUserRole} />
-                    )}
-
-                    {currentView === 'SHIP_DEF' && (
-                        <ShipDefinition currentShipId={shipId} onShipChange={setShipId} />
-                    )}
-
-                    {currentView === 'DRUM_SCHEDULE' && (
-                        <DrumScheduleReport cables={cables} />
-                    )}
-
-                    {currentView === 'NODE_LIST_REPORT' && (
-                        <NodeListReport nodes={nodes} />
-                    )}
-
-                    {currentView === 'HISTORY' && (
-                        <HistoryViewer
-                            projectId={shipId}
-                            onRestore={(restoredCables, restoredNodes, restoredCableTypes) => {
-                                setCables(restoredCables);
-                                setNodes(restoredNodes);
-                                setCableTypes(restoredCableTypes);
-                            }}
-                        />
-                    )}
-
-                    {currentView === 'SETTINGS' && (
-                        <Settings />
-                    )}
-
-                    {currentView === 'CABLE_GROUP' && (
-                        <CableGroup cables={cables} />
-                    )}
-
-                    {currentView === 'IMPORT' && (
-                        <ImportPanel onImportFiles={(files) => handleFileChange({ target: { files } } as any)} isLoading={isLoading} />
-                    )}
+                    {renderContent()}
                 </div>
             </main>
 

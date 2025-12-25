@@ -17,6 +17,7 @@ interface CableListProps {
     onView3D: (cable: Cable) => void;
     triggerImport: () => void;
     onExport: () => void;
+    initialFilter?: 'missingLength' | 'unrouted' | null;
 }
 
 // Virtual scrolling constants
@@ -24,7 +25,7 @@ const ROW_HEIGHT = 24; // pixels per row
 const VISIBLE_ROWS = 30; // number of rows to render at once
 const BUFFER_ROWS = 10; // extra rows above/below viewport
 
-const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport }) => {
+const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter }) => {
     // Selection State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -36,6 +37,14 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     // Filters
     const [filterName, setFilterName] = useState('');
     const [showMissingLength, setShowMissingLength] = useState(false);
+    const [showUnrouted, setShowUnrouted] = useState(false);
+
+    // Apply initial filter if provided
+    useEffect(() => {
+        if (!initialFilter) return;
+        if (initialFilter === 'missingLength') setShowMissingLength(true);
+        if (initialFilter === 'unrouted') setShowUnrouted(true);
+    }, [initialFilter]);
 
     // Sorting State
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -55,6 +64,11 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     // Count cables with missing length (for badge)
     const missingLengthCount = useMemo(() =>
         cables.filter(c => !c.length || c.length === 0).length,
+        [cables]);
+
+    // Count unrouted cables
+    const unroutedCount = useMemo(() =>
+        cables.filter(c => !c.calculatedPath || c.calculatedPath.length === 0).length,
         [cables]);
 
     // Refs for Drag Selection
@@ -119,6 +133,10 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         // Apply missing length filter if active
         if (showMissingLength) {
             result = result.filter(c => !c.length || c.length === 0);
+        }
+        // Apply unrouted filter if active
+        if (showUnrouted) {
+            result = result.filter(c => !c.calculatedPath || c.calculatedPath.length === 0);
         }
         // Apply sorting
         if (sortColumn) {
@@ -243,11 +261,31 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     title={showMissingLength ? "Show All Cables" : "Show Only Missing Length"}
                 >
                     <AlertTriangle size={12} />
-                    {showMissingLength ? 'SHOW ALL' : 'NO LENGTH'}
+                    {showMissingLength ? 'ALL LENGTH' : 'NO LENGTH'}
                     {missingLengthCount > 0 && (
                         <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${showMissingLength ? 'bg-white text-red-600' : 'bg-red-500 text-white'
                             }`}>
                             {missingLengthCount}
+                        </span>
+                    )}
+                </button>
+
+                <button
+                    onClick={() => setShowUnrouted(!showUnrouted)}
+                    className={`relative flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded mx-1 transition-all ${showUnrouted
+                        ? 'bg-purple-600 text-white'
+                        : unroutedCount > 0
+                            ? 'bg-purple-100 text-purple-800 border border-purple-400'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                    title={showUnrouted ? "Show All Cables" : "Show Only Unrouted"}
+                >
+                    <Zap size={12} />
+                    {showUnrouted ? 'ALL ROUTES' : 'UNROUTED'}
+                    {unroutedCount > 0 && (
+                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${showUnrouted ? 'bg-white text-purple-600' : 'bg-purple-500 text-white'
+                            }`}>
+                            {unroutedCount}
                         </span>
                     )}
                 </button>

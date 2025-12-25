@@ -8,11 +8,12 @@ import { Activity, Disc, Ruler, Share2, AlertTriangle, Layers, CheckCircle } fro
 interface DashboardProps {
   cables: Cable[];
   nodes: Node[];
+  onViewUnrouted: (type: 'missingLength' | 'unrouted') => void;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
-const Dashboard: React.FC<DashboardProps> = ({ cables, nodes }) => {
+const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) => {
   // Stats Calculation
   const stats = useMemo(() => {
     const totalCables = cables.length;
@@ -71,8 +72,10 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes }) => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [cables]);
 
-  const StatCard = ({ title, value, sub, icon: Icon, color, alert }: any) => (
-    <div className={`bg-seastar-800 border ${alert ? 'border-red-500' : 'border-seastar-700'} p-4 rounded-lg shadow-lg flex items-center gap-4`}>
+  const StatCard = ({ title, value, sub, icon: Icon, color, alert, onClick, cursor = 'default' }: any) => (
+    <div
+      onClick={onClick}
+      className={`bg-seastar-800 border ${alert ? 'border-red-500' : 'border-seastar-700'} p-4 rounded-lg shadow-lg flex items-center gap-4 transition-transform hover:scale-105 ${cursor === 'pointer' ? 'cursor-pointer hover:bg-seastar-700' : ''}`}>
       <div className={`p-3 rounded-full bg-opacity-20 ${color.replace('text-', 'bg-')}`}>
         <Icon size={24} className={color} />
       </div>
@@ -112,11 +115,15 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes }) => {
           icon={AlertTriangle}
           color="text-red-400"
           alert={stats.routingErrors.length > 0}
+          onClick={() => onViewUnrouted('unrouted')}
+          cursor="pointer"
         />
         <StatCard
           title="Missing Length"
           value={stats.missingLength.length}
           icon={Ruler} color="text-orange-400"
+          onClick={() => onViewUnrouted('missingLength')}
+          cursor="pointer"
         />
       </div>
 
