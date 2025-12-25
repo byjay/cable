@@ -223,6 +223,24 @@ const App: React.FC = () => {
         setRoutingService(svc);
     }, [nodes]);
 
+    // Auto-route on startup when both nodes and cables are loaded
+    const [autoRouted, setAutoRouted] = useState(false);
+    useEffect(() => {
+        if (routingService && cables.length > 0 && nodes.length > 0 && !autoRouted) {
+            // Check if any cables need routing (no calculatedPath)
+            const needsRouting = cables.some(c => !c.calculatedPath || c.calculatedPath.length === 0);
+            if (needsRouting) {
+                console.log('🚀 Auto-routing cables on startup...');
+                setTimeout(() => {
+                    handleCalculateAllRoutes();
+                    setAutoRouted(true);
+                }, 500);
+            } else {
+                setAutoRouted(true);
+            }
+        }
+    }, [routingService, cables.length, nodes.length, autoRouted]);
+
     const handleUpdateNodes = (updatedNodes: Node[]) => {
         setNodes(updatedNodes);
         // Auto-save logic could go here, but usually explicitly saved via "Save Project"
@@ -663,7 +681,7 @@ const App: React.FC = () => {
                     )}
 
                     {currentView === MainView.REPORT_NODE && (
-                        <NodeManager nodes={nodes} onUpdateNodes={handleUpdateNodes} triggerImport={triggerFileUpload} onExport={handleExport} />
+                        <NodeManager nodes={nodes} cables={cables} onUpdateNodes={handleUpdateNodes} triggerImport={triggerFileUpload} onExport={handleExport} />
                     )}
 
                     {currentView === MainView.REPORT_BOM && (
