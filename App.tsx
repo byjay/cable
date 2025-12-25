@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home
+    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeScene';
@@ -17,6 +17,11 @@ import UserManagement from './components/UserManagement';
 import ShipDefinition from './components/ShipDefinition';
 import MasterData from './components/MasterData';
 import HistoryViewer from './components/HistoryViewer';
+import Settings from './components/Settings';
+import CableGroup from './components/CableGroup';
+import ImportPanel from './components/ImportPanel';
+import { SimpleModal } from './components/SimpleModal';
+import { TraySpecContent, CableBindingContent, EquipCodeContent, TerminalQtyContent } from './components/StaticContent';
 import { initialCables, initialNodes, initialCableTypes } from './services/mockData';
 import { RoutingService } from './services/routingService';
 import { ExcelService } from './services/excelService';
@@ -73,8 +78,8 @@ const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'cabletype', title: 'CableType', items: [
             { label: "Cable Type", action: "Cable Type" },
-            { label: "Tray Spec", action: "Tray Spec", disabled: true },
-            { label: "Cable Binding", action: "Cable Binding", disabled: true }
+            { label: "Tray Spec", action: "Tray Spec" },
+            { label: "Cable Binding", action: "Cable Binding" }
         ]
     },
     {
@@ -89,13 +94,13 @@ const MENU_STRUCTURE: MenuGroup[] = [
             { label: "Ship Select", action: "Ship Select", restricted: true },
             { label: "Ship Definition", action: "Ship Definition" },
             { label: "Deck Code", action: "Deck Code" },
-            { label: "Equip Code", action: "Equip Code", disabled: true }
+            { label: "Equip Code", action: "Equip Code" }
         ]
     },
     {
         id: 'schedule', title: 'Schedule', items: [
             { label: "Schedule", action: "Schedule" },
-            { label: "CableGroup", action: "CableGroup", disabled: true }
+            { label: "CableGroup", action: "CableGroup" }
         ]
     },
     {
@@ -105,18 +110,18 @@ const MENU_STRUCTURE: MenuGroup[] = [
             { label: "Cable Requirement", action: "Cable Requirement" },
             { label: "Tray Analysis", action: "Tray Analysis" },
             { label: "Cable Drum Inquiry", action: "Cable Drum Inquiry" },
-            { label: "Terminal Qty", action: "Terminal Qty", disabled: true }
+            { label: "Terminal Qty", action: "Terminal Qty" }
         ]
     },
     {
         id: 'data', title: 'Data Transfer', items: [
-            { label: "Import", action: "Import", disabled: true },
+            { label: "Import", action: "Import" },
             { label: "Export", action: "Export" }
         ]
     },
     {
         id: 'option', title: 'Option', items: [
-            { label: "Settings", action: "Settings", disabled: true },
+            { label: "Settings", action: "Settings" },
             { label: "3D Config", action: "3D Config" }
         ]
     }
@@ -144,6 +149,9 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [userRole, setUserRole] = useState<'ADMIN' | 'GUEST'>('ADMIN');
+
+    // Simple Modals State
+    const [activeModal, setActiveModal] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -571,6 +579,8 @@ const App: React.FC = () => {
                 setUserRole(newRole);
                 alert(`Switched to ${newRole} role.`);
                 break;
+            case "DB Update": alert("DB Update functionality not yet implemented."); break;
+            case "Test": alert("Test functionality not yet implemented."); break;
             case "Cable Type": setCurrentView(MainView.CABLE_TYPE); break;
             case "Ship Select":
                 if (userRole === 'ADMIN') setShowShipModal(true);
@@ -600,6 +610,16 @@ const App: React.FC = () => {
             case "Ship Definition": setCurrentView('SHIP_DEF'); break;
             case "Cable Drum Inquiry": setCurrentView('DRUM_SCHEDULE'); break;
             case "Log": setCurrentView('HISTORY'); break;
+            case "Settings": setCurrentView('SETTINGS'); break;
+            case "CableGroup": setCurrentView('CABLE_GROUP'); break;
+            case "Import": setCurrentView('IMPORT'); break;
+
+            // Simple Modals
+            case "Tray Spec": setActiveModal('TRAY_SPEC'); break;
+            case "Cable Binding": setActiveModal('CABLE_BINDING'); break;
+            case "Equip Code": setActiveModal('EQUIP_CODE'); break;
+            case "Terminal Qty": setActiveModal('TERMINAL_QTY'); break;
+
             default: console.log("Action not implemented:", action);
         }
     };
@@ -753,6 +773,18 @@ const App: React.FC = () => {
                                 setCableTypes(restoredCableTypes);
                             }}
                         />
+                    )}
+
+                    {currentView === 'SETTINGS' && (
+                        <Settings />
+                    )}
+
+                    {currentView === 'CABLE_GROUP' && (
+                        <CableGroup cables={cables} />
+                    )}
+
+                    {currentView === 'IMPORT' && (
+                        <ImportPanel onImportFiles={(files) => handleFileChange({ target: { files } } as any)} isLoading={isLoading} />
                     )}
                 </div>
             </main>
