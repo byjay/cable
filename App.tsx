@@ -291,16 +291,19 @@ const App: React.FC = () => {
         }
     };
 
-    const handleCalculateAllRoutes = () => {
+    const handleCalculateAllRoutes = (currentCablesOverride?: Cable[]) => {
         if (!routingService) {
-            alert("Routing Engine not ready.");
+            alert("Routing service not initialized!");
             return;
         }
-        setIsLoading(true);
 
+        const targetCables = currentCablesOverride || cables;
+
+        setIsLoading(true);
+        // Use timeout to allow UI to render generic loader
         setTimeout(() => {
             let calculatedCount = 0;
-            const updatedCables = cables.map(cable => {
+            const updatedCables = targetCables.map(cable => {
                 // Only calculate if nodes exist and path is empty or forced update
                 if (cable.fromNode && cable.toNode) {
                     const result = routingService!.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
@@ -477,7 +480,18 @@ const App: React.FC = () => {
                     if (preservedCount > 0) {
                         msg += `\n✅ ${preservedCount} cable(s) route data preserved.`;
                     }
-                    // Check for missing lengths
+
+                    // Trigger auto-routing for new/reset cables
+                    if (resetCount > 0 || newCables.length > cables.length) {
+                        alert(`${msg}\n\nStarting automatic route calculation for ${mergedCables.length} cables...`);
+                        // Use a timeout to allow state to update
+                        setTimeout(() => {
+                            // We need to pass the NEW mergedCables directly because state might not be updated yet in this closure
+                            handleCalculateAllRoutes(mergedCables);
+                        }, 500);
+                    } else {
+                        alert(msg);
+                    }
                     const missingLength = mergedCables.filter(c => !c.length || c.length === 0).length;
                     if (missingLength > 0) {
                         msg += `\n⚠️ ${missingLength} cable(s) have NO length calculated!`;
