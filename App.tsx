@@ -11,10 +11,17 @@ import NodeManager from './components/NodeManager';
 import CableRequirementReport from './components/CableRequirementReport';
 import TrayAnalysis from './components/TrayAnalysis';
 import Dashboard from './components/Dashboard';
+import NodeListReport from './components/NodeListReport';
+import DrumScheduleReport from './components/DrumScheduleReport';
+import UserManagement from './components/UserManagement';
+import ShipDefinition from './components/ShipDefinition';
+import MasterData from './components/MasterData';
+import HistoryViewer from './components/HistoryViewer';
 import { initialCables, initialNodes, initialCableTypes } from './services/mockData';
 import { RoutingService } from './services/routingService';
 import { ExcelService } from './services/excelService';
-import { Cable, Node, MainView, DeckConfig, GenericRow } from './types';
+import { HistoryService } from './services/historyService';
+import { Cable, Node, MainView, DeckConfig, GenericRow, CableType } from './types';
 
 // Default Deck Heights
 const DEFAULT_DECK_CONFIG: DeckConfig = {
@@ -58,7 +65,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
     },
     {
         id: 'master', title: 'Master', items: [
-            { label: "Master Data", action: "Master Data", disabled: true },
+            { label: "Master Data", action: "Master Data" },
             { label: "DB Update", action: "DB Update", disabled: true },
             { label: "Test", action: "Test", disabled: true }
         ]
@@ -72,15 +79,15 @@ const MENU_STRUCTURE: MenuGroup[] = [
     },
     {
         id: 'user', title: 'User', items: [
-            { label: "User Mgmt", action: "User Mgmt", disabled: true },
+            { label: "User Mgmt", action: "User Mgmt" },
             { label: "Switch User Role", action: "Switch Role" },
-            { label: "Log", action: "Log", disabled: true }
+            { label: "Log", action: "Log" }
         ]
     },
     {
         id: 'ship', title: 'Ship', items: [
             { label: "Ship Select", action: "Ship Select", restricted: true },
-            { label: "Ship Definition", action: "Ship Definition", disabled: true },
+            { label: "Ship Definition", action: "Ship Definition" },
             { label: "Deck Code", action: "Deck Code" },
             { label: "Equip Code", action: "Equip Code", disabled: true }
         ]
@@ -213,6 +220,9 @@ const App: React.FC = () => {
             alert("Access Denied: You do not have permission to save data.");
             return;
         }
+        // Record history snapshot before saving
+        HistoryService.record('Save Project', `Manual save with ${cables.length} cables, ${nodes.length} nodes`, shipId, cables, nodes, cableTypes);
+
         const dataToSave = { cables, nodes, cableTypes, deckHeights };
         localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
         alert(`Project saved for Ship ${shipId} successfully.`);
@@ -585,6 +595,11 @@ const App: React.FC = () => {
                 break;
             case "Cable List": setCurrentView(MainView.SCHEDULE); break;
             case "3D Config": setCurrentView(MainView.THREE_D); break;
+            case "Master Data": setCurrentView('MASTER_DATA'); break;
+            case "User Mgmt": setCurrentView('USER_MGMT'); break;
+            case "Ship Definition": setCurrentView('SHIP_DEF'); break;
+            case "Cable Drum Inquiry": setCurrentView('DRUM_SCHEDULE'); break;
+            case "Log": setCurrentView('HISTORY'); break;
             default: console.log("Action not implemented:", action);
         }
     };
@@ -707,6 +722,37 @@ const App: React.FC = () => {
                         <div className="flex-1 border border-seastar-700 rounded-lg overflow-hidden relative shadow-2xl">
                             <ThreeScene nodes={nodes} highlightPath={routePath} deckHeights={deckHeights} />
                         </div>
+                    )}
+
+                    {currentView === 'MASTER_DATA' && (
+                        <MasterData cables={cables} nodes={nodes} cableTypes={cableTypes} />
+                    )}
+
+                    {currentView === 'USER_MGMT' && (
+                        <UserManagement currentRole={userRole} onRoleChange={setUserRole} />
+                    )}
+
+                    {currentView === 'SHIP_DEF' && (
+                        <ShipDefinition currentShipId={shipId} onShipChange={setShipId} />
+                    )}
+
+                    {currentView === 'DRUM_SCHEDULE' && (
+                        <DrumScheduleReport cables={cables} />
+                    )}
+
+                    {currentView === 'NODE_LIST_REPORT' && (
+                        <NodeListReport nodes={nodes} />
+                    )}
+
+                    {currentView === 'HISTORY' && (
+                        <HistoryViewer
+                            projectId={shipId}
+                            onRestore={(restoredCables, restoredNodes, restoredCableTypes) => {
+                                setCables(restoredCables);
+                                setNodes(restoredNodes);
+                                setCableTypes(restoredCableTypes);
+                            }}
+                        />
                     )}
                 </div>
             </main>
