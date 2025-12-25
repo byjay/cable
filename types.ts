@@ -29,7 +29,20 @@ export interface Cable {
   remark?: string;
   // Route Info from Excel
   path?: string; // 'CABLE_PATH'
+  // Error tracking
+  routeError?: string; // Routing error message
+  revComment?: string; // Revision comment for change tracking
   [key: string]: any; // Allow flexible indexing
+}
+
+export interface CableType {
+  id: string;
+  name: string;
+  type: string;
+  od: number;
+  weight?: number;
+  description?: string;
+  [key: string]: any;
 }
 
 export interface Node {

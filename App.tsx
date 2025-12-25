@@ -296,8 +296,15 @@ const App: React.FC = () => {
                             ...cable,
                             calculatedPath: result.path,
                             calculatedLength: totalLength,
-                            length: totalLength, // Also update the length field
-                            path: result.path.join(',') // Populate the CABLE_PATH column
+                            length: totalLength,
+                            path: result.path.join(','),
+                            routeError: undefined // Clear any previous error
+                        };
+                    } else {
+                        // Store error info for display
+                        return {
+                            ...cable,
+                            routeError: result.error || 'Unknown routing error'
                         };
                     }
                 }

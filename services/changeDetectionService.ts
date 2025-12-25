@@ -255,6 +255,38 @@ export class ChangeDetectionService {
             return cable;
         });
     }
+    /**
+     * Apply REV.COMMENT to cables based on detected changes
+     */
+    static applyRevComments(
+        cables: Cable[],
+        changes: ChangeRecord[]
+    ): Cable[] {
+        const timestamp = new Date().toISOString().split('T')[0];
+        const modifyRecords = changes.filter(c => c.type === 'MODIFY' && c.itemType === 'cable');
+        const addRecords = changes.filter(c => c.type === 'ADD' && c.itemType === 'cable');
+
+        const modifyMap = new Map<string, string[]>();
+        modifyRecords.forEach(r => {
+            if (!modifyMap.has(r.itemName)) modifyMap.set(r.itemName, []);
+            if (r.field) modifyMap.get(r.itemName)!.push(`${r.field}: ${r.oldValue}→${r.newValue}`);
+        });
+
+        const addedNames = new Set(addRecords.map(r => r.itemName));
+
+        return cables.map(cable => {
+            let revComment = cable.revComment || '';
+
+            if (addedNames.has(cable.name)) {
+                revComment = `[${timestamp}] NEW CABLE`;
+            } else if (modifyMap.has(cable.name)) {
+                const changes = modifyMap.get(cable.name)!.join(', ');
+                revComment = `[${timestamp}] MODIFIED: ${changes}`;
+            }
+
+            return { ...cable, revComment };
+        });
+    }
 }
 
 export default ChangeDetectionService;

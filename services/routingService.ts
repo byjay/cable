@@ -23,12 +23,12 @@ export class RoutingService {
         neighbors.forEach(neighbor => {
           // Add edge
           this.graph[node.name][neighbor] = node.linkLength || 1;
-          
+
           // Bidirectional safety
           if (!this.graph[neighbor]) {
             this.graph[neighbor] = {};
           }
-          this.graph[neighbor][node.name] = node.linkLength || 1; 
+          this.graph[neighbor][node.name] = node.linkLength || 1;
         });
       }
     });
@@ -51,30 +51,30 @@ export class RoutingService {
 
     // Visit each waypoint
     for (const waypoint of waypoints) {
-        const segment = this.dijkstra(current, waypoint);
-        
-        if (segment.distance < 0) {
-            return { 
-                path: [], 
-                distance: -1, 
-                error: `Cannot reach waypoint ${waypoint} from ${current}` 
-            };
-        }
+      const segment = this.dijkstra(current, waypoint);
 
-        // Add segment to path (exclude first node to avoid duplication)
-        fullPath.push(...segment.path.slice(1));
-        totalDistance += segment.distance;
-        current = waypoint;
+      if (segment.distance < 0) {
+        return {
+          path: [],
+          distance: -1,
+          error: `Cannot reach waypoint ${waypoint} from ${current}`
+        };
+      }
+
+      // Add segment to path (exclude first node to avoid duplication)
+      fullPath.push(...segment.path.slice(1));
+      totalDistance += segment.distance;
+      current = waypoint;
     }
 
     // Final leg from last waypoint to end
     const finalSegment = this.dijkstra(current, end);
     if (finalSegment.distance < 0) {
-        return { 
-            path: [], 
-            distance: -1, 
-            error: `Cannot reach destination ${end} from last waypoint ${current}` 
-        };
+      return {
+        path: [],
+        distance: -1,
+        error: `Cannot reach destination ${end} from last waypoint ${current}`
+      };
     }
 
     fullPath.push(...finalSegment.path.slice(1));
@@ -84,12 +84,21 @@ export class RoutingService {
   }
 
   private dijkstra(start: string, end: string): RouteResult {
-    // Basic checks
-    if (!this.graph[start] || !this.graph[end]) {
-      return { path: [], distance: -1, error: "Start or End node not found in graph" };
+    // Basic checks with detailed error messages
+    const startExists = !!this.graph[start];
+    const endExists = !!this.graph[end];
+
+    if (!startExists && !endExists) {
+      return { path: [], distance: -1, error: `Both nodes missing: FROM[${start}] TO[${end}]` };
+    }
+    if (!startExists) {
+      return { path: [], distance: -1, error: `FROM node not found: [${start}]` };
+    }
+    if (!endExists) {
+      return { path: [], distance: -1, error: `TO node not found: [${end}]` };
     }
     if (start === end) {
-        return { path: [start], distance: 0 };
+      return { path: [start], distance: 0 };
     }
 
     const distances: { [key: string]: number } = {};
@@ -110,10 +119,10 @@ export class RoutingService {
       let minDesc = Infinity;
 
       for (const node of unvisited) {
-          if (distances[node] < minDesc) {
-              minDesc = distances[node];
-              u = node;
-          }
+        if (distances[node] < minDesc) {
+          minDesc = distances[node];
+          u = node;
+        }
       }
 
       if (u === null || distances[u] === Infinity) break; // unreachable remaining
@@ -124,25 +133,25 @@ export class RoutingService {
       const neighbors = this.graph[u];
       for (const v in neighbors) {
         if (unvisited.has(v)) {
-            const alt = distances[u] + neighbors[v];
-            if (alt < distances[v]) {
-                distances[v] = alt;
-                previous[v] = u;
-            }
+          const alt = distances[u] + neighbors[v];
+          if (alt < distances[v]) {
+            distances[v] = alt;
+            previous[v] = u;
+          }
         }
       }
     }
 
     // Reconstruct path
     if (distances[end] === Infinity) {
-         return { path: [], distance: -1, error: "Target unreachable" };
+      return { path: [], distance: -1, error: "Target unreachable" };
     }
 
     const path: string[] = [];
     let curr: string | null = end;
     while (curr) {
-        path.unshift(curr);
-        curr = previous[curr];
+      path.unshift(curr);
+      curr = previous[curr];
     }
 
     return { path, distance: distances[end] };
