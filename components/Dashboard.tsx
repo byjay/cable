@@ -13,8 +13,10 @@ interface DashboardProps {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
+import DataVerification from './DataVerification';
+
 const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) => {
-  // Stats Calculation
+  // Calculate Stats
   const stats = useMemo(() => {
     const totalCables = cables.length;
     const totalNodes = nodes.length;
@@ -88,10 +90,14 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) 
   );
 
   return (
-    <div className="flex flex-col h-full bg-seastar-900 overflow-y-auto p-4 custom-scrollbar">
-      <h2 className="text-xl font-bold text-seastar-cyan mb-4 flex items-center gap-2">
-        <Activity size={20} /> PROJECT DASHBOARD
-      </h2>
+    <div className="h-full flex flex-col p-4 overflow-y-auto bg-seastar-900 text-white">
+      <DataVerification cables={cables} nodes={nodes} />
+
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-seastar-cyan flex items-center gap-2">
+          <Activity size={20} /> PROJECT DASHBOARD
+        </h1>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">

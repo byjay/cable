@@ -127,103 +127,93 @@ const MENU_STRUCTURE: MenuGroup[] = [
     }
 ];
 
-const App: React.FC = () => {
-    const [currentView, setCurrentView] = useState<string>(MainView.DASHBOARD);
+// FORCE RESET VERSION - Increment this to wipe user data and force default load
+const DATA_VERSION = "2025-12-26-v6-FORCE-REFRESH-AUTO-SAVE";
 
-    // Data State
-    const [cables, setCables] = useState<Cable[]>(initialCables);
-    const [nodes, setNodes] = useState<Node[]>(initialNodes);
-    const [cableTypes, setCableTypes] = useState<GenericRow[]>(initialCableTypes);
-    const [deckHeights, setDeckHeights] = useState<DeckConfig>(DEFAULT_DECK_CONFIG);
+import { useProjectData } from './hooks/useProjectData';
+import { useAutoRouting } from './hooks/useAutoRouting';
+
+const App: React.FC = () => {
+    // Force Clear LocalStorage on first load of version
+    useEffect(() => {
+        const currentVer = localStorage.getItem('APP_DATA_VERSION');
+        if (currentVer !== DATA_VERSION) {
+            console.warn("⚠️ Version mismatch. Clearing LocalStorage...");
+            localStorage.clear();
+            localStorage.setItem('APP_DATA_VERSION', DATA_VERSION);
+            window.location.reload();
+        }
+    }, []);
+
+    const [currentView, setCurrentView] = useState<string>(MainView.DASHBOARD);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const [showShipModal, setShowShipModal] = useState(false);
+    const [showDeckModal, setShowDeckModal] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false); // Manual loading state
+
+    // CUSTOM HOOKS - The Core Logic
+    const {
+        cables, setCables,
+        nodes, setNodes,
+        cableTypes, setCableTypes,
+        deckHeights, setDeckHeights,
+        shipId, setShipId,
+        isLoading: isDataLoading,
+        saveData,
+        availableShips
+    } = useProjectData();
+
+    const {
+        routingService,
+        routePath, setRoutePath,
+        isRouting,
+        calculateRoute,
+        calculateAllRoutes,
+        calculateSelectedRoutes
+    } = useAutoRouting({ nodes, cables, setCables, saveData });
+
+    const isLoading = isDataLoading || isRouting || isProcessing;
+
+    // View Routing Filter State
+    const [cableListFilter, setCableListFilter] = useState<'all' | 'unrouted' | 'missingLength'>('all');
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+
 
     const [genericData, setGenericData] = useState<GenericRow[]>([]);
     const [genericTitle, setGenericTitle] = useState<string>('');
 
-    const [routePath, setRoutePath] = useState<string[]>([]);
-    const [routingService, setRoutingService] = useState<RoutingService | null>(null);
-
-    const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    const [showDeckModal, setShowDeckModal] = useState(false);
-    const [showShipModal, setShowShipModal] = useState(false);
-    const [shipId, setShipId] = useState("S1001_35K_FD");
-    const [isLoading, setIsLoading] = useState(false);
-
     const [userRole, setUserRole] = useState<'ADMIN' | 'GUEST'>('ADMIN');
 
     // Simple Modals State
-    const [activeModal, setActiveModal] = useState<string | null>(null);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // Menu Handling
+    const MENUS = [
+        { id: 'DASHBOARD', label: 'Dashboard', icon: <Activity size={12} />, action: () => setCurrentView(MainView.DASHBOARD) },
+        { id: 'SCHEDULE', label: 'Cable Schedule', icon: <Calendar size={12} />, action: () => setCurrentView(MainView.SCHEDULE) },
+        { id: '3D', label: '3D View', icon: <Box size={12} />, action: () => setCurrentView(MainView.THREE_D) },
+        { id: 'SETTINGS', label: 'Settings', icon: <SettingsIcon size={12} />, action: () => setCurrentView(MainView.SETTINGS) },
+    ];
 
-    const [cableListFilter, setCableListFilter] = useState<'missingLength' | 'unrouted' | null>(null);
-
-    useEffect(() => {
-        loadShipData(shipId);
-    }, [shipId]);
-
-    const loadShipData = async (id: string) => {
-        setIsLoading(true);
-
-        const savedData = localStorage.getItem(`SEASTAR_DATA_${id}`);
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                setCables(parsed.cables || []);
-                setNodes(parsed.nodes || []);
-                setCableTypes(parsed.cableTypes && parsed.cableTypes.length > 0 ? parsed.cableTypes : initialCableTypes);
-                setDeckHeights(parsed.deckHeights || DEFAULT_DECK_CONFIG);
-                setIsLoading(false);
-                return;
-            } catch (e) {
-                console.error("Failed to load saved data", e);
-            }
+    const MENU_STRUCTURE = [
+        {
+            id: 'master', label: 'Master Data', icon: <Database size={14} />, items: [
+                { id: 'nodes', label: 'Node List', action: () => setCurrentView(MainView.REPORT_NODE) },
+                { id: 'types', label: 'Cable Types', action: () => setCurrentView(MainView.CABLE_TYPE) },
+                { id: 'ship', label: 'Ship Definition', action: () => setCurrentView(MainView.SHIP_DEF) },
+            ]
+        },
+        {
+            id: 'report', label: 'Reports', icon: <FileSpreadsheet size={14} />, items: [
+                { id: 'drum', label: 'Drum Schedule', action: () => setCurrentView(MainView.REPORT_DRUM) },
+                { id: 'bom', label: 'Bill of Materials', action: () => setCurrentView(MainView.REPORT_BOM) },
+                { id: 'tray', label: 'Tray Analysis', action: () => setCurrentView(MainView.TRAY_ANALYSIS) },
+            ]
         }
+    ];
 
-        // Auto-load Excel files for S1001_35K_FD if no saved data
-        if (id === "S1001_35K_FD") {
-            try {
-                console.log("🚀 Auto-loading 35K data from Excel files...");
 
-                // Load Node file
-                const nodeResponse = await fetch('/data/35k_node.xlsx');
-                if (nodeResponse.ok) {
-                    const nodeBlob = await nodeResponse.blob();
-                    const nodeFile = new File([nodeBlob], '35k_node.xlsx');
-                    const nodeRaw = await ExcelService.importFromExcel(nodeFile);
-                    const mappedNodes = ExcelService.mapRawToNode(nodeRaw);
-                    setNodes(mappedNodes);
-                    console.log(`✅ Loaded ${mappedNodes.length} nodes with POINT coordinates`);
-                }
-
-                // Load Cable Schedule file
-                const schResponse = await fetch('/data/35k_sch.xlsx');
-                if (schResponse.ok) {
-                    const schBlob = await schResponse.blob();
-                    const schFile = new File([schBlob], '35k_sch.xlsx');
-                    const schRaw = await ExcelService.importFromExcel(schFile);
-                    const mappedCables = ExcelService.mapRawToCable(schRaw);
-                    setCables(mappedCables);
-                    console.log(`✅ Loaded ${mappedCables.length} cables`);
-                }
-
-                setCableTypes(initialCableTypes);
-                setDeckHeights(DEFAULT_DECK_CONFIG);
-
-            } catch (e) {
-                console.error("Auto-load failed, using mock data:", e);
-                setCables(initialCables);
-                setNodes(initialNodes);
-                setCableTypes(initialCableTypes);
-            }
-        } else {
-            setCables([]);
-            setNodes([]);
-            setCableTypes(initialCableTypes);
-        }
-
-        setDeckHeights(DEFAULT_DECK_CONFIG);
-        setIsLoading(false);
-    };
 
     const saveShipData = () => {
         if (userRole !== 'ADMIN') {
@@ -301,7 +291,7 @@ const App: React.FC = () => {
 
         const targetCables = currentCablesOverride || cables;
 
-        setIsLoading(true);
+        setIsProcessing(true);
         // Use timeout to allow UI to render generic loader
         setTimeout(() => {
             let calculatedCount = 0;
@@ -338,7 +328,7 @@ const App: React.FC = () => {
             // Auto-save after Route All
             const dataToSave = { cables: updatedCables, nodes, cableTypes, deckHeights };
             localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
-            setIsLoading(false);
+            setIsProcessing(false);
             alert(`Route Generation Complete. ${calculatedCount} routes updated. (Auto-saved)`);
         }, 100);
     };
@@ -353,7 +343,7 @@ const App: React.FC = () => {
             alert("No cables selected.");
             return;
         }
-        setIsLoading(true);
+        setIsProcessing(true);
 
         setTimeout(() => {
             let calculatedCount = 0;
@@ -381,7 +371,7 @@ const App: React.FC = () => {
             });
 
             setCables(updatedCables);
-            setIsLoading(false);
+            setIsProcessing(false);
             alert(`Selected Route Generation Complete. ${calculatedCount} of ${selectedCables.length} routes updated.`);
         }, 100);
     };
@@ -420,7 +410,7 @@ const App: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setIsLoading(true);
+        setIsProcessing(true);
         setTimeout(async () => {
             try {
                 const rawData = await ExcelService.importFromExcel(file);
@@ -524,14 +514,14 @@ const App: React.FC = () => {
                 console.error(error);
                 alert("Failed to import Excel file. Please check the file format.");
             } finally {
-                setIsLoading(false);
+                setIsProcessing(false);
                 if (fileInputRef.current) fileInputRef.current.value = '';
             }
         }, 500);
     };
 
     const handleExport = () => {
-        setIsLoading(true);
+        setIsProcessing(true);
         setTimeout(() => {
             try {
                 let dataToExport: any[] = [];
@@ -578,7 +568,7 @@ const App: React.FC = () => {
                 console.error(e);
                 alert("Export Failed");
             } finally {
-                setIsLoading(false);
+                setIsProcessing(false);
             }
         }, 500);
     };
@@ -757,7 +747,7 @@ const App: React.FC = () => {
             {/* TOP MENU BAR */}
             <div className="h-10 bg-seastar-900 border-b border-seastar-700 flex items-center px-4 select-none shadow-md z-50">
                 <div className="font-bold text-seastar-cyan mr-6 flex items-center gap-2 text-sm tracking-wider cursor-pointer" onClick={() => setCurrentView(MainView.DASHBOARD)}>
-                    <Activity size={16} /> SEASTAR V5
+                    <Activity size={16} /> SCMS
                 </div>
 
                 <div className="flex items-center gap-1">
