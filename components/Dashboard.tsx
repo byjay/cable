@@ -169,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) 
                   <tr key={s.name} className="border-t border-seastar-700 hover:bg-seastar-700/50">
                     <td className="py-1 text-gray-300">{s.name}</td>
                     <td className="text-right text-blue-400">{s.count}</td>
-                    <td className="text-right text-yellow-400">{s.length.toFixed(0)}m</td>
+                    <td className="text-right text-yellow-400">{(Math.ceil(s.length * 10) / 10).toFixed(1)}m</td>
                   </tr>
                 ))}
               </tbody>
@@ -192,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) 
                   <tr key={s.name} className="border-t border-seastar-700 hover:bg-seastar-700/50">
                     <td className="py-1 text-gray-300 truncate max-w-[100px]">{s.name}</td>
                     <td className="text-right text-blue-400">{s.count}</td>
-                    <td className="text-right text-yellow-400">{s.length.toFixed(0)}m</td>
+                    <td className="text-right text-yellow-400">{(Math.ceil(s.length * 10) / 10).toFixed(1)}m</td>
                   </tr>
                 ))}
               </tbody>
@@ -215,7 +215,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) 
                   <tr key={s.name} className="border-t border-seastar-700 hover:bg-seastar-700/50">
                     <td className="py-1 text-gray-300">{s.name}</td>
                     <td className="text-right text-blue-400">{s.count}</td>
-                    <td className="text-right text-yellow-400">{s.length.toFixed(0)}m</td>
+                    <td className="text-right text-yellow-400">{(Math.ceil(s.length * 10) / 10).toFixed(1)}m</td>
                   </tr>
                 ))}
               </tbody>

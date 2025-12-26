@@ -128,7 +128,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
 ];
 
 // FORCE RESET VERSION - Increment this to wipe user data and force default load
-const DATA_VERSION = "2025-12-26-v6-FORCE-REFRESH-AUTO-SAVE";
+const DATA_VERSION = "2025-12-26-v7-FORCE-RECALC-LENGTH";
 
 import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
@@ -189,31 +189,7 @@ const App: React.FC = () => {
     // Simple Modals State
     const [activeModal, setActiveModal] = useState<string | null>(null);
 
-    // Menu Handling
-    const MENUS = [
-        { id: 'DASHBOARD', label: 'Dashboard', icon: <Activity size={12} />, action: () => setCurrentView(MainView.DASHBOARD) },
-        { id: 'SCHEDULE', label: 'Cable Schedule', icon: <Calendar size={12} />, action: () => setCurrentView(MainView.SCHEDULE) },
-        { id: '3D', label: '3D View', icon: <Box size={12} />, action: () => setCurrentView(MainView.THREE_D) },
-        { id: 'SETTINGS', label: 'Settings', icon: <SettingsIcon size={12} />, action: () => setCurrentView(MainView.SETTINGS) },
-    ];
-
-    const MENU_STRUCTURE = [
-        {
-            id: 'master', label: 'Master Data', icon: <Database size={14} />, items: [
-                { id: 'nodes', label: 'Node List', action: () => setCurrentView(MainView.REPORT_NODE) },
-                { id: 'types', label: 'Cable Types', action: () => setCurrentView(MainView.CABLE_TYPE) },
-                { id: 'ship', label: 'Ship Definition', action: () => setCurrentView(MainView.SHIP_DEF) },
-            ]
-        },
-        {
-            id: 'report', label: 'Reports', icon: <FileSpreadsheet size={14} />, items: [
-                { id: 'drum', label: 'Drum Schedule', action: () => setCurrentView(MainView.REPORT_DRUM) },
-                { id: 'bom', label: 'Bill of Materials', action: () => setCurrentView(MainView.REPORT_BOM) },
-                { id: 'tray', label: 'Tray Analysis', action: () => setCurrentView(MainView.TRAY_ANALYSIS) },
-            ]
-        }
-    ];
-
+    // Menu Handling - uses global MENU_STRUCTURE defined above
 
 
     const saveShipData = () => {
