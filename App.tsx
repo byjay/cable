@@ -21,6 +21,7 @@ import Settings from './components/Settings';
 import CableGroup from './components/CableGroup';
 import ImportPanel from './components/ImportPanel';
 import { SimpleModal } from './components/SimpleModal';
+import LoadingOverlay from './components/LoadingOverlay';
 import { TraySpecContent, CableBindingContent, EquipCodeContent, TerminalQtyContent } from './components/StaticContent';
 import { initialCables, initialNodes, initialCableTypes } from './services/mockData';
 import { RoutingService } from './services/routingService';
@@ -698,6 +699,7 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 overflow-hidden font-sans">
+            {isLoading && <LoadingOverlay message={isRouting ? "케이블 라우팅 중..." : "데이터 로딩 중..."} />}
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="hidden" />
 
             {/* TOP MENU BAR */}

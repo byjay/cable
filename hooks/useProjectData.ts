@@ -57,23 +57,26 @@ export const useProjectData = () => {
                 }
 
                 // PRIORITY 2: Try loading pre-computed JSON cache (fastest, already routed)
-                const cacheUrl = `/data/${shipId}/cache.json`;
-                console.log(`🔍 Checking for JSON cache at ${cacheUrl}...`);
-                const cacheResponse = await fetch(cacheUrl);
-                if (cacheResponse.ok) {
-                    const cacheData = await cacheResponse.json();
-                    if (cacheData.cables && cacheData.cables.length > 0) {
-                        setCables(cacheData.cables);
-                        setNodes(cacheData.nodes || []);
-                        setCableTypes(cacheData.cableTypes || initialCableTypes);
-                        setDeckHeights(cacheData.deckHeights || DEFAULT_DECK_CONFIG);
-                        setDataSource('cache');
-                        console.log(`✅ Loaded ${cacheData.cables.length} cables from JSON cache (pre-routed)`);
-                        // Also save to localStorage for faster next load
-                        localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(cacheData));
-                        setIsLoading(false);
-                        return;
+                try {
+                    const cacheUrl = `/data/${shipId}/cache.json`;
+                    console.log(`🔍 Checking for JSON cache at ${cacheUrl}...`);
+                    const cacheResponse = await fetch(cacheUrl);
+                    if (cacheResponse.ok) {
+                        const cacheData = await cacheResponse.json();
+                        if (cacheData.cables && cacheData.cables.length > 0) {
+                            setCables(cacheData.cables);
+                            setNodes(cacheData.nodes || []);
+                            setCableTypes(cacheData.cableTypes || initialCableTypes);
+                            setDeckHeights(cacheData.deckHeights || DEFAULT_DECK_CONFIG);
+                            setDataSource('cache');
+                            console.log(`✅ Loaded ${cacheData.cables.length} cables from JSON cache (pre-routed)`);
+                            localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(cacheData));
+                            setIsLoading(false);
+                            return;
+                        }
                     }
+                } catch (cacheError) {
+                    console.log(`⚠️ JSON cache not available: ${cacheError}`);
                 }
                 console.log(`⚠️ No valid JSON cache found, falling back to Excel...`);
 
