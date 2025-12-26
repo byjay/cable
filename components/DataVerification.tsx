@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Cable, Node } from '../types';
-import { AlertTriangle, CheckCircle, HardDrive, FileSpreadsheet, Box, Activity } from 'lucide-react';
+import { AlertTriangle, CheckCircle, HardDrive, FileSpreadsheet, Box, Activity, Database } from 'lucide-react';
 
 interface DataVerificationprops {
     cables: Cable[];

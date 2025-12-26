@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home
+    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeScene';
@@ -187,6 +187,7 @@ const App: React.FC = () => {
     const [userRole, setUserRole] = useState<'ADMIN' | 'GUEST'>('ADMIN');
 
     // Simple Modals State
+    const [activeModal, setActiveModal] = useState<string | null>(null);
 
     // Menu Handling
     const MENUS = [
@@ -228,28 +229,7 @@ const App: React.FC = () => {
         alert(`Project saved for Ship ${shipId} successfully.`);
     };
 
-    useEffect(() => {
-        const svc = new RoutingService(nodes);
-        setRoutingService(svc);
-    }, [nodes]);
 
-    // Auto-route on startup when both nodes and cables are loaded
-    const [autoRouted, setAutoRouted] = useState(false);
-    useEffect(() => {
-        if (routingService && cables.length > 0 && nodes.length > 0 && !autoRouted) {
-            // Check if any cables need routing (no calculatedPath)
-            const needsRouting = cables.some(c => !c.calculatedPath || c.calculatedPath.length === 0);
-            if (needsRouting) {
-                console.log('🚀 Auto-routing cables on startup...');
-                setTimeout(() => {
-                    handleCalculateAllRoutes();
-                    setAutoRouted(true);
-                }, 500);
-            } else {
-                setAutoRouted(true);
-            }
-        }
-    }, [routingService, cables.length, nodes.length, autoRouted]);
 
     const handleUpdateNodes = (updatedNodes: Node[]) => {
         setNodes(updatedNodes);

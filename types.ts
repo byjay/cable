@@ -90,5 +90,6 @@ export enum MainView {
   REPORT_BOM = 'Cable Requirement',
   TRAY_ANALYSIS = 'Tray Analysis', // New: Fill Ratio Analysis
   THREE_D = '3D Visualization',
-  GENERIC_GRID = 'Generic Grid'
+  GENERIC_GRID = 'Generic Grid',
+  SETTINGS = 'Settings'
 }
