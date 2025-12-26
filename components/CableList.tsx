@@ -17,6 +17,7 @@ interface CableListProps {
     onView3D: (cable: Cable) => void;
     triggerImport: () => void;
     onExport: () => void;
+    onUpdateCable?: (cable: Cable) => void; // New prop for editing
     initialFilter?: 'missingLength' | 'unrouted' | null;
 }
 
@@ -159,6 +160,33 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         }
         return result;
     }, [cables, filterName, showMissingLength, sortColumn, sortDirection]);
+
+    // Editing Logic
+    const handleCellChange = (id: string, field: string, value: any) => {
+        if (!onUpdateCable) return;
+
+        const cable = cables.find(c => c.id === id);
+        if (!cable) return;
+
+        const oldValue = cable[field];
+        if (oldValue == value) return; // No change
+
+        const today = new Date().toISOString().split('T')[0];
+        const user = "ADMIN"; // TODO: Get actual user
+        const changeLog = `${today} [${user}] ${field}: ${oldValue} -> ${value}`;
+
+        const newRevComment = cable.revComment
+            ? `${cable.revComment}\n${changeLog}`
+            : changeLog;
+
+        const updatedCable = {
+            ...cable,
+            [field]: value,
+            revComment: newRevComment
+        };
+
+        onUpdateCable(updatedCable);
+    };
 
     // Selection Logic
     const handleRowMouseDown = (e: React.MouseEvent, id: string, index: number) => {
@@ -507,7 +535,15 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                             </td>
                                                             {FIXED_COLUMNS.map(col => (
                                                                 <td key={`${cable.id}-${col.key}`} className={`px-1 border-r border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${!isSelected && col.bg ? 'bg-opacity-50 ' + col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
-                                                                    <span className={isSelected ? 'text-white' : (col.color || 'text-gray-800')}>{cable[col.key]}</span>
+                                                                    {/* Editable Input */}
+                                                                    <input
+                                                                        type="text"
+                                                                        className={`w-full bg-transparent border-none focus:ring-1 focus:ring-blue-500 px-0.5 text-inherit ${isSelected ? 'text-white placeholder-white' : (col.color || 'text-gray-800')}`}
+                                                                        value={cable[col.key] || ''}
+                                                                        onChange={(e) => handleCellChange(cable.id, col.key, e.target.value)}
+                                                                        onClick={(e) => e.stopPropagation()} // Prevent row selection when clicking input
+                                                                        readOnly={col.key === 'id' || col.key === 'length' || col.key === 'path'} // ID, Calculated Length, Path are usually auto-generated
+                                                                    />
                                                                 </td>
                                                             ))}
                                                             <td className="px-1 border-l border-gray-200 text-center sticky right-0 bg-inherit z-10">

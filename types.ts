@@ -32,6 +32,13 @@ export interface Cable {
   // Error tracking
   routeError?: string; // Routing error message
   revComment?: string; // Revision comment for change tracking
+  revHistory?: {
+    date: string;
+    user: string;
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }[];
   [key: string]: any; // Allow flexible indexing
 }
 
@@ -93,3 +100,70 @@ export enum MainView {
   GENERIC_GRID = 'Generic Grid',
   SETTINGS = 'Settings'
 }
+
+
+export interface NodeFillData {
+  nodeName: string;
+  trayWidth: number;
+  trayCapacity: number; // width * 60
+  cableCount: number;
+  totalCableArea: number;
+  fillRatio: number; // as percentage
+  isOverfilled: boolean;
+  cables: string[];
+}
+
+// --- Logic for Advanced Tray Solver (FILL) ---
+
+export interface CableData {
+  id: string;
+  name: string;
+  type: string;
+  od: number;
+  color?: string;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface PlacedCable extends CableData {
+  x: number;
+  y: number;
+  layer: number; // Vertical stacking layer within a single tray
+  displayIndex?: number; // Added for visualization numbering
+}
+
+export interface SingleTrayResult {
+  tierIndex: number;
+  width: number; // Required width for this specific tier
+  cables: PlacedCable[];
+  success: boolean;
+  fillRatio: number;
+  totalODSum: number;
+  totalCableArea: number;
+}
+
+export interface SystemResult {
+  systemWidth: number; // The max width among all tiers
+  tiers: SingleTrayResult[];
+  success: boolean;
+  maxHeightPerTier: number;
+}
+
+// ... existing exports
+
+export interface User {
+  id: string; // 'admin' or UUID
+  username: string;
+  password?: string; // In real app, hashed. Here plain for mock.
+  role: 'ADMIN' | 'USER' | 'GUEST';
+  assignedShips: string[]; // List of Ship IDs this user can access
+  createdBy?: string;
+  createdAt?: string;
+}
+
+export const MARGIN_X = 10; // 10mm margin on each side (global tray edges)
+export const MAX_PILE_WIDTH = 200; // Max width for a single continuous pile
+export const PILE_GAP = 10; // Gap between piles

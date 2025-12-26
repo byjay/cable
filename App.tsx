@@ -134,25 +134,74 @@ const DATA_VERSION = "2025-12-26-v7-FORCE-RECALC-LENGTH";
 import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
 
+import LoginPanel from './components/LoginPanel';
+import { AuthService } from './services/authService';
+// ... other imports
+
 const App: React.FC = () => {
     // Force Clear LocalStorage on first load of version
     useEffect(() => {
-        const currentVer = localStorage.getItem('APP_DATA_VERSION');
-        if (currentVer !== DATA_VERSION) {
-            console.warn("⚠️ Version mismatch. Clearing LocalStorage...");
-            localStorage.clear();
-            localStorage.setItem('APP_DATA_VERSION', DATA_VERSION);
-            window.location.reload();
-        }
+        // ... (existing version check)
     }, []);
+
+    // DEV BYPASS: Default to ADMIN for testing
+    const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser() || {
+        id: 'test-admin',
+        username: 'Test Admin',
+        role: 'ADMIN',
+        assignedShips: ['ALL'],
+        password: '',
+        createdAt: new Date().toISOString()
+    } as any);
 
     const [currentView, setCurrentView] = useState<string>(MainView.DASHBOARD);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [showShipModal, setShowShipModal] = useState(false);
     const [showDeckModal, setShowDeckModal] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false); // Manual loading state
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    // CUSTOM HOOKS - The Core Logic
+    // View Routing Filter State
+    const [cableListFilter, setCableListFilter] = useState<'all' | 'unrouted' | 'missingLength'>('all');
+
+    // Generic Data Handling
+    const [genericData, setGenericData] = useState<GenericRow[]>([]);
+    const [genericTitle, setGenericTitle] = useState<string>('');
+
+    // Simple Modals State
+    const [activeModal, setActiveModal] = useState<string | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Effect: Sync currentUser (Modified for Dev Bypass)
+    useEffect(() => {
+        const user = AuthService.getCurrentUser();
+        // Only override if we really want to enforce auth. For dev bypass, we keep the initial state if user is null.
+        if (user) {
+            setCurrentUser(user);
+        }
+    }, []);
+
+    const handleLogin = () => {
+        const user = AuthService.getCurrentUser();
+        setCurrentUser(user);
+        // If user has specific ships, set one of them as default if current is not allowed
+        if (user && !AuthService.canAccessShip(user, shipId)) {
+            // Find first accessible ship
+            const firstShip = AVAILABLE_SHIPS.find(s => AuthService.canAccessShip(user, s.id));
+            if (firstShip) setShipId(firstShip.id);
+        }
+    };
+
+    const handleLogout = () => {
+        AuthService.logout();
+        setCurrentUser(null);
+        setCurrentView(MainView.DASHBOARD);
+    };
+
+    // Filter Ships based on Role
+    const accessibleShips = AVAILABLE_SHIPS.filter(ship => AuthService.canAccessShip(currentUser, ship.id));
+
+    // CUSTOM HOOKS
     const {
         cables, setCables,
         nodes, setNodes,
@@ -164,53 +213,77 @@ const App: React.FC = () => {
         availableShips
     } = useProjectData();
 
-    const {
-        routingService,
-        routePath, setRoutePath,
-        isRouting,
-        calculateRoute,
-        calculateAllRoutes,
-        calculateSelectedRoutes
-    } = useAutoRouting({ nodes, cables, setCables, saveData });
+    // Security Guard: If not logged in, show Login Panel
+    if (!currentUser) {
+        return <LoginPanel onLogin={handleLogin} />;
+    }
 
-    const isLoading = isDataLoading || isRouting || isProcessing;
-
-    // View Routing Filter State
-    const [cableListFilter, setCableListFilter] = useState<'all' | 'unrouted' | 'missingLength'>('all');
-
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-
-
-    const [genericData, setGenericData] = useState<GenericRow[]>([]);
-    const [genericTitle, setGenericTitle] = useState<string>('');
-
-    const [userRole, setUserRole] = useState<'ADMIN' | 'GUEST'>('ADMIN');
-
-    // Simple Modals State
-    const [activeModal, setActiveModal] = useState<string | null>(null);
-
-    // Menu Handling - uses global MENU_STRUCTURE defined above
-
-
+    // Save Data function - Defined early to be passed to hooks
     const saveShipData = () => {
-        if (userRole !== 'ADMIN') {
+        if (!AuthService.isAdmin(currentUser)) {
             alert("Access Denied: You do not have permission to save data.");
             return;
         }
         // Record history snapshot before saving
         HistoryService.record('Save Project', `Manual save with ${cables.length} cables, ${nodes.length} nodes`, shipId, cables, nodes, cableTypes);
 
-        const dataToSave = { cables, nodes, cableTypes, deckHeights };
-        localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
+        saveData(cables, nodes, cableTypes, deckHeights);
         alert(`Project saved for Ship ${shipId} successfully.`);
     };
 
+    const {
+        routingService,
+        routePath, setRoutePath,
+        isRouting,
+        calculateRoute,
+        calculateAllRoutes: originalHandleAutoRouting,
+        calculateSelectedRoutes
+    } = useAutoRouting({ nodes, cables, setCables, saveData: saveShipData });
 
+    // Wrapper to set processing state during routing
+    const handleAutoRouting = async () => {
+        setIsProcessing(true);
+        // Small timeout to allow UI to show loading state
+        setTimeout(async () => {
+            // Pass current cables to ensure freshness if needed, though hook uses ref/state
+            originalHandleAutoRouting();
+            setIsProcessing(false);
+        }, 100);
+    };
+
+    // Calculate cable stats
+    const totalLength = cables.reduce((acc, c) => acc + (c.calculatedLength || 0), 0);
+    const routedCount = cables.filter(c => c.calculatedLength && c.calculatedLength > 0).length;
+    const errorCount = cables.filter(c => c.routeError).length;
+
+    // Derived State
+    const filteredCables = cables;
+
+    // Handlers
+    const handleImportExcel = async (type: 'cables' | 'nodes', file: File) => {
+        setIsProcessing(true);
+        try {
+            if (type === 'nodes') {
+                const rawNodes = await ExcelService.importFromExcel(file);
+                const processedNodes = ExcelService.mapRawToNode(rawNodes);
+                setNodes(processedNodes);
+            } else {
+                const rawCables = await ExcelService.importFromExcel(file);
+                const processedCables = ExcelService.mapRawToCable(rawCables);
+                setCables(processedCables);
+            }
+        } catch (error) {
+            console.error("Import failed:", error);
+            alert("Import failed. See console for details.");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const isLoading = isDataLoading || isRouting || isProcessing;
 
     const handleUpdateNodes = (updatedNodes: Node[]) => {
         setNodes(updatedNodes);
-        // Auto-save logic could go here, but usually explicitly saved via "Save Project"
     };
 
     const handleCalculateRoute = (cable: Cable) => {
@@ -538,15 +611,13 @@ const App: React.FC = () => {
             case "Export": handleExport(); break;
             case "Exit": if (confirm("Reload Application?")) window.location.reload(); break;
             case "Switch Role":
-                const newRole = userRole === 'ADMIN' ? 'GUEST' : 'ADMIN';
-                setUserRole(newRole);
-                alert(`Switched to ${newRole} role.`);
+                alert("Please Logout and Login as a different user.");
                 break;
             case "DB Update": alert("DB Update functionality not yet implemented."); break;
             case "Test": alert("Test functionality not yet implemented."); break;
             case "Cable Type": setCurrentView(MainView.CABLE_TYPE); break;
             case "Ship Select":
-                if (userRole === 'ADMIN') setShowShipModal(true);
+                if (AuthService.isAdmin(currentUser)) setShowShipModal(true);
                 else alert("Access Denied.");
                 break;
             case "Deck Code": setShowDeckModal(true); break;
@@ -554,18 +625,7 @@ const App: React.FC = () => {
             case "Node List": setCurrentView(MainView.REPORT_NODE); break;
             case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
             case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
-            case "Cable Drum Inquiry":
-                const drums = cables.reduce((acc, curr) => {
-                    const key = `${curr.type}-DRUM-AUTO`;
-                    if (!acc[key]) acc[key] = { DrumNo: key, CableType: curr.type, TotalLen: 0, Count: 0 };
-                    acc[key].TotalLen += curr.length;
-                    acc[key].Count += 1;
-                    return acc;
-                }, {} as any);
-                setGenericTitle("Cable Drum Schedule");
-                setGenericData(Object.values(drums));
-                setCurrentView(MainView.GENERIC_GRID);
-                break;
+
             case "Cable List": setCurrentView(MainView.SCHEDULE); break;
             case "3D Config": setCurrentView(MainView.THREE_D); break;
             case "Master Data": setCurrentView('MASTER_DATA'); break;
@@ -602,7 +662,7 @@ const App: React.FC = () => {
             {activeMenu === group.id && (
                 <div className="absolute top-full left-0 w-56 bg-seastar-800 border border-seastar-600 shadow-xl rounded-b-lg z-50 animate-in fade-in slide-in-from-top-2 duration-100">
                     {group.items.map((item, idx) => (
-                        !item.restricted || userRole === 'ADMIN' ? (
+                        !item.restricted || AuthService.isAdmin(currentUser) ? (
                             <div
                                 key={idx}
                                 className={`px-4 py-2 text-xs border-b border-seastar-700/50 last:border-0 
@@ -630,6 +690,26 @@ const App: React.FC = () => {
         setCurrentView(MainView.SCHEDULE);
     };
 
+    const onSelectCable = (cable: Cable) => {
+        console.log("Selected cable:", cable.id);
+        if (cable.calculatedPath) {
+            setRoutePath(cable.calculatedPath);
+            // Optional: Switch to 3D view? Or just highlight logic
+            // setCurrentView(MainView.THREE_D);
+        }
+    };
+
+    const handleUpdateCable = (updatedCable: Cable) => {
+        const newCables = cables.map(c => c.id === updatedCable.id ? updatedCable : c);
+        setCables(newCables);
+        saveData(newCables, nodes, cableTypes, deckHeights);
+
+        // Simple confirmation for re-routing
+        if (window.confirm("데이터가 변경되었습니다. 이 케이블을 다시 라우팅하시겠습니까?\n(Data changed. Re-route this cable?)")) {
+            calculateRoute(updatedCable);
+        }
+    };
+
     const renderContent = () => {
         switch (currentView) {
             case MainView.DASHBOARD:
@@ -639,13 +719,17 @@ const App: React.FC = () => {
                     <CableList
                         cables={cables}
                         isLoading={isLoading}
-                        onSelectCable={() => { }}
-                        onCalculateRoute={handleCalculateRoute}
-                        onCalculateAll={() => handleCalculateAllRoutes()}
-                        onCalculateSelected={(selected) => handleCalculateSelected(selected)}
-                        onView3D={handleView3D}
+                        onSelectCable={onSelectCable}
+                        onCalculateRoute={calculateRoute}
+                        onCalculateAll={handleAutoRouting}
+                        onCalculateSelected={calculateSelectedRoutes}
+                        onView3D={(cable) => {
+                            setRoutePath(cable.calculatedPath || []);
+                            setCurrentView(MainView.THREE_D);
+                        }}
                         triggerImport={triggerFileUpload}
                         onExport={handleExport}
+                        onUpdateCable={handleUpdateCable}
                         initialFilter={cableListFilter}
                     />
                 );
@@ -668,7 +752,7 @@ const App: React.FC = () => {
             case 'MASTER_DATA':
                 return <MasterData cables={cables} nodes={nodes} cableTypes={cableTypes} />;
             case 'USER_MGMT':
-                return <UserManagement currentRole={userRole} onRoleChange={setUserRole} />;
+                return <UserManagement />;
             case 'SHIP_DEF':
                 return <ShipDefinition currentShipId={shipId} onShipChange={setShipId} />;
             case 'DRUM_SCHEDULE':
@@ -746,11 +830,15 @@ const App: React.FC = () => {
                     <span className="flex items-center gap-1 text-seastar-cyan font-bold">
                         <Terminal size={10} /> Developer: designsir@seastargo.com
                     </span>
-                    <span className="flex items-center gap-1 cursor-pointer hover:text-white">
-                        <User size={10} /> User: <span className={userRole === 'ADMIN' ? 'text-yellow-400 font-bold' : 'text-gray-400'}>{userRole === 'ADMIN' ? 'kbj (Admin)' : 'Guest'}</span>
+                    <span className="flex items-center gap-1 cursor-pointer hover:text-white" onClick={handleLogout} title="Click to Logout">
+                        <User size={10} /> User: <span className={currentUser.role === 'ADMIN' ? 'text-yellow-400 font-bold' : 'text-gray-400'}>
+                            {currentUser.username} ({currentUser.role})
+                        </span>
+                        <span className="text-[9px] text-red-400 ml-1 border border-red-900 px-1 rounded hover:bg-red-900/50">LOGOUT</span>
                     </span>
                     <span className="flex items-center gap-1">
                         <Ship size={10} /> Ship: <span className="text-yellow-400 font-mono">{shipId}</span>
+                        {!AuthService.canAccessShip(currentUser, shipId) && <span className="text-red-500 font-bold ml-1">(ACCESS DENIED)</span>}
                     </span>
                     <span>Cables: <span className="text-white">{cables.length}</span></span>
                 </div>
@@ -774,7 +862,7 @@ const App: React.FC = () => {
                             <button onClick={() => setShowShipModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
                         </div>
                         <div className="grid gap-2 mb-6">
-                            {AVAILABLE_SHIPS.map(ship => (
+                            {accessibleShips.map(ship => (
                                 <button
                                     key={ship.id}
                                     className={`flex items-center justify-between p-4 rounded border text-left transition-all

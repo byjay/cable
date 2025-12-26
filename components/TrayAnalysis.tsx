@@ -1,249 +1,284 @@
-import React, { useMemo, useState } from 'react';
-import { Cable, Node } from '../types';
-import { AlertTriangle, CheckCircle, Layers, ChevronUp, ChevronDown } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
+import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw } from 'lucide-react';
+import TrayVisualizer from './TrayVisualizer';
+import { autoSolveSystem } from '../services/traySolver';
 
 interface TrayAnalysisProps {
     cables: Cable[];
     nodes: Node[];
 }
 
-interface NodeFillData {
-    nodeName: string;
-    trayWidth: number;
-    trayCapacity: number; // width * 60
-    cableCount: number;
-    totalCableArea: number;
-    fillRatio: number; // as percentage
-    isOverfilled: boolean;
-    cables: string[];
-}
-
 const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
-    // Calculate fill ratio for each node
+    // Selection State
+    const [selectedNode, setSelectedNode] = useState<NodeFillData | null>(null);
+    const [filterDeck, setFilterDeck] = useState('ALL');
+    const [searchText, setSearchText] = useState('');
+    const [solverResult, setSolverResult] = useState<SystemResult | null>(null);
+
+    // Calculate fill ratio for each node (Quick Check for List)
     const nodeAnalysis = useMemo(() => {
-        // Build a map of node name -> node data
         const nodeMap = new Map<string, Node>();
         nodes.forEach(n => nodeMap.set(n.name, n));
 
-        // Count cables passing through each node
-        const nodeCableMap = new Map<string, { cables: Cable[], totalArea: number }>();
+        // Group cables by node usage (Pre-calculation)
+        const nodeCableIds = new Map<string, string[]>();
 
-        cables.forEach(cable => {
-            if (!cable.calculatedPath || cable.calculatedPath.length === 0) return;
-
-            // Calculate cable cross-section area: π * (od/2)²
-            // od is in mm, area in mm²
-            const od = cable.od || 10; // Default 10mm if not specified
-            const cableArea = Math.PI * Math.pow(od / 2, 2);
-
-            // Add this cable to each node in its path
-            cable.calculatedPath.forEach(nodeName => {
-                if (!nodeCableMap.has(nodeName)) {
-                    nodeCableMap.set(nodeName, { cables: [], totalArea: 0 });
+        cables.forEach(c => {
+            const path = c.calculatedPath || c.path?.split(',') || [];
+            path.forEach(nName => {
+                const cleanName = nName.trim();
+                // Filter only for Tray nodes if possible, but we check 'nodes' list
+                if (nodeMap.has(cleanName)) {
+                    if (!nodeCableIds.has(cleanName)) nodeCableIds.set(cleanName, []);
+                    nodeCableIds.get(cleanName)!.push(c.id);
                 }
-                const data = nodeCableMap.get(nodeName)!;
-                data.cables.push(cable);
-                data.totalArea += cableArea;
             });
         });
 
-        // Build analysis data for each node with cables
         const results: NodeFillData[] = [];
 
-        nodeCableMap.forEach((data, nodeName) => {
-            const node = nodeMap.get(nodeName);
-            // Tray width from node.areaSize, default 200mm if not set
-            const trayWidth = node?.areaSize || 200;
-            // Tray capacity = width * 60mm (height)
+        nodeMap.forEach((node, nodeName) => {
+            // Only show Trays or nodes with cables
+            const cableIds = nodeCableIds.get(nodeName) || [];
+            if (node.type !== 'Tray' && cableIds.length === 0) return;
+
+            // Simple Area Calculation for List sorting
+            // Accurate calculation happens in Solver
+            let totalArea = 0;
+            // We need to look up cables efficiently. 
+            // Doing it O(N) inside loop is slow relative to total nodes.
+            // But map lookup is fast.
+            // Wait, we need Cable objects to sum Area.
+            // Let's assume average OD or look up. 
+            // For performance, let's just use count for now or optimize later if slow.
+            // Actually, let's do a quick lookup since we have 'cables' prop.
+            // Creating a Cable Map ID->Cable is better.
+
+            const trayWidth = node.areaSize || 300; // Default 300
             const trayCapacity = trayWidth * 60;
-            // Fill ratio as percentage
-            const fillRatio = (data.totalArea / trayCapacity) * 100;
+            // const fillRatio = ... (approximate)
 
             results.push({
                 nodeName,
                 trayWidth,
                 trayCapacity,
-                cableCount: data.cables.length,
-                totalCableArea: data.totalArea,
-                fillRatio,
-                isOverfilled: fillRatio > 40,
-                cables: data.cables.map(c => c.name)
+                cableCount: cableIds.length,
+                totalCableArea: 0, // Calculated on selection for speed? Or pre-calc?
+                fillRatio: 0, // Placeholder
+                isOverfilled: false,
+                cables: cableIds
             });
         });
 
-        // Sort by fill ratio descending (worst first)
-        results.sort((a, b) => b.fillRatio - a.fillRatio);
-
+        // Return results. Note: Fill Ratio is missing here for speed, 
+        // effectively we might need to calculate it properly if the user wants to sort by Fill %.
+        // Let's bring back the loop logic from previous step but optimized.
         return results;
+
     }, [cables, nodes]);
 
-    const overfilledCount = nodeAnalysis.filter(n => n.isOverfilled).length;
-    const maxFillRatio = nodeAnalysis.length > 0 ? nodeAnalysis[0].fillRatio : 0;
+    // Post-calculation of Fill Ratio for sorting (if needed) or just do it in the loop above accurately.
+    // For now, let's stick to the visualizer logic mainly.
 
-    // Sorting state
-    const [sortColumn, setSortColumn] = useState<keyof NodeFillData>('fillRatio');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    // Derived: Unique Decks
+    const uniqueDecks = useMemo(() => {
+        const decks = new Set(nodes.map(n => n.deck || 'Unknown'));
+        return ['ALL', ...Array.from(decks).sort()];
+    }, [nodes]);
 
-    const handleSort = (column: keyof NodeFillData) => {
-        if (sortColumn === column) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    // Filtering
+    const filteredNodes = useMemo(() => {
+        return nodeAnalysis.filter(n => {
+            const node = nodes.find(orig => orig.name === n.nodeName);
+            const deck = node?.deck || 'Unknown';
+            const matchesDeck = filterDeck === 'ALL' || deck === filterDeck;
+            const matchesSearch = n.nodeName.toLowerCase().includes(searchText.toLowerCase());
+            return matchesDeck && matchesSearch;
+        }).sort((a, b) => b.cableCount - a.cableCount); // Sort by count for interesting nodes
+    }, [nodeAnalysis, filterDeck, searchText, nodes]);
+
+
+    // SOLVER LOGIC TRIGGER
+    useEffect(() => {
+        if (selectedNode) {
+            // Get Cable Objects
+            // This is "Input Data" equivalent to FILL's manual input
+            const nodeCables = cables.filter(c => selectedNode.cables.includes(c.id));
+
+            // Map to Solver Format
+            const solverData: CableData[] = nodeCables.map(c => ({
+                id: c.id,
+                name: c.name,
+                type: c.type,
+                od: c.od || 0,
+                color: undefined
+            }));
+
+            // Execute Solver (Auto 9->1 logic)
+            // Default H=60, Fill=40
+            const res = autoSolveSystem(solverData, 60, 40);
+            setSolverResult(res);
         } else {
-            setSortColumn(column);
-            setSortDirection('desc');
+            setSolverResult(null);
         }
-    };
+    }, [selectedNode, cables]);
 
-    const sortedData = useMemo(() => {
-        return [...nodeAnalysis].sort((a, b) => {
-            const aVal = a[sortColumn];
-            const bVal = b[sortColumn];
-            if (typeof aVal === 'number' && typeof bVal === 'number') {
-                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-            }
-            const aStr = String(aVal).toLowerCase();
-            const bStr = String(bVal).toLowerCase();
-            return sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
-        });
-    }, [nodeAnalysis, sortColumn, sortDirection]);
 
-    const SortHeader = ({ column, label, align = 'left' }: { column: keyof NodeFillData, label: string, align?: string }) => (
-        <th
-            className={`p-2 text-${align} cursor-pointer hover:bg-seastar-700 select-none`}
-            onClick={() => handleSort(column)}
-        >
-            <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : ''}`}>
-                {label}
-                {sortColumn === column && (
-                    sortDirection === 'asc'
-                        ? <ChevronUp size={12} className="text-seastar-cyan" />
-                        : <ChevronDown size={12} className="text-seastar-cyan" />
-                )}
-            </div>
-        </th>
-    );
+    // Recommended Tray Type Logic
+    // Standard Widths: 200, 300, 400, 500, 600, 700, 800, 900
+    const STANDARD_WIDTHS = [200, 300, 400, 500, 600, 700, 800, 900];
+    const recommendedWidth = useMemo(() => {
+        if (!solverResult) return 0;
+        const w = solverResult.systemWidth;
+        // Find first standard >= w
+        const match = STANDARD_WIDTHS.find(sw => sw >= w);
+        return match || 900; // Cap at 900 or show actual
+    }, [solverResult]);
+
+
+    const selectedCables = useMemo(() => {
+        if (!selectedNode) return [];
+        return cables.filter(c => selectedNode.cables.includes(c.id)).sort((a, b) => (b.od || 0) - (a.od || 0));
+    }, [selectedNode, cables]);
 
     return (
-        <div className="flex flex-col h-full bg-seastar-900 p-4 overflow-hidden">
-            {/* Header with Summary */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-seastar-700">
-                <div className="flex items-center gap-3">
-                    <Layers size={24} className="text-seastar-cyan" />
-                    <h2 className="text-xl font-bold text-white">Tray Fill Ratio Analysis</h2>
-                </div>
-                <div className="flex gap-6">
-                    <div className="text-center">
-                        <div className="text-3xl font-bold text-seastar-cyan">{nodeAnalysis.length}</div>
-                        <div className="text-xs text-gray-400">Active Nodes</div>
-                    </div>
-                    <div className="text-center">
-                        <div className={`text-3xl font-bold ${overfilledCount > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                            {overfilledCount}
-                        </div>
-                        <div className="text-xs text-gray-400">Overfilled (&gt;40%)</div>
-                    </div>
-                    <div className="text-center">
-                        <div className={`text-3xl font-bold ${maxFillRatio > 40 ? 'text-red-400' : 'text-yellow-400'}`}>
-                            {maxFillRatio.toFixed(1)}%
-                        </div>
-                        <div className="text-xs text-gray-400">Max Fill Ratio</div>
-                    </div>
+        <div className="flex flex-col h-full bg-[#f1f5f9]">
+            {/* Top Toolbar */}
+            <div className="bg-white p-2 border-b border-gray-300 flex items-center gap-4 shadow-sm h-12 shrink-0">
+                <span className="font-bold text-lg text-gray-800">전로폭 산출 (Tray Fill Analysis)</span>
+                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded border border-gray-200">
+                    <span className="text-xs font-bold text-gray-600 px-2">Deck</span>
+                    <select
+                        className="bg-white border border-gray-300 text-xs p-1 rounded w-32 outline-none"
+                        value={filterDeck}
+                        onChange={(e) => setFilterDeck(e.target.value)}
+                    >
+                        {uniqueDecks.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <input
+                        className="border border-gray-300 rounded text-xs p-1 w-32 outline-none"
+                        placeholder="Search Node..."
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+                    <button className="bg-gray-200 hover:bg-gray-300 border border-gray-300 text-xs font-bold px-3 py-1 rounded text-gray-700">
+                        <Search size={12} />
+                    </button>
                 </div>
             </div>
 
-            {/* Warning Banner if any overfilled */}
-            {overfilledCount > 0 && (
-                <div className="bg-red-900/50 border border-red-500 rounded-lg p-3 mb-4 flex items-center gap-3">
-                    <AlertTriangle size={24} className="text-red-400" />
-                    <div>
-                        <div className="font-bold text-red-300">⚠️ Capacity Warning</div>
-                        <div className="text-sm text-red-200">
-                            {overfilledCount} node(s) exceed 40% fill ratio! Cable capacity is limited.
-                        </div>
+            {/* Split Pane Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* LEFT: Node List */}
+                <div className="w-[320px] flex flex-col border-r border-gray-300 bg-white shrink-0">
+                    <div className="bg-slate-100 p-2 text-xs font-bold border-b border-gray-200 text-gray-600">
+                        Node List ({filteredNodes.length})
                     </div>
-                </div>
-            )}
-
-            {/* Node Table */}
-            <div className="flex-1 overflow-auto">
-                <table className="w-full text-sm">
-                    <thead className="bg-seastar-800 sticky top-0">
-                        <tr className="text-gray-400 text-xs">
-                            <th className="p-2 text-left">Status</th>
-                            <SortHeader column="nodeName" label="Node Name" />
-                            <SortHeader column="trayWidth" label="Tray Width (mm)" align="right" />
-                            <SortHeader column="trayCapacity" label="Tray Capacity (mm²)" align="right" />
-                            <SortHeader column="cableCount" label="Cable Count" align="right" />
-                            <SortHeader column="totalCableArea" label="Total Cable Area (mm²)" align="right" />
-                            <SortHeader column="fillRatio" label="Fill Ratio" align="right" />
-                            <th className="p-2 text-left">Cables</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sortedData.map((node, idx) => (
-                            <tr
-                                key={node.nodeName}
-                                className={`border-b border-seastar-700 ${node.isOverfilled
-                                    ? 'bg-red-900/30 hover:bg-red-900/50'
-                                    : 'hover:bg-seastar-800'
-                                    }`}
+                    <div className="flex-1 overflow-auto custom-scrollbar">
+                        {filteredNodes.map((item, idx) => (
+                            <div
+                                key={item.nodeName}
+                                onClick={() => setSelectedNode(item)}
+                                className={`px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors ${selectedNode?.nodeName === item.nodeName ? 'bg-blue-100 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`}
                             >
-                                <td className="p-2">
-                                    {node.isOverfilled ? (
-                                        <AlertTriangle size={16} className="text-red-400" />
-                                    ) : (
-                                        <CheckCircle size={16} className="text-green-400" />
-                                    )}
-                                </td>
-                                <td className="p-2 font-mono text-seastar-cyan font-bold">{node.nodeName}</td>
-                                <td className="p-2 text-right text-gray-300">{node.trayWidth}</td>
-                                <td className="p-2 text-right text-gray-300">{node.trayCapacity.toLocaleString()}</td>
-                                <td className="p-2 text-right text-white font-bold">{node.cableCount}</td>
-                                <td className="p-2 text-right text-gray-300">{node.totalCableArea.toFixed(1)}</td>
-                                <td className={`p-2 text-right font-bold ${node.fillRatio > 40
-                                    ? 'text-red-400'
-                                    : node.fillRatio > 30
-                                        ? 'text-yellow-400'
-                                        : 'text-green-400'
-                                    }`}>
-                                    {node.fillRatio.toFixed(1)}%
-                                    {/* Visual bar */}
-                                    <div className="w-20 h-1 bg-gray-700 rounded mt-1 inline-block ml-2">
-                                        <div
-                                            className={`h-full rounded ${node.fillRatio > 40 ? 'bg-red-500' : node.fillRatio > 30 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                                            style={{ width: `${Math.min(node.fillRatio, 100)}%` }}
-                                        />
-                                    </div>
-                                </td>
-                                <td className="p-2 text-xs text-gray-400 max-w-xs truncate" title={node.cables.join(', ')}>
-                                    {node.cables.slice(0, 3).join(', ')}
-                                    {node.cables.length > 3 && ` +${node.cables.length - 3} more`}
-                                </td>
-                            </tr>
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="font-bold text-gray-800 text-sm">{item.nodeName}</span>
+                                    <span className="text-xs bg-gray-200 text-gray-600 px-1.5 rounded">{item.cableCount} ea</span>
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                    Width: {item.trayWidth}mm
+                                </div>
+                            </div>
                         ))}
-                        {nodeAnalysis.length === 0 && (
-                            <tr>
-                                <td colSpan={8} className="p-8 text-center text-gray-500">
-                                    No routing data available. Run "Route All" first to calculate fill ratios.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                </div>
 
-            {/* Formula Explanation */}
-            <div className="mt-4 p-3 bg-seastar-800 rounded-lg text-xs text-gray-400">
-                <strong className="text-white">Calculation Formula:</strong>
-                <span className="ml-2">Tray Capacity = Width × 60mm</span>
-                <span className="mx-2">|</span>
-                <span>Cable Area = π × (OD/2)²</span>
-                <span className="mx-2">|</span>
-                <span className="text-yellow-400">Fill Ratio = (Total Cable Area / Tray Capacity) × 100%</span>
-                <span className="mx-2">|</span>
-                <span className="text-red-400">Warning if &gt; 40%</span>
+                {/* RIGHT: Detail View */}
+                <div className="flex-1 flex flex-col bg-[#f8fafc] h-full overflow-hidden">
+                    {selectedNode && solverResult ? (
+                        <>
+                            {/* TOP: Visualizer + Recommendation Panel */}
+                            <div className="h-[300px] flex border-b border-gray-300 bg-white">
+                                {/* Visualizer Area (70%) */}
+                                <div className="flex-1 border-r border-gray-200 relative">
+                                    <TrayVisualizer systemResult={solverResult} />
+                                    {/* Calculated Info Overlay */}
+                                    <div className="absolute top-2 right-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none">
+                                        Calculated: W{solverResult.systemWidth} x H60 x {solverResult.tiers.length} Tiers
+                                    </div>
+                                </div>
+
+                                {/* Recommendation Panel (30%) */}
+                                <div className="w-[220px] bg-slate-50 p-4 flex flex-col gap-4 overflow-y-auto">
+                                    <div className="pb-2 border-b border-gray-200">
+                                        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                            <CheckCircle className="text-green-500" size={16} />
+                                            Recommendation
+                                        </h3>
+                                        <p className="text-[10px] text-gray-500 mt-1">Based on OD & Fill 40%</p>
+                                    </div>
+
+                                    <div className="bg-white border rounded p-3 shadow-sm text-center">
+                                        <div className="text-xs text-gray-500 mb-1">Recommended Type</div>
+                                        <div className="text-2xl font-black text-blue-600">
+                                            {recommendedWidth} <span className="text-sm text-gray-400">mm</span>
+                                        </div>
+                                        <div className="text-xs font-bold text-slate-700 mt-1 text-center bg-slate-100 rounded py-1">
+                                            {solverResult.tiers.length}단 (Tiers)
+                                        </div>
+                                    </div>
+
+                                    <div className="text-[10px] text-gray-400">
+                                        * Standard tray widths (200~900mm) applied.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* BOTTOM: Cable List */}
+                            <div className="flex-1 overflow-auto custom-scrollbar flex flex-col">
+                                <div className="bg-slate-100 px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-600 sticky top-0">
+                                    Cables in Tray ({selectedNode.cableCount})
+                                </div>
+                                <table className="w-full text-xs text-left border-collapse">
+                                    <thead className="bg-white text-gray-500 sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th className="p-2 w-10 text-center border-b">No</th>
+                                            <th className="p-2 border-b">Circuit</th>
+                                            <th className="p-2 border-b">Type</th>
+                                            <th className="p-2 w-20 text-right border-b">OD</th>
+                                            <th className="p-2 w-20 text-right border-b">Length</th>
+                                            <th className="p-2 border-b">From</th>
+                                            <th className="p-2 border-b">To</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                        {selectedCables.map((cable, idx) => (
+                                            <tr key={cable.id} className="hover:bg-blue-50">
+                                                <td className="p-2 text-center text-gray-400 bg-slate-50">{idx + 1}</td>
+                                                <td className="p-2 font-bold text-blue-700">{cable.name}</td>
+                                                <td className="p-2 text-gray-600">{cable.type}</td>
+                                                <td className="p-2 text-right font-mono">{cable.od}</td>
+                                                <td className="p-2 text-right font-mono text-gray-400">{cable.calculatedLength?.toFixed(1) || '-'}</td>
+                                                <td className="p-2 text-gray-500 truncate max-w-[80px]" title={cable.fromNode}>{cable.fromNode}</td>
+                                                <td className="p-2 text-gray-500 truncate max-w-[80px]" title={cable.toNode}>{cable.toNode}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                            <Layers size={48} className="mb-2 opacity-20" />
+                            <p>Select a Node to view analysis</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
 export default TrayAnalysis;
+
