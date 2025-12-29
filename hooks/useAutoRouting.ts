@@ -6,7 +6,7 @@ interface AutoRoutingProps {
     nodes: Node[];
     cables: Cable[];
     setCables: (cables: Cable[]) => void;
-    saveData: () => void;
+    saveData: (cables?: Cable[]) => void;
 }
 
 export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRoutingProps) => {
@@ -46,6 +46,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                     : c
             );
             setCables(updatedCables);
+            saveData(updatedCables);
         } else {
             const updatedCables = cables.map(c =>
                 c.id === cable.id
@@ -53,9 +54,10 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                     : c
             );
             setCables(updatedCables);
+            saveData(updatedCables);
             alert(`Routing Failed: ${result.error || 'Unknown error'}`);
         }
-    }, [routingService, cables, setCables]);
+    }, [routingService, cables, setCables, saveData]);
 
     // Batch Routing (All)
     const calculateAllRoutes = useCallback(() => {
@@ -94,7 +96,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
             });
 
             setCables(updatedCables);
-            saveData(); // Auto-save
+            saveData(updatedCables);
             setIsRouting(false);
             alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
         }, 100);
@@ -158,6 +160,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
         isRouting,
         calculateRoute,
         calculateAllRoutes,
-        calculateSelectedRoutes
+        calculateSelectedRoutes,
+        isReady: !!routingService
     };
 };

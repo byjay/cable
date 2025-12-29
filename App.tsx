@@ -101,7 +101,8 @@ const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'schedule', title: 'Schedule', items: [
             { label: "Schedule", action: "Schedule" },
-            { label: "CableGroup", action: "CableGroup" }
+            { label: "CableGroup", action: "CableGroup" },
+            { label: "WD Extraction", action: "WD Extraction" }
         ]
     },
     {
@@ -129,7 +130,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
 ];
 
 // FORCE RESET VERSION - Increment this to wipe user data and force default load
-const DATA_VERSION = "2025-12-26-v7-FORCE-RECALC-LENGTH";
+const DATA_VERSION = "2025-12-26-v8-FORCE-RESTART-FINAL";
 
 import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
@@ -141,7 +142,19 @@ import { AuthService } from './services/authService';
 const App: React.FC = () => {
     // Force Clear LocalStorage on first load of version
     useEffect(() => {
-        // ... (existing version check)
+        const currentVersion = localStorage.getItem('app_data_version');
+        if (currentVersion !== DATA_VERSION) {
+            console.log(`Detected version change: ${currentVersion} -> ${DATA_VERSION}. Clearing data...`);
+
+            // Clear all SEASTAR related data
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('SEASTAR_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            localStorage.setItem('app_data_version', DATA_VERSION);
+        }
     }, []);
 
     // DEV BYPASS: Default to ADMIN for testing
@@ -237,19 +250,58 @@ const App: React.FC = () => {
         isRouting,
         calculateRoute,
         calculateAllRoutes: originalHandleAutoRouting,
-        calculateSelectedRoutes
+        calculateSelectedRoutes,
+        isReady: isRoutingReady
     } = useAutoRouting({ nodes, cables, setCables, saveData: saveShipData });
 
     // Wrapper to set processing state during routing
     const handleAutoRouting = async () => {
         setIsProcessing(true);
-        // Small timeout to allow UI to show loading state
-        setTimeout(async () => {
-            // Pass current cables to ensure freshness if needed, though hook uses ref/state
-            originalHandleAutoRouting();
-            setIsProcessing(false);
-        }, 100);
+        // Small timeout to allow UI to wait for state to settle
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Use the function from the hook
+        originalHandleAutoRouting();
+
+        setIsProcessing(false);
     };
+
+    // Auto-Calculate Routes on Data Load
+    useEffect(() => {
+        if (!isDataLoading && cables.length > 0 && nodes.length > 0 && isRoutingReady) {
+            // Only auto-route if we have unrouted cables or forced logic?
+            // For now, assume if we loaded raw Excel (no length), we route.
+            // If we loaded cache (which has length), maybe we skip? 
+            // But user wants "always load and route".
+            // Checks if any unrouted? Or just Do It once.
+
+            // To prevent infinite loops or double runs, we could check a flag or just run it.
+            // But cables.length won't change after routing (just content).
+            // However, calculateAllRoutes triggers setCables -> triggers this effect?
+            // No, cables.length stays same. cable object references change.
+            // Dependencies: isDataLoading, cables.length, nodes.length, isRoutingReady.
+            // This is relatively safe.
+
+            // Optimization: Check if actually needed?
+            const needsRouting = cables.some(c => !c.calculatedPath || c.calculatedPath.length === 0 || !c.length);
+            if (needsRouting) {
+                console.log("🚀 Triggering Initial Auto-Routing...");
+                handleAutoRouting();
+            }
+        }
+    }, [isDataLoading, cables.length, nodes.length, isRoutingReady]);
+
+    // Auto-Route on Initial Load
+    useEffect(() => {
+        if (!isDataLoading && cables.length > 0 && nodes.length > 0) {
+            // Check if routing hasn't drastically happened yet (optional optimization)
+            const routedCount = cables.filter(c => c.calculatedLength).length;
+            if (routedCount < cables.length * 0.1) { // If less than 10% routed, force route
+                console.log("🚀 Initial Data Loaded. Triggering Auto-Routing...");
+                handleAutoRouting();
+            }
+        }
+    }, [isDataLoading, shipId]); // Run when loading finishes or ship changes
 
     // Calculate cable stats
     const totalLength = cables.reduce((acc, c) => acc + (c.calculatedLength || 0), 0);
@@ -635,6 +687,9 @@ const App: React.FC = () => {
             case "Log": setCurrentView('HISTORY'); break;
             case "Settings": setCurrentView('SETTINGS'); break;
             case "CableGroup": setCurrentView('CABLE_GROUP'); break;
+            case "WD Extraction":
+                alert("This feature requires running the python script backend:\npython scripts/ship_cable_parser.py");
+                break;
             case "Import": setCurrentView('IMPORT'); break;
 
             // Simple Modals
