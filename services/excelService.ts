@@ -106,6 +106,19 @@ export const ExcelService = {
     });
   },
 
+  readArrayBuffer: (buffer: ArrayBuffer): any[] => {
+    try {
+      const data = new Uint8Array(buffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      return XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+    } catch (error) {
+      console.error("Excel Parse Error:", error);
+      return [];
+    }
+  },
+
   detectFileType: (headers: string[]): 'CABLE' | 'NODE' | 'TYPE' | 'UNKNOWN' => {
     const h = headers.map(s => String(s).toUpperCase().replace(/_/g, ''));
     const has = (k: string) => h.some(header => header.includes(k.toUpperCase()));

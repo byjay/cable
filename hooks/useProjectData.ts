@@ -103,7 +103,7 @@ export const useProjectData = () => {
                 // PRIORITY 3: JSON CACHE (TODO: Update cache loader to support split or adapt monolithic cache)
                 // For now, assume cache is still monolithic source of truth for new ships
                 try {
-                    const cacheUrl = `/data/${shipId}/cache.json`;
+                    const cacheUrl = `./data/${shipId}/cache.json`;
                     console.log(`🔍 Checking for JSON cache at ${cacheUrl}...`);
                     const cacheResponse = await fetch(cacheUrl);
                     if (cacheResponse.ok) {
@@ -232,4 +232,54 @@ export const useProjectData = () => {
         dataSource,
         availableShips: AVAILABLE_SHIPS
     };
+};
+
+// Helper Functions for Excel Loading
+const loadNodesFromExcel = async (shipId: string): Promise<Node[]> => {
+    try {
+        const response = await fetch(`./data/${shipId}/nodes.xlsx`);
+        if (!response.ok) return [];
+        const buffer = await response.arrayBuffer();
+        const rawData = ExcelService.readArrayBuffer(buffer);
+        return ExcelService.mapRawToNode(rawData);
+    } catch (error) {
+        console.warn(`Failed to load nodes for ${shipId}`, error);
+        return [];
+    }
+};
+
+const loadCablesFromExcel = async (shipId: string): Promise<Cable[]> => {
+    try {
+        const response = await fetch(`./data/${shipId}/cables.xlsx`);
+        if (!response.ok) return [];
+        const buffer = await response.arrayBuffer();
+        const rawData = ExcelService.readArrayBuffer(buffer);
+        return ExcelService.mapRawToCable(rawData);
+    } catch (error) {
+        console.warn(`Failed to load cables for ${shipId}`, error);
+        return [];
+    }
+};
+
+const computeAllRoutes = (cables: Cable[], nodes: Node[]): Cable[] => {
+    // Simple pass-through if full routing service isn't instantiated
+    // For initial load, we might rely on cached paths or simple straight lines.
+    // If we want real routing, we need RoutingService.
+    // Given the complexity, let's just return cables for now, or instantiate RoutingService.
+    try {
+        const router = new RoutingService(nodes);
+        return cables.map(c => {
+            if (c.calculatedPath) return c; // Already has path?
+            const res = router.findRoute(c.fromNode, c.toNode, c.checkNode);
+            return {
+                ...c,
+                calculatedPath: res.path,
+                calculatedLength: res.length || c.length,
+                routeError: res.path.length === 0 ? 'No Path' : undefined
+            };
+        });
+    } catch (e) {
+        console.warn("Auto-routing failed during load", e);
+        return cables;
+    }
 };
