@@ -119,8 +119,10 @@ class ShipCableListParser:
         circuit_pattern = r'\b([PLCFNAS]\d{4}[A-Z]?)\b'
         
         # 케이블 타입 패턴: 도면에서 실제 사용되는 형식
-        # 예: D-2, T-35, M-7, TY-2, DY-1, FM-7, TTS-1 등
-        cable_type_pattern = r'\b([FDTMS][DYSM]?[YP]?[CS]?-?\d{1,3}(?:\(\d+A\))?)\b'
+        # 예: D-2, T-35, M-7, TY-2, DY-1, FM-7, TTS-1, 5P-1, RG-6, CAT-5
+        # [FDTMS]: 기존 패턴
+        # (?:5P|RG|CAT|STP): 추가 패턴
+        cable_type_pattern = r'\b((?:[FDTMS][DYSM]?[YP]?[CS]?-?\d{1,3}|5P(?:YC)?-?\d+|RG-?\w+|CAT-?\d+)(?:\(\d+A\))?)\b'
         
         lines = text.split('\n')
         
@@ -162,8 +164,27 @@ class ShipCableListParser:
                     cable_info['FROM_ROOM'] = rooms[0]
                 
                 cables.append(cable_info)
-        
+            
+            # [VERIFICATION] Check for potential misses
+            # Look for patterns that resemble circuit numbers but were not caught
+            # e.g., P-1234, P 1234, or different prefixes
+            loose_pattern = r'\b([A-Z]{1,2}[-\s]?\d{3,4}[A-Z]?)\b'
+            potential_matches = re.findall(loose_pattern, line)
+            for pot in potential_matches:
+                # Clean up potential match to compare
+                clean_pot = pot.replace('-', '').replace(' ', '')
+                if clean_pot not in [c['CABLE_NAME'] for c in cables] and clean_pot not in self.detected_potential_misses:
+                    # Ignore common non-cable strings
+                    if not re.match(r'^(IEC|JIS|NK|POS|NO|DWG|REF|REV|SEC|PAGE|DATE|APP|CHK|DRW|TYP|CAP|AC\d|DC\d|OE-)', clean_pot):
+                         self.detected_potential_misses.append(f"Page {self.current_page}: {pot} (Context: {line.strip()[:50]}...)")
+
         return cables
+
+    def __init__(self, pdf_path: str):
+        self.pdf_path = pdf_path
+        self.cable_data = []
+        self.detected_potential_misses = []
+        self.current_page = 0
     
     def normalize_cable_type(self, cable_type_str: str) -> str:
         """
@@ -346,6 +367,7 @@ class ShipCableListParser:
         # 각 페이지에서 케이블 정보 추출
         all_cables = []
         for idx, text in enumerate(text_pages):
+            self.current_page = idx + 1
             cables = self.parse_circuit_number(text)
             if cables:
                 all_cables.extend(cables)
@@ -360,6 +382,20 @@ class ShipCableListParser:
         
         self.cable_data = list(unique_cables.values())
         print(f"\n✓ 총 {len(self.cable_data)}개 고유 케이블 추출 완료")
+
+        # [VERIFICATION REPORT]
+        if self.detected_potential_misses:
+            print("\n" + "!" * 80)
+            print("⚠️ [VERIFICATION] 잠재적 누락 의심 항목 발견")
+            print("!" * 80)
+            print(f"총 {len(self.detected_potential_misses)}개 의심 항목:")
+            for miss in self.detected_potential_misses[:20]: # Show top 20
+                print(f"  - {miss}")
+            if len(self.detected_potential_misses) > 20:
+                print(f"  ... 외 {len(self.detected_potential_misses) - 20}개 더 있음")
+            print("!" * 80 + "\n")
+        else:
+            print("\n✅ [VERIFICATION] 누락 의심 항목 없음 (추출 신뢰도 높음)\n")
         
         return self.cable_data
     
