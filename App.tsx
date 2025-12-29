@@ -20,6 +20,7 @@ import HistoryViewer from './components/HistoryViewer';
 import Settings from './components/Settings';
 import CableGroup from './components/CableGroup';
 import ImportPanel from './components/ImportPanel';
+import WDExtractionView from './components/WDExtractionView';
 import { SimpleModal } from './components/SimpleModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { TraySpecContent, CableBindingContent, EquipCodeContent, TerminalQtyContent } from './components/StaticContent';
@@ -130,7 +131,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
 ];
 
 // FORCE RESET VERSION - Increment this to wipe user data and force default load
-const DATA_VERSION = "2025-12-26-v8-FORCE-RESTART-FINAL";
+const DATA_VERSION = "2025-12-26-v9-SHIP-ISOLATION-FIX";
 
 import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
@@ -688,7 +689,7 @@ const App: React.FC = () => {
             case "Settings": setCurrentView('SETTINGS'); break;
             case "CableGroup": setCurrentView('CABLE_GROUP'); break;
             case "WD Extraction":
-                alert("This feature requires running the python script backend:\npython scripts/ship_cable_parser.py");
+                setCurrentView(MainView.WD_EXTRACTION);
                 break;
             case "Import": setCurrentView('IMPORT'); break;
 
@@ -796,6 +797,50 @@ const App: React.FC = () => {
                 return <CableRequirementReport cables={cables} />;
             case MainView.TRAY_ANALYSIS:
                 return <TrayAnalysis cables={cables} nodes={nodes} />;
+            case MainView.WD_EXTRACTION:
+                return <WDExtractionView
+                    currentShipId={shipId}
+                    onImportCables={(newCables) => {
+                        // CRITICAL FIX: Harvest Nodes from Imported Cables
+                        const existingNodeNames = new Set(nodes.map(n => n.name));
+                        const newNodesToAdd: Node[] = [];
+
+                        newCables.forEach(cable => {
+                            const requiredNodes = [cable.fromNode, cable.toNode];
+                            requiredNodes.forEach(nodeName => {
+                                if (nodeName && !existingNodeNames.has(nodeName)) {
+                                    newNodesToAdd.push({
+                                        name: nodeName,
+                                        x: 0, y: 0, z: 0,
+                                        deck: (nodeName.length > 2 ? nodeName.substring(0, 2) : 'UNK'),
+                                        room: '',
+                                        equip: '',
+                                        relation: '',
+                                        linkLength: 0
+                                    });
+                                    existingNodeNames.add(nodeName);
+                                }
+                            });
+                        });
+
+                        const finalNodes = [...nodes, ...newNodesToAdd];
+                        if (newNodesToAdd.length > 0) {
+                            setNodes(finalNodes);
+                        }
+
+                        setCables(newCables);
+
+                        // Save Data Immediately
+                        saveData(newCables, finalNodes, cableTypes, deckHeights);
+
+                        setCurrentView(MainView.SCHEDULE);
+
+                        // Force route calculation with new data
+                        // Passing strict arguments to avoid closure staleness
+                        setTimeout(() => handleCalculateAllRoutes(newCables), 200);
+
+                        alert(`Imported ${newCables.length} cables.\nAuto-generated ${newNodesToAdd.length} nodes.\nRouting Started...`);
+                    }} />;
             case MainView.GENERIC_GRID:
                 return <GenericGrid title={genericTitle} data={genericData} />;
             case MainView.THREE_D:

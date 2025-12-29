@@ -26,7 +26,7 @@ const ROW_HEIGHT = 24; // pixels per row
 const VISIBLE_ROWS = 30; // number of rows to render at once
 const BUFFER_ROWS = 10; // extra rows above/below viewport
 
-const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter }) => {
+const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter, onUpdateCable }) => {
     // Selection State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -214,16 +214,17 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         }
     };
 
+    // Drag selection disabled to prevent accidental multi-select
     const handleRowMouseEnter = (index: number) => {
-        if (isDragging.current && startRowIndex.current !== -1) {
-            const start = Math.min(startRowIndex.current, index);
-            const end = Math.max(startRowIndex.current, index);
-            const newSet = new Set();
-            for (let i = start; i <= end; i++) {
-                if (filteredCables[i]) newSet.add(filteredCables[i].id);
-            }
-            setSelectedIds(newSet);
-        }
+        // if (isDragging.current && startRowIndex.current !== -1) {
+        //     const start = Math.min(startRowIndex.current, index);
+        //     const end = Math.max(startRowIndex.current, index);
+        //     const newSet = new Set();
+        //     for (let i = start; i <= end; i++) {
+        //         if (filteredCables[i]) newSet.add(filteredCables[i].id);
+        //     }
+        //     setSelectedIds(newSet);
+        // }
     };
 
     const handleMouseUp = () => {
@@ -529,7 +530,14 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                                     title={`Select ${cable.name}`}
                                                                     checked={isSelected}
                                                                     onChange={() => { }}
-                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        const newSet = new Set(selectedIds);
+                                                                        if (newSet.has(cable.id)) newSet.delete(cable.id);
+                                                                        else newSet.add(cable.id);
+                                                                        setSelectedIds(newSet);
+                                                                        setLastSelectedId(cable.id);
+                                                                    }}
                                                                     className="w-3 h-3 cursor-pointer"
                                                                 />
                                                             </td>

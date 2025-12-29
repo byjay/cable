@@ -98,7 +98,8 @@ export enum MainView {
   TRAY_ANALYSIS = 'Tray Analysis', // New: Fill Ratio Analysis
   THREE_D = '3D Visualization',
   GENERIC_GRID = 'Generic Grid',
-  SETTINGS = 'Settings'
+  SETTINGS = 'Settings',
+  WD_EXTRACTION = 'WD Extraction'
 }
 
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Node, DeckConfig } from '../types';
 
 interface ThreeSceneProps {
@@ -74,25 +74,38 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ nodes, highlightPath, deckHeigh
       // Fallback: Group nodes by deck for grid layout
       const nodesByDeck: { [key: string]: Node[] } = {};
       nodes.forEach(n => {
-        const d = n.deck || 'UNKNOWN';
+        // Safe deck name extraction
+        const d = n.deck || (n.name && n.name.length > 2 ? n.name.substring(0, 2) : 'UNK');
         if (!nodesByDeck[d]) nodesByDeck[d] = [];
         nodesByDeck[d].push(n);
       });
 
-      Object.entries(nodesByDeck).forEach(([deckName, deckNodes]) => {
-        const height = (deckHeights[deckName] || 0) * 20;
+      // Sort decks to have logical stacking?
+      const sortedDecks = Object.keys(nodesByDeck).sort();
+
+      sortedDecks.forEach((deckName, deckIdx) => {
+        const deckNodes = nodesByDeck[deckName];
+
+        // Vertical spacing between decks
+        const baseHeight = deckIdx * 50;
+
+        // Grid Calculation
         const cols = Math.ceil(Math.sqrt(deckNodes.length));
-        const spacing = 30;
+        const spacing = 40; // Increased spacing for better visibility
 
         deckNodes.forEach((node, i) => {
           const row = Math.floor(i / cols);
           const col = i % cols;
+
+          // Deterministic jitter to look more 'organic' but stable
           const jitterX = (hashString(node.name) % 100) / 10;
           const jitterZ = (hashString(node.name + "z") % 100) / 10;
+
           const x = (col * spacing) - ((cols * spacing) / 2) + jitterX;
           const z = (row * spacing) - ((cols * spacing) / 2) + jitterZ;
+          const y = baseHeight;
 
-          processedNodes.current.set(node.name, { x, y: height, z });
+          processedNodes.current.set(node.name, { x, y, z });
         });
       });
     }

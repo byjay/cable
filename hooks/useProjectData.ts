@@ -159,11 +159,19 @@ export const useProjectData = () => {
                         }));
                     }
                 } else {
-                    // PRIORITY 5: MOCK
-                    console.warn(`⚠️ Could not load data, using mock`);
-                    setCables(initialCables);
-                    setNodes(initialNodes);
-                    setDataSource('mock');
+                    // PRIORITY 5: MOCK (Only for dev/unknown ships)
+                    const isProductionShip = AVAILABLE_SHIPS.some(s => s.id === shipId);
+                    if (isProductionShip) {
+                        console.log(`ℹ️ New/Empty Production Ship (${shipId}). Starting precise.`);
+                        setCables([]);
+                        setNodes([]);
+                        setDataSource('localStorage'); // Treat as valid empty state
+                    } else {
+                        console.warn(`⚠️ Could not load data, using mock`);
+                        setCables(initialCables);
+                        setNodes(initialNodes);
+                        setDataSource('mock');
+                    }
                 }
 
             } catch (error) {
@@ -274,7 +282,7 @@ const computeAllRoutes = (cables: Cable[], nodes: Node[]): Cable[] => {
             return {
                 ...c,
                 calculatedPath: res.path,
-                calculatedLength: res.length || c.length,
+                calculatedLength: res.distance || c.length,
                 routeError: res.path.length === 0 ? 'No Path' : undefined
             };
         });

@@ -107,7 +107,9 @@ class AdvancedCableParser:
                 
                 cable_type = self._find_cable_type(context_str)
                 from_room, to_room = self._find_rooms(context_str)
-                
+                # [NEW] Extract Node Codes
+                from_node, to_node = self._find_nodes(context_str)
+
                 # Create ExtractedCable object
                 # Use strict validation from Pydantic models
                 try:
@@ -118,6 +120,8 @@ class AdvancedCableParser:
                         to_room=to_room,
                         from_equip="", 
                         to_equip="",
+                        from_node=from_node,  # Populate extracted node
+                        to_node=to_node,      # Populate extracted node
                         page_number=page_num,
                         raw_text=line.strip()
                     )
@@ -156,6 +160,43 @@ class AdvancedCableParser:
             return rooms[0], rooms[1]
         elif len(rooms) == 1:
             return rooms[0], ""
+        return "", ""
+
+    def _find_nodes(self, context: str) -> Tuple[str, str]:
+        """
+        Extracts Node Identifiers (e.g., TW99S, SF99P, PR99AP) from the context.
+        Strategy: Look for uppercase alphanumeric codes that align with known node patterns.
+        """
+        # Node Pattern: 2-3 Letters + 2-3 Digits/Letters (often ending in S, P, AP, FP, C, etc.)
+        # Ex: TW99S, PRU99C, 1001, etc.
+        # This generic pattern tries to capture common node formats in the project
+        
+        # Regex explanation:
+        # \b: Word boundary
+        # [A-Z]{2,4}: 2 to 4 uppercase letters (Area Code)
+        # \d{2,4}: 2 to 4 digits (Location Code)
+        # [A-Z]{0,2}: Optional 0-2 suffix letters
+        # \b: Word boundary
+        node_pattern = r'\b([A-Z]{2}\d{2}[A-Z]{1,2}|[A-Z]{2,3}\d{2,3})\b'
+        
+        matches = re.findall(node_pattern, context)
+        
+        # Filtering logic: Remove matches that are likely rooms or cable types
+        # This is heuristics; ideally we have a Master Node List to validate against
+        filtered_nodes = []
+        for m in matches:
+            # Simple filters
+            if m in ["SPYC", "TPYC", "DPYC"]: continue # Cable types
+            if "DK" in m: continue # Decks
+            filtered_nodes.append(m)
+            
+        if len(filtered_nodes) >= 2:
+            # Heuristic: First relevant match is FROM, second is TO
+            # (Context usually lists FROM then TO)
+            return filtered_nodes[0], filtered_nodes[1]
+        elif len(filtered_nodes) == 1:
+            return filtered_nodes[0], ""
+            
         return "", ""
 
     def _normalize_type(self, raw_type: str) -> str:

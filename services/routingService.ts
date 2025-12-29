@@ -21,14 +21,15 @@ export class RoutingService {
         // Handle relations separated by commas
         const neighbors = node.relation.split(',').map(n => n.trim()).filter(n => n);
         neighbors.forEach(neighbor => {
-          // Add edge
-          this.graph[node.name][neighbor] = node.linkLength || 1;
+          // Add edge - Default to distance 20m if not specified
+          const dist = node.linkLength && node.linkLength > 0 ? node.linkLength : 20;
+          this.graph[node.name][neighbor] = dist;
 
           // Bidirectional safety
           if (!this.graph[neighbor]) {
             this.graph[neighbor] = {};
           }
-          this.graph[neighbor][node.name] = node.linkLength || 1;
+          this.graph[neighbor][node.name] = dist;
         });
       }
     });

@@ -60,6 +60,7 @@ class ExtractionSummary(BaseModel):
     processing_time_ms: float
     timestamp: datetime = Field(default_factory=datetime.now)
     ship_metadata: dict = Field(default_factory=dict, description="Extracted Ship Info (Hull No, Type)")
+    cables: List[ExtractedCable] = Field(default_factory=list, description="List of extracted cables")
 
 class ParseRequest(BaseModel):
     file_path: str
