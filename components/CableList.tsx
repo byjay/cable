@@ -72,9 +72,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         cables.filter(c => !c.calculatedPath || c.calculatedPath.length === 0).length,
         [cables]);
 
-    // Refs for Drag Selection
-    const isDragging = useRef(false);
-    const startRowIndex = useRef<number>(-1);
+
 
     // Derived Selection for Detail View (First selected or null)
     const selectedCable = useMemo(() => {
@@ -188,48 +186,37 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         onUpdateCable(updatedCable);
     };
 
-    // Selection Logic
-    const handleRowMouseDown = (e: React.MouseEvent, id: string, index: number) => {
-        isDragging.current = true;
-        startRowIndex.current = index;
+    // Simplified Selection Logic
+    const handleRowClick = (e: React.MouseEvent, cable: Cable, index: number) => {
+        const id = cable.id;
 
         if (e.ctrlKey || e.metaKey) {
+            // Multi-select toggle
             const newSet = new Set(selectedIds);
             if (newSet.has(id)) newSet.delete(id);
             else newSet.add(id);
             setSelectedIds(newSet);
             setLastSelectedId(id);
         } else if (e.shiftKey && lastSelectedId) {
+            // Range select
             const lastIndex = filteredCables.findIndex(c => c.id === lastSelectedId);
-            const start = Math.min(lastIndex, index);
-            const end = Math.max(lastIndex, index);
-            const newSet = new Set(selectedIds);
-            for (let i = start; i <= end; i++) {
-                if (filteredCables[i]) newSet.add(filteredCables[i].id);
+            if (lastIndex !== -1) {
+                const start = Math.min(lastIndex, index);
+                const end = Math.max(lastIndex, index);
+                const newSet = new Set(selectedIds);
+                for (let i = start; i <= end; i++) {
+                    if (filteredCables[i]) newSet.add(filteredCables[i].id);
+                }
+                setSelectedIds(newSet);
             }
-            setSelectedIds(newSet);
         } else {
+            // Single select
             setSelectedIds(new Set([id]));
             setLastSelectedId(id);
         }
-    };
 
-    // Drag selection disabled to prevent accidental multi-select
-    const handleRowMouseEnter = (index: number) => {
-        // if (isDragging.current && startRowIndex.current !== -1) {
-        //     const start = Math.min(startRowIndex.current, index);
-        //     const end = Math.max(startRowIndex.current, index);
-        //     const newSet = new Set();
-        //     for (let i = start; i <= end; i++) {
-        //         if (filteredCables[i]) newSet.add(filteredCables[i].id);
-        //     }
-        //     setSelectedIds(newSet);
-        // }
-    };
-
-    const handleMouseUp = () => {
-        isDragging.current = false;
-        startRowIndex.current = -1;
+        // Notify parent
+        onSelectCable(cable);
     };
 
     const IconBtn = ({ icon: Icon, label, onClick, color = "text-gray-200" }: any) => (
@@ -242,7 +229,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const Divider = () => <div className="w-px h-6 bg-gray-600 mx-1"></div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#e2e8f0] font-sans" onMouseUp={handleMouseUp}>
+        <div className="flex flex-col h-full bg-[#e2e8f0] font-sans">
 
             {/* --- ICON TOOLBAR (Matches Screenshot Top) --- */}
             <div className="h-9 bg-[#f1f5f9] border-b border-gray-300 flex items-center px-1 shadow-sm select-none">
@@ -518,9 +505,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                     return (
                                                         <tr
                                                             key={cable.id}
-                                                            onMouseDown={(e) => handleRowMouseDown(e, cable.id, idx)}
-                                                            onMouseEnter={() => handleRowMouseEnter(idx)}
-                                                            onClick={() => onSelectCable(cable)}
+                                                            onClick={(e) => handleRowClick(e, cable, idx)}
                                                             style={{ height: ROW_HEIGHT }}
                                                             className={`cursor-pointer text-[11px] ${isSelected ? 'bg-[#0078d7] text-white' : 'text-gray-800 hover:bg-blue-50 odd:bg-white even:bg-[#f8fafc]'}`}
                                                         >

@@ -361,6 +361,7 @@ const App: React.FC = () => {
                     : c
             );
             setCables(updatedCables);
+            saveData(updatedCables, nodes, cableTypes, deckHeights);
         } else {
             alert(`Routing failed: ${result.error || 'No connection found between nodes.'}`);
         }
@@ -454,6 +455,9 @@ const App: React.FC = () => {
             });
 
             setCables(updatedCables);
+            // Auto-save after Selected Route
+            saveData(updatedCables, nodes, cableTypes, deckHeights);
+
             setIsProcessing(false);
             alert(`Selected Route Generation Complete. ${calculatedCount} of ${selectedCables.length} routes updated.`);
         }, 100);
