@@ -18,8 +18,10 @@ class CableBase(BaseModel):
     cable_type: str = Field(..., description="Normalized Cable Specification (e.g., DPYC-2.5)")
     from_room: str = Field("", description="Origin Compartment")
     from_equip: str = Field("", description="Origin Equipment")
+    from_node: str = Field("", description="Origin Node (e.g. TW99S)")
     to_room: str = Field("", description="Destination Compartment")
     to_equip: str = Field("", description="Destination Equipment")
+    to_node: str = Field("", description="Destination Node (e.g. SF99P)")
     length: Optional[float] = Field(None, description="Physical Length (m)")
 
     @validator('cable_name')
@@ -38,18 +40,20 @@ class ExtractedCable(CableBase):
         Converts to the frontend 'Cable' interface format found in types.ts
         """
         return {
-            "id": self.cable_name, # Use name as ID for now
+            "id": self.cable_name,
             "name": self.cable_name,
             "type": self.cable_type,
-            "od": 0, # Default, will be filled by CableType lookup in frontend
-            "length": 0, # Default
+            "od": 0,
+            "length": 0,
             "system": system_code or self.cable_name[0],
-            "fromDeck": "", # TODO: Map room to deck
-            "fromNode": "",
+            "fromDeck": "", 
+            "fromNode": self.from_node,
             "fromRoom": self.from_room,
+            "fromEquip": self.from_equip,
             "toDeck": "",
-            "toNode": "",
+            "toNode": self.to_node,
             "toRoom": self.to_room,
+            "toEquip": self.to_equip,
             "page": str(self.page_number)
         }
     
