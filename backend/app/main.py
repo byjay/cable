@@ -23,68 +23,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-parser = AdvancedCableParser()
+from .services.manager import ExtractionManager
+
+parser_manager = ExtractionManager()
 
 @app.get("/")
 async def root():
-    return {"message": "Seastar Cable Manager API v3.0 Online"}
+    return {"message": "Seastar Cable Manager API v3.0 Online (High-Performance Mode)"}
 
 @app.post("/api/extract/wd", response_model=ExtractionSummary)
 async def extract_from_wd():
     """
     Batch process all files in the server's 'wd' (Working Directory).
-    Simulates the specific user request workflow.
+    Uses Parallel Processing and Caching for maximum performance.
     """
-    base_dir = Path(__file__).resolve().parent.parent.parent.parent # Adjust based on depth
+    base_dir = Path(__file__).resolve().parent.parent.parent.parent
     wd_dir = base_dir / "wd"
-    print(f"Scanning directory: {wd_dir}")
     
     if not wd_dir.exists():
-        raise HTTPException(status_code=404, detail="'wd' directory not found on server")
+        raise HTTPException(status_code=404, detail="'wd' directory not found")
     
-    pdf_files = list(wd_dir.glob("*.pdf"))
+    # Get all PDF paths
+    pdf_files = [str(p) for p in wd_dir.glob("*.pdf")]
+    
     if not pdf_files:
-        raise HTTPException(status_code=404, detail="No PDF files found in 'wd' directory")
+        raise HTTPException(status_code=404, detail="No PDF files found")
     
-    all_cables = []
-    ship_info_agg = {
-        "hull_no": set(),
-        "ship_type": set()
-    }
+    # Execute Parallel Extraction
+    result = parser_manager.extract_batch(pdf_files)
     
-    for pdf in pdf_files:
-        try:
-            # Extract metadata from filename
-            meta = parser.extract_metadata(pdf.name)
-            ship_info_agg["hull_no"].add(meta["hull_no"])
-            ship_info_agg["ship_type"].add(meta["ship_type"])
-            
-            # Parse cables
-            cables = parser.parse_file(str(pdf))
-            all_cables.extend(cables)
-        except Exception as e:
-            print(f"Error parsing {pdf}: {str(e)}")
-            # Continue processing other files even if one fails
-    
-    # Resolve unified Ship Info (simple majority or first found)
-    unified_hull = next(iter(ship_info_agg["hull_no"])) if ship_info_agg["hull_no"] else "UNKNOWN"
-    unified_type = next(iter(ship_info_agg["ship_type"])) if ship_info_agg["ship_type"] else "UNKNOWN"
-    
-    # Calculate stats
-    system_counts = {}
-    for c in all_cables:
-        sys_code = c.cable_name[0]
-        system_counts[sys_code] = system_counts.get(sys_code, 0) + 1
-        
     return ExtractionSummary(
-        total_count=len(all_cables),
-        system_distribution=system_counts,
-        potential_misses=parser.missed_patterns,
-        processing_time_ms=0.0,
-        ship_metadata={  # New field in response (need to update schema if strict)
-            "hull_no": unified_hull,
-            "ship_type": unified_type
-        }
+        total_count=result["total_count"],
+        system_distribution=result["system_distribution"],
+        potential_misses=result["potential_misses"],
+        processing_time_ms=result["processing_time_ms"],
+        ship_metadata=result["ship_metadata"]
     )
 
 if __name__ == "__main__":
