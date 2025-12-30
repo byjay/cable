@@ -27,6 +27,10 @@ interface WDExtractionViewProps {
     currentShipId: string;
 }
 
+// Use environment variable for API URL (production vs development)
+// @ts-ignore - Vite injects import.meta.env at build time
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:8000';
+
 const WDExtractionView: React.FC<WDExtractionViewProps> = ({ onImportCables, currentShipId }) => {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [selectedShipId, setSelectedShipId] = useState(currentShipId);
@@ -58,7 +62,7 @@ const WDExtractionView: React.FC<WDExtractionViewProps> = ({ onImportCables, cur
             const formData = new FormData();
             formData.append('file', e.target.files[0]);
 
-            const response = await fetch(`http://localhost:8000/api/upload/${selectedShipId}`, {
+            const response = await fetch(`${API_BASE}/api/upload/${selectedShipId}`, {
                 method: 'POST',
                 body: formData
             });
@@ -80,7 +84,7 @@ const WDExtractionView: React.FC<WDExtractionViewProps> = ({ onImportCables, cur
         setResult(null);
 
         try {
-            const response = await fetch(`http://localhost:8000/api/extract/${selectedShipId}`, {
+            const response = await fetch(`${API_BASE}/api/extract/${selectedShipId}`, {
                 method: 'POST',
             });
 

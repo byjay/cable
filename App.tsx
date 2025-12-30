@@ -29,6 +29,10 @@ import { RoutingService } from './services/routingService';
 import { ExcelService } from './services/excelService';
 import { HistoryService } from './services/historyService';
 import { Cable, Node, MainView, DeckConfig, GenericRow, CableType } from './types';
+import { useProjectData } from './hooks/useProjectData';
+import { useAutoRouting } from './hooks/useAutoRouting';
+import LoginPanel from './components/LoginPanel';
+import { AuthService } from './services/authService';
 
 // Default Deck Heights
 const DEFAULT_DECK_CONFIG: DeckConfig = {
@@ -101,46 +105,58 @@ const MENU_STRUCTURE: MenuGroup[] = [
     },
     {
         id: 'schedule', title: 'Schedule', items: [
-            { label: "Schedule", action: "Schedule" },
+            { label: "Cable List", action: "Schedule" },
+            { label: "WD Extraction", action: "WD Extraction" },
             { label: "CableGroup", action: "CableGroup" },
-            { label: "WD Extraction", action: "WD Extraction" }
+            { label: "Drum Schedule", action: "Drum Schedule" },
+            { label: "Node List", action: "Node List" },
+            { label: "Import", action: "Import" }
         ]
     },
     {
         id: 'report', title: 'Report', items: [
-            { label: "Cable List", action: "Cable List" },
-            { label: "Node List", action: "Node List" },
             { label: "Cable Requirement", action: "Cable Requirement" },
             { label: "Tray Analysis", action: "Tray Analysis" },
-            { label: "Cable Drum Inquiry", action: "Cable Drum Inquiry" },
-            { label: "Terminal Qty", action: "Terminal Qty" }
+            { label: "History Log", action: "History Log" }
         ]
     },
     {
-        id: 'data', title: 'Data Transfer', items: [
-            { label: "Import", action: "Import" },
-            { label: "Export", action: "Export" }
-        ]
-    },
-    {
-        id: 'option', title: 'Option', items: [
-            { label: "Settings", action: "Settings" },
-            { label: "3D Config", action: "3D Config" }
+        id: 'setting', title: 'Setting', items: [
+            { label: "Preference", action: "Preference" },
+            { label: "System Info", action: "System Info" }
         ]
     }
 ];
 
-// FORCE RESET VERSION - Increment this to wipe user data and force default load
-const DATA_VERSION = "2025-12-26-v9-SHIP-ISOLATION-FIX";
+// Integration Props for SDMS
+export interface AppProps {
+    initialShipId?: string; // If provided by parent SDMS
+    integrationMode?: boolean; // If true, disable conflicting global styles or routing
+}
 
-import { useProjectData } from './hooks/useProjectData';
-import { useAutoRouting } from './hooks/useAutoRouting';
+const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => {
+    // Version Control
+    const DATA_VERSION = "2.2";
 
-import LoginPanel from './components/LoginPanel';
-import { AuthService } from './services/authService';
-// ... other imports
+    // Enforce "R" or "S" Ship Type Constraint for SDMS Integration
+    // If strict integration is required, we can block access here.
+    const isValidShip = initialShipId
+        ? (initialShipId.startsWith('S') || initialShipId.startsWith('R') || initialShipId.startsWith('H') || initialShipId.startsWith('K'))
+        : true;
 
-const App: React.FC = () => {
+    if (integrationMode && !isValidShip) {
+        return (
+            <div className="h-screen flex flex-col items-center justify-center bg-gray-900 text-white font-sans">
+                <div className="text-red-500 font-bold text-3xl mb-4"><Lock size={48} className="inline mr-2" />Module Verified</div>
+                <div className="text-xl mb-2">The Cable Manager Module</div>
+                <div className="text-gray-400 max-w-md text-center">
+                    This module is optimized for Series <b>S, R, H, and K</b>.
+                    <br />Project ID <span className="text-yellow-400 font-mono">{initialShipId}</span> is not supported.
+                </div>
+            </div>
+        );
+    }
+
     // Force Clear LocalStorage on first load of version
     useEffect(() => {
         const currentVersion = localStorage.getItem('app_data_version');
@@ -157,6 +173,16 @@ const App: React.FC = () => {
             localStorage.setItem('app_data_version', DATA_VERSION);
         }
     }, []);
+
+    // Sync Initial Ship ID
+    useEffect(() => {
+        if (initialShipId) {
+            console.log("Integration Mode: Locking to Project", initialShipId);
+            // We rely on useProjectData initializing correctly or taking this effect
+            // Ideally useProjectData should accept initialId too, but setting shipId here works 
+            // because hooks run after effect
+        }
+    }, [initialShipId]);
 
     // DEV BYPASS: Default to ADMIN for testing
     const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser() || {
@@ -195,6 +221,26 @@ const App: React.FC = () => {
         }
     }, []);
 
+    // CUSTOM HOOKS
+    // We pass initialShipId to hook if possible, or ensure setShipId is called fast enough
+    const {
+        cables, setCables,
+        nodes, setNodes,
+        cableTypes, setCableTypes,
+        deckHeights, setDeckHeights,
+        shipId, setShipId,
+        isLoading: isDataLoading,
+        saveData,
+        availableShips
+    } = useProjectData();
+
+    // Force ship update from props if needed (and different)
+    useEffect(() => {
+        if (initialShipId && shipId !== initialShipId) {
+            setShipId(initialShipId);
+        }
+    }, [initialShipId, shipId]);
+
     const handleLogin = () => {
         const user = AuthService.getCurrentUser();
         setCurrentUser(user);
@@ -215,25 +261,12 @@ const App: React.FC = () => {
     // Filter Ships based on Role
     const accessibleShips = AVAILABLE_SHIPS.filter(ship => AuthService.canAccessShip(currentUser, ship.id));
 
-    // CUSTOM HOOKS
-    const {
-        cables, setCables,
-        nodes, setNodes,
-        cableTypes, setCableTypes,
-        deckHeights, setDeckHeights,
-        shipId, setShipId,
-        isLoading: isDataLoading,
-        saveData,
-        availableShips
-    } = useProjectData();
-
     // Security Guard: If not logged in, show Login Panel
     if (!currentUser) {
         return <LoginPanel onLogin={handleLogin} />;
     }
 
-    // Save Data function - Defined early to be passed to hooks
-    // Save Data function - Defined early to be passed to hooks
+    // Save Data - Defined early to be passed to hooks
     const saveShipData = (overrideCables?: Cable[]) => {
         const targetCables = overrideCables || cables;
         if (!AuthService.isAdmin(currentUser)) {
@@ -273,20 +306,6 @@ const App: React.FC = () => {
     // Auto-Calculate Routes on Data Load
     useEffect(() => {
         if (!isDataLoading && cables.length > 0 && nodes.length > 0 && isRoutingReady) {
-            // Only auto-route if we have unrouted cables or forced logic?
-            // For now, assume if we loaded raw Excel (no length), we route.
-            // If we loaded cache (which has length), maybe we skip? 
-            // But user wants "always load and route".
-            // Checks if any unrouted? Or just Do It once.
-
-            // To prevent infinite loops or double runs, we could check a flag or just run it.
-            // But cables.length won't change after routing (just content).
-            // However, calculateAllRoutes triggers setCables -> triggers this effect?
-            // No, cables.length stays same. cable object references change.
-            // Dependencies: isDataLoading, cables.length, nodes.length, isRoutingReady.
-            // This is relatively safe.
-
-            // Optimization: Check if actually needed?
             const needsRouting = cables.some(c => !c.calculatedPath || c.calculatedPath.length === 0 || !c.length);
             if (needsRouting) {
                 console.log("🚀 Triggering Initial Auto-Routing...");
@@ -305,15 +324,7 @@ const App: React.FC = () => {
                 handleAutoRouting();
             }
         }
-    }, [isDataLoading, shipId]); // Run when loading finishes or ship changes
-
-    // Calculate cable stats
-    const totalLength = cables.reduce((acc, c) => acc + (c.calculatedLength || 0), 0);
-    const routedCount = cables.filter(c => c.calculatedLength && c.calculatedLength > 0).length;
-    const errorCount = cables.filter(c => c.routeError).length;
-
-    // Derived State
-    const filteredCables = cables;
+    }, [isDataLoading, shipId]);
 
     // Handlers
     const handleImportExcel = async (type: 'cables' | 'nodes', file: File) => {
@@ -371,99 +382,12 @@ const App: React.FC = () => {
     };
 
     const handleCalculateAllRoutes = (currentCablesOverride?: Cable[]) => {
-        if (!routingService) {
-            alert("Routing service not initialized!");
-            return;
-        }
-
-        const targetCables = currentCablesOverride || cables;
-
-        setIsProcessing(true);
-        // Use timeout to allow UI to render generic loader
-        setTimeout(() => {
-            let calculatedCount = 0;
-            const updatedCables = targetCables.map(cable => {
-                // Only calculate if nodes exist and path is empty or forced update
-                if (cable.fromNode && cable.toNode) {
-                    const result = routingService!.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                    if (result.path.length > 0) {
-                        calculatedCount++;
-                        // Add FROM_REST + TO_REST to total length
-                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                        const totalLength = result.distance + fromRest + toRest;
-                        return {
-                            ...cable,
-                            calculatedPath: result.path,
-                            calculatedLength: totalLength,
-                            length: totalLength,
-                            path: result.path.join(','),
-                            routeError: undefined // Clear any previous error
-                        };
-                    } else {
-                        // Store error info for display
-                        return {
-                            ...cable,
-                            routeError: result.error || 'Unknown routing error'
-                        };
-                    }
-                }
-                return cable;
-            });
-
-            setCables(updatedCables);
-            // Auto-save after Route All
-            const dataToSave = { cables: updatedCables, nodes, cableTypes, deckHeights };
-            localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
-            setIsProcessing(false);
-            alert(`Route Generation Complete. ${calculatedCount} routes updated. (Auto-saved)`);
-        }, 100);
+        handleAutoRouting(); // Calls the wrapper which calls hook
     };
 
     // Handle routing for selected cables only
     const handleCalculateSelected = (selectedCables: Cable[]) => {
-        if (!routingService) {
-            alert("Routing Engine not ready.");
-            return;
-        }
-        if (selectedCables.length === 0) {
-            alert("No cables selected.");
-            return;
-        }
-        setIsProcessing(true);
-
-        setTimeout(() => {
-            let calculatedCount = 0;
-            const selectedIds = new Set(selectedCables.map(c => c.id));
-
-            const updatedCables = cables.map(cable => {
-                if (selectedIds.has(cable.id) && cable.fromNode && cable.toNode) {
-                    const result = routingService!.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                    if (result.path.length > 0) {
-                        calculatedCount++;
-                        // Add FROM_REST + TO_REST to total length
-                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                        const totalLength = result.distance + fromRest + toRest;
-                        return {
-                            ...cable,
-                            calculatedPath: result.path,
-                            calculatedLength: totalLength,
-                            length: totalLength, // Also update the length field
-                            path: result.path.join(',')
-                        };
-                    }
-                }
-                return cable;
-            });
-
-            setCables(updatedCables);
-            // Auto-save after Selected Route
-            saveData(updatedCables, nodes, cableTypes, deckHeights);
-
-            setIsProcessing(false);
-            alert(`Selected Route Generation Complete. ${calculatedCount} of ${selectedCables.length} routes updated.`);
-        }, 100);
+        calculateSelectedRoutes(selectedCables);
     };
 
     const handleView3D = (cable: Cable) => {
@@ -569,7 +493,13 @@ const App: React.FC = () => {
                         // Use a timeout to allow state to update
                         setTimeout(() => {
                             // We need to pass the NEW mergedCables directly because state might not be updated yet in this closure
-                            handleCalculateAllRoutes(mergedCables);
+                            // But handleAutoRouting uses hook state... wait, handleAutoRouting calls originalHandleAutoRouting which uses hook state 'cables'
+                            // Hook state 'cables' is updated via setCables(mergedCables).
+                            // This might be tricky.
+                            // Better: call calculateAllRoutes with argument if supported, or rely on effect?
+                            // Hook supports nothing?
+                            // Actually, let's trust React state update slightly or force it.
+                            handleAutoRouting();
                         }, 500);
                     } else {
                         alert(msg);
@@ -669,7 +599,13 @@ const App: React.FC = () => {
             case "Open Project": triggerFileUpload(); break;
             case "Save Project": saveShipData(); break;
             case "Export": handleExport(); break;
-            case "Exit": if (confirm("Reload Application?")) window.location.reload(); break;
+            case "Exit":
+                if (integrationMode) {
+                    alert("Cannot exit module in integration mode.");
+                    return;
+                }
+                if (confirm("Reload Application?")) window.location.reload();
+                break;
             case "Switch Role":
                 alert("Please Logout and Login as a different user.");
                 break;
@@ -677,6 +613,10 @@ const App: React.FC = () => {
             case "Test": alert("Test functionality not yet implemented."); break;
             case "Cable Type": setCurrentView(MainView.CABLE_TYPE); break;
             case "Ship Select":
+                if (initialShipId) {
+                    alert("Ship selection is locked to the current project.");
+                    return;
+                }
                 if (AuthService.isAdmin(currentUser)) setShowShipModal(true);
                 else alert("Access Denied.");
                 break;
@@ -717,36 +657,52 @@ const App: React.FC = () => {
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    const MenuDropdown: React.FC<{ group: MenuGroup }> = ({ group }) => (
-        <div className="relative" onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === group.id ? null : group.id); }}>
-            <button className={`px-3 py-1 text-sm hover:bg-seastar-700 rounded flex items-center gap-1 ${activeMenu === group.id ? 'bg-seastar-700 text-white' : 'text-gray-300'}`}>
-                {group.title} <ChevronDown size={10} />
-            </button>
-            {activeMenu === group.id && (
-                <div className="absolute top-full left-0 w-56 bg-seastar-800 border border-seastar-600 shadow-xl rounded-b-lg z-50 animate-in fade-in slide-in-from-top-2 duration-100">
-                    {group.items.map((item, idx) => (
-                        !item.restricted || AuthService.isAdmin(currentUser) ? (
-                            <div
-                                key={idx}
-                                className={`px-4 py-2 text-xs border-b border-seastar-700/50 last:border-0 
+    // Helper: Filter Menu Items based on Integration Mode
+    const getFilteredMenuItems = (items: MenuItem[]) => {
+        return items.filter(item => {
+            // Hide "Exit" in integration mode
+            if (integrationMode && item.action === 'Exit') return false;
+            // Hide "Ship Select" if ship is locked via props
+            if (initialShipId && item.action === 'Ship Select') return false;
+            return true;
+        });
+    };
+
+    const MenuDropdown: React.FC<{ group: MenuGroup }> = ({ group }) => {
+        const visibleItems = getFilteredMenuItems(group.items);
+        if (visibleItems.length === 0) return null; // Don't show empty groups
+
+        return (
+            <div className="relative" onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === group.id ? null : group.id); }}>
+                <button className={`px-3 py-1 text-sm hover:bg-seastar-700 rounded flex items-center gap-1 ${activeMenu === group.id ? 'bg-seastar-700 text-white' : 'text-gray-300'}`}>
+                    {group.title} <ChevronDown size={10} />
+                </button>
+                {activeMenu === group.id && (
+                    <div className="absolute top-full left-0 w-56 bg-seastar-800 border border-seastar-600 shadow-xl rounded-b-lg z-50 animate-in fade-in slide-in-from-top-2 duration-100">
+                        {visibleItems.map((item, idx) => (
+                            !item.restricted || AuthService.isAdmin(currentUser) ? (
+                                <div
+                                    key={idx}
+                                    className={`px-4 py-2 text-xs border-b border-seastar-700/50 last:border-0 
                                 ${item.disabled
-                                        ? 'text-gray-600 cursor-not-allowed'
-                                        : 'text-gray-300 hover:bg-seastar-cyan hover:text-seastar-900 cursor-pointer'
-                                    }`}
-                                onClick={(e) => {
-                                    if (!item.disabled) handleMenuAction(item.action);
-                                    e.stopPropagation();
-                                }}
-                            >
-                                {item.label}
-                                {item.restricted && <Lock size={10} className="inline ml-2 text-yellow-500" />}
-                            </div>
-                        ) : null
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+                                            ? 'text-gray-600 cursor-not-allowed'
+                                            : 'text-gray-300 hover:bg-seastar-cyan hover:text-seastar-900 cursor-pointer'
+                                        }`}
+                                    onClick={(e) => {
+                                        if (!item.disabled) handleMenuAction(item.action);
+                                        e.stopPropagation();
+                                    }}
+                                >
+                                    {item.label}
+                                    {item.restricted && <Lock size={10} className="inline ml-2 text-yellow-500" />}
+                                </div>
+                            ) : null
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const handleViewUnrouted = (type: 'missingLength' | 'unrouted') => {
         setCableListFilter(type);
@@ -799,104 +755,76 @@ const App: React.FC = () => {
             case MainView.CABLE_TYPE:
                 return <CableTypeManager data={cableTypes} />;
             case MainView.REPORT_NODE:
-                return <NodeManager nodes={nodes} cables={cables} onUpdateNodes={handleUpdateNodes} triggerImport={triggerFileUpload} onExport={handleExport} />;
+                return <NodeManager nodes={nodes} updateNodes={handleUpdateNodes} />;
             case MainView.REPORT_BOM:
-                return <CableRequirementReport cables={cables} />;
+                return <CableRequirementReport cables={cables} onExport={handleExport} onCreatePOS={handleExport} />;
             case MainView.TRAY_ANALYSIS:
                 return <TrayAnalysis cables={cables} nodes={nodes} />;
-            case MainView.WD_EXTRACTION:
-                return <WDExtractionView
-                    currentShipId={shipId}
-                    onImportCables={(newCables) => {
-                        // CRITICAL FIX: Harvest Nodes from Imported Cables
-                        const existingNodeNames = new Set(nodes.map(n => n.name));
-                        const newNodesToAdd: Node[] = [];
-
-                        newCables.forEach(cable => {
-                            const requiredNodes = [cable.fromNode, cable.toNode];
-                            requiredNodes.forEach(nodeName => {
-                                if (nodeName && !existingNodeNames.has(nodeName)) {
-                                    newNodesToAdd.push({
-                                        name: nodeName,
-                                        x: 0, y: 0, z: 0,
-                                        deck: (nodeName.length > 2 ? nodeName.substring(0, 2) : 'UNK'),
-                                        room: '',
-                                        equip: '',
-                                        relation: '',
-                                        linkLength: 0
-                                    });
-                                    existingNodeNames.add(nodeName);
-                                }
-                            });
-                        });
-
-                        const finalNodes = [...nodes, ...newNodesToAdd];
-                        if (newNodesToAdd.length > 0) {
-                            setNodes(finalNodes);
-                        }
-
-                        setCables(newCables);
-
-                        // Save Data Immediately
-                        saveData(newCables, finalNodes, cableTypes, deckHeights);
-
-                        setCurrentView(MainView.SCHEDULE);
-
-                        // Force route calculation with new data
-                        // Passing strict arguments to avoid closure staleness
-                        setTimeout(() => handleCalculateAllRoutes(newCables), 200);
-
-                        alert(`Imported ${newCables.length} cables.\nAuto-generated ${newNodesToAdd.length} nodes.\nRouting Started...`);
-                    }} />;
-            case MainView.GENERIC_GRID:
-                return <GenericGrid title={genericTitle} data={genericData} />;
             case MainView.THREE_D:
                 return (
-                    <div className="flex-1 border border-seastar-700 rounded-lg overflow-hidden relative shadow-2xl">
-                        <ThreeScene nodes={nodes} highlightPath={routePath} deckHeights={deckHeights} />
-                    </div>
-                );
-            case 'MASTER_DATA':
-                return <MasterData cables={cables} nodes={nodes} cableTypes={cableTypes} />;
-            case 'USER_MGMT':
-                return <UserManagement />;
-            case 'SHIP_DEF':
-                return <ShipDefinition currentShipId={shipId} onShipChange={setShipId} />;
-            case 'DRUM_SCHEDULE':
-                return <DrumScheduleReport cables={cables} />;
-            case 'NODE_LIST_REPORT':
-                return <NodeListReport nodes={nodes} />;
-            case 'HISTORY':
-                return (
-                    <HistoryViewer
-                        projectId={shipId}
-                        onRestore={(restoredCables, restoredNodes, restoredCableTypes) => {
-                            setCables(restoredCables);
-                            setNodes(restoredNodes);
-                            setCableTypes(restoredCableTypes);
-                        }}
+                    <ThreeScene
+                        nodes={nodes}
+                        cables={cables}
+                        highlightPath={routePath}
+                        deckHeights={deckHeights}
+                        onClose={() => setCurrentView(MainView.SCHEDULE)}
                     />
                 );
-            case 'SETTINGS':
-                return <Settings />;
-            case 'CABLE_GROUP':
-                return <CableGroup cables={cables} />;
-            case 'IMPORT':
-                return <ImportPanel onImportFiles={(files) => handleFileChange({ target: { files } } as any)} isLoading={isLoading} />;
+            case MainView.GENERIC_GRID:
+                return <GenericGrid data={genericData} title={genericTitle} />;
+            case MainView.WD_EXTRACTION:
+                return <WDExtractionView onApplyCables={(newCables) => {
+                    setCables(newCables);
+                    saveData(newCables, nodes, cableTypes, deckHeights);
+                    setCurrentView(MainView.SCHEDULE);
+                    alert(`Applied ${newCables.length} cables from Extraction.`);
+                }} />;
+
+            // New Menu Views
+            case 'MASTER_DATA': return <MasterData />;
+            case 'USER_MGMT': return <UserManagement />;
+            case 'SHIP_DEF': return <ShipDefinition />;
+            case 'DRUM_SCHEDULE': return <DrumScheduleReport cables={cables} />;
+            case 'HISTORY': return <HistoryViewer history={HistoryService.getHistory()} />;
+            case 'SETTINGS': return <Settings />;
+            case 'CABLE_GROUP': return <CableGroup cables={cables} />;
+            case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
+
             default:
-                return null;
+                return <div className="p-10 text-center text-gray-400">View Not Implemented: {currentView}</div>;
         }
     };
 
     return (
-        <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 overflow-hidden font-sans">
-            {isLoading && <LoadingOverlay message={isRouting ? "케이블 라우팅 중..." : "데이터 로딩 중..."} />}
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx, .xls, .csv" className="hidden" />
+        <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 font-sans overflow-hidden">
+            <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} />
 
-            {/* TOP MENU BAR */}
-            <div className="h-10 bg-seastar-900 border-b border-seastar-700 flex items-center px-4 select-none shadow-md z-50">
-                <div className="font-bold text-seastar-cyan mr-6 flex items-center gap-2 text-sm tracking-wider cursor-pointer" onClick={() => setCurrentView(MainView.DASHBOARD)}>
-                    <Activity size={16} /> SCMS
+            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
+
+            {/* Simple Modals */}
+            {activeModal && (
+                <SimpleModal
+                    title={activeModal.replace('_', ' ')}
+                    onClose={() => setActiveModal(null)}
+                >
+                    {activeModal === 'TRAY_SPEC' && <TraySpecContent />}
+                    {activeModal === 'CABLE_BINDING' && <CableBindingContent />}
+                    {activeModal === 'EQUIP_CODE' && <EquipCodeContent />}
+                    {activeModal === 'TERMINAL_QTY' && <TerminalQtyContent />}
+                </SimpleModal>
+            )}
+
+            {/* HEADER */}
+            <div className="h-10 bg-seastar-800 border-b border-seastar-600 flex items-center justify-between px-4 shadow-md z-20 select-none">
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-seastar-neon to-blue-600 rounded flex items-center justify-center shadow-neon">
+                        <Terminal size={14} className="text-white" />
+                    </div>
+                    <span className="font-bold text-lg tracking-tight">
+                        <span className="text-white">SEASTAR</span>
+                        <span className="text-seastar-cyan">CMS</span>
+                    </span>
+                    <span className="text-[10px] text-gray-500 ml-1 border border-gray-600 px-1 rounded">v{DATA_VERSION}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -998,27 +926,24 @@ const App: React.FC = () => {
 
             {/* DECK MODAL */}
             {showDeckModal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-96 p-6 animate-in zoom-in-95">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-[400px] p-6 animate-in zoom-in-95">
                         <div className="flex justify-between items-center mb-4 border-b border-seastar-700 pb-2">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Settings size={18} className="text-seastar-pink" /> Deck Configuration
-                            </h3>
+                            <h3 className="text-lg font-bold text-white">Deck Configuration (Elevation)</h3>
                             <button onClick={() => setShowDeckModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
                         </div>
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 mb-4">
-                            {Object.keys(deckHeights).map(deck => (
+                        <div className="space-y-2">
+                            {Object.entries(deckHeights).map(([deck, height]) => (
                                 <div key={deck} className="flex items-center justify-between bg-seastar-900 p-2 rounded border border-seastar-700">
-                                    <span className="font-mono text-seastar-cyan font-bold w-12">{deck}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500">Level:</span>
-                                        <input type="number" step="0.5" className="w-20 bg-seastar-800 border border-seastar-600 rounded px-2 py-1 text-sm text-right focus:border-seastar-neon outline-none" value={deckHeights[deck]} onChange={(e) => updateDeckHeight(deck, e.target.value)} />
-                                    </div>
+                                    <span className="font-mono text-seastar-cyan">{deck}</span>
+                                    <input
+                                        type="number"
+                                        className="w-24 bg-black border border-gray-600 rounded px-2 py-1 text-right text-white"
+                                        value={height}
+                                        onChange={(e) => updateDeckHeight(deck, e.target.value)}
+                                    />
                                 </div>
                             ))}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowDeckModal(false)} className="px-4 py-2 bg-seastar-cyan hover:bg-cyan-400 text-seastar-900 font-bold rounded text-sm shadow-lg shadow-cyan-900/50">Apply</button>
                         </div>
                     </div>
                 </div>

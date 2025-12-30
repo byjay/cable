@@ -99,7 +99,8 @@ export enum MainView {
   THREE_D = '3D Visualization',
   GENERIC_GRID = 'Generic Grid',
   SETTINGS = 'Settings',
-  WD_EXTRACTION = 'WD Extraction'
+  WD_EXTRACTION = 'WD Extraction',
+  UNIVERSAL = 'UNIVERSAL'
 }
 
 

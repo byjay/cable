@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 
 from .services.parser import AdvancedCableParser
+from .services.universal_parser import UniversalParser
+from .services.cad_service import CADService
 from .models.schemas import ExtractedCable, ExtractionSummary
 
 app = FastAPI(
@@ -97,6 +99,91 @@ async def extract_from_ship_wd(ship_id: str):
         ship_metadata=result["ship_metadata"],
         cables=result.get("cables", []) # Ensure we pass the list back
     )
+
+@app.post("/api/universal/upload/{ship_id}", response_model=ExtractionSummary)
+async def universal_upload(
+    ship_id: str,
+    file: UploadFile = File(...)
+):
+    try:
+        # Save temp file
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+
+        parser = UniversalParser()
+        data = parser.parse(temp_path)
+        
+        # Convert to ExtractedCable format
+        cables = []
+        for i, row in enumerate(data):
+            try:
+                # Basic validation / cleanup
+                cable = ExtractedCable(
+                    id=str(row.get('no', str(i+1))), # Use 'no' column if exists, else index
+                    project_id=ship_id,
+                    filename=file.filename,
+                    valid=True,
+                    
+                    # Map standard fields from fuzzy parser result
+                    cable_no=str(row.get('cable_name', '')),
+                    system=str(row.get('system', '')),
+                    cable_type=str(row.get('comp_name', '')),
+                    length=str(row.get('length', '')),
+                    
+                    # Routing
+                    from_node=str(row.get('from_node', '')),
+                    to_node=str(row.get('to_node', '')),
+                    
+                    # Store extra metadata for full fidelity
+                    metadata=row 
+                )
+                cables.append(cable)
+            except Exception as row_err:
+                print(f"Row error: {row_err}")
+                continue
+
+        # Clean up
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+        return ExtractionSummary(
+            total_count=len(cables),
+            cables=cables,
+            potential_misses=[],
+            system_distribution={},
+            processing_time_ms=0,
+            ship_metadata={"hull_no": ship_id, "ship_type": "UNIVERSAL"}
+        )
+            
+    except Exception as e:
+        if os.path.exists(f"temp_{file.filename}"):
+            os.remove(f"temp_{file.filename}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/cad/upload")
+async def cad_upload(
+    file: UploadFile = File(...)
+):
+    try:
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+
+        cad_service = CADService()
+        result = cad_service.parse_dxf(temp_path)
+        
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            
+        return result
+            
+    except Exception as e:
+        if os.path.exists(f"temp_{file.filename}"):
+            os.remove(f"temp_{file.filename}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
