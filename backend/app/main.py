@@ -8,6 +8,7 @@ from pathlib import Path
 from .services.parser import AdvancedCableParser
 from .services.universal_parser import UniversalParser
 from .services.cad_service import CADService
+from .services.storage import get_storage_service
 from .models.schemas import ExtractedCable, ExtractionSummary
 
 app = FastAPI(
@@ -28,6 +29,7 @@ app.add_middleware(
 from .services.manager import ExtractionManager
 
 parser_manager = ExtractionManager()
+storage_service = get_storage_service()
 
 @app.get("/")
 async def root():
@@ -41,15 +43,12 @@ async def upload_file(ship_id: str, file: UploadFile = File(...)):
     """
     Upload a PDF file to the specific ship's working directory.
     """
-    base_dir = Path(__file__).resolve().parent.parent.parent.parent
-    ship_wd = base_dir / "wd" / ship_id
-    ship_wd.mkdir(parents=True, exist_ok=True)
-    
-    file_path = ship_wd / file.filename
-    
+    # Use Storage Service to save file
+    # This handles Local vs Cloud abstraction
     try:
-        with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        file_path_or_uri = storage_service.save_file(ship_id, file.filename, file.file)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
     finally:
         file.file.close()
         
@@ -60,12 +59,19 @@ async def extract_from_ship_wd(ship_id: str):
     """
     Process all files in the specific SHIP's 'wd' folder.
     """
-    base_dir = Path(__file__).resolve().parent.parent.parent.parent
-    ship_wd = base_dir / "wd" / ship_id
     
-    if not ship_wd.exists():
-        # Try finding it in root wd if ship specific folder doesn't exist yet but root does?
-        # No, enforce strict separation. 
+    # Use Storage Service to list files
+    try:
+        pdf_files = storage_service.list_files(ship_id)
+        # Filter only PDFs? list_files already does some filtering or returns all?
+        # Let's trust list_files but ensure extension check if needed.
+        pdf_files = [f for f in pdf_files if f.lower().endswith(".pdf")]
+    except Exception as e:
+        # If storage fails (e.g. bucket access), return empty
+        print(f"Storage Error: {e}")
+        pdf_files = []
+
+    if not pdf_files:
         return ExtractionSummary(
             total_count=0,
             system_distribution={},
@@ -75,21 +81,24 @@ async def extract_from_ship_wd(ship_id: str):
             cables=[]
         )
     
-    # Get all PDF paths
-    pdf_files = [str(p) for p in ship_wd.glob("*.pdf")]
-    
-    if not pdf_files:
-         return ExtractionSummary(
-            total_count=0,
-            system_distribution={},
-            potential_misses=[],
-            processing_time_ms=0,
-            ship_metadata={"hull_no": "N/A", "ship_type": "No Data"},
-            cables=[]
-        )
-    
     # Execute Parallel Extraction
-    result = parser_manager.extract_batch(pdf_files)
+    # NOTE: parser_manager needs to handle gs:// paths if on cloud.
+    # storage_service.get_file_path handles downloading if necessary.
+    
+    # We need to adapt parser_manager slightly or handle download here.
+    # For robust architecture, let's download files to temp if they are remote
+    # or ensure parser supports gs://
+    
+    # Currently parser expects Paths. 
+    # Let's map remote URIs to local temp paths
+    local_paths = []
+    for uri in pdf_files:
+        if uri.startswith("gs://"):
+            local_paths.append(storage_service.get_file_path(ship_id, uri))
+        else:
+            local_paths.append(uri)
+            
+    result = parser_manager.extract_batch(local_paths)
     
     return ExtractionSummary(
         total_count=result["total_count"],
