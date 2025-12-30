@@ -161,9 +161,20 @@ export const ExcelService = {
       if (!name) continue;
 
       const rawId = getStr('id');
+      const page = getStr('page');
+
+      // CRITICAL FIX: Ensure Unique ID
+      // If rawId (NO) is present, it might duplicate across pages (1, 2, 3).
+      // Combine with Page if possible, or fallback to Name (usually unique).
+      let uniqueId = rawId;
+      if (rawId && page) uniqueId = `${page}_${rawId}`;
+      else if (!rawId) uniqueId = name; // Fallback to Name if No ID
+
+      // Final fallback to index if collision likely (though Name should be unique)
+      if (!uniqueId) uniqueId = String(i);
 
       const cable: Cable = {
-        id: rawId || String(i),
+        id: uniqueId,
         name: name,
         type: getStr('type'),
         system: getStr('system') || 'POWER',

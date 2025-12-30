@@ -233,16 +233,19 @@ const App: React.FC = () => {
     }
 
     // Save Data function - Defined early to be passed to hooks
-    const saveShipData = () => {
+    // Save Data function - Defined early to be passed to hooks
+    const saveShipData = (overrideCables?: Cable[]) => {
+        const targetCables = overrideCables || cables;
         if (!AuthService.isAdmin(currentUser)) {
             alert("Access Denied: You do not have permission to save data.");
             return;
         }
         // Record history snapshot before saving
-        HistoryService.record('Save Project', `Manual save with ${cables.length} cables, ${nodes.length} nodes`, shipId, cables, nodes, cableTypes);
+        HistoryService.record('Save Project', `Manual save with ${targetCables.length} cables, ${nodes.length} nodes`, shipId, targetCables, nodes, cableTypes);
 
-        saveData(cables, nodes, cableTypes, deckHeights);
-        alert(`Project saved for Ship ${shipId} successfully.`);
+        saveData(targetCables, nodes, cableTypes, deckHeights);
+        // Only show alert if manual save (no override) or explicit
+        if (!overrideCables) alert(`Project saved for Ship ${shipId} successfully.`);
     };
 
     const {
