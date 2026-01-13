@@ -373,6 +373,8 @@ export const autoSolveSystem = (
   };
 };
 
+export const solveSystem = autoSolveSystem;
+
 export const solveSystemAtWidth = (
   allCables: CableData[],
   numberOfTiers: number,
@@ -412,5 +414,3 @@ function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, wid
     totalCableArea: result.totalArea
   };
 }
-e x p o r t   c o n s t   s o l v e S y s t e m   =   a u t o S o l v e S y s t e m ;  
- 
