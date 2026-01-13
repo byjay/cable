@@ -75,7 +75,10 @@ const LoginPanel: React.FC<LoginPanelProps> = ({ onLogin }) => {
                     </div>
                     <h1 className="text-3xl font-bold text-white tracking-tight">SEASTAR <span className="text-seastar-cyan">SCMS</span></h1>
                     <p className="text-seastar-300 text-sm mt-2">Ship Cable Management System</p>
-                    <div className="mt-1 text-xs text-gray-500 font-mono">v{APP_VERSION}</div>
+                    <div className="mt-1 text-xs text-gray-500 font-mono">
+                        v{APP_VERSION}
+                        <span className="ml-2 text-[10px] text-gray-600">Last Push: 2026-01-13 15:45</span>
+                    </div>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
