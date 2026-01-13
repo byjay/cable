@@ -373,6 +373,32 @@ export const autoSolveSystem = (
   };
 };
 
+export const solveSystemAtWidth = (
+  allCables: CableData[],
+  numberOfTiers: number,
+  width: number,
+  maxHeightLimit: number,
+  targetFillRatioPercent: number
+): SystemResult => {
+  const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
+  const sorted = [...allCables].sort((a, b) => b.od - a.od);
+
+  sorted.forEach((c, i) => {
+    tierBuckets[i % numberOfTiers].push(c);
+  });
+
+  const finalTierResults = tierBuckets.map((bucket, idx) => {
+    return solveSingleTierAtFixedWidth(bucket, idx, width, maxHeightLimit, 3);
+  });
+
+  return {
+    systemWidth: width,
+    tiers: finalTierResults,
+    success: finalTierResults.every(r => r.success),
+    maxHeightPerTier: maxHeightLimit
+  };
+};
+
 function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, width: number, maxHeightLimit: number, stackingLimit: number): SingleTrayResult {
   const result = tryPlaceAtWidth(cables, width, maxHeightLimit, stackingLimit);
 
