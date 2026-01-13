@@ -776,6 +776,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             case 'SETTINGS': return <Settings />;
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
+            case 'Node List': return <NodeListReport nodes={nodes} cables={cables} />; // Added Node List View
 
             default:
                 return <div className="p-10 text-center text-gray-400">View Not Implemented: {currentView}</div>;
@@ -812,6 +813,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                         <span className="text-seastar-cyan">CMS</span>
                     </span>
                     <span className="text-[10px] text-gray-500 ml-1 border border-gray-600 px-1 rounded">v{DATA_VERSION}</span>
+                    <span className="ml-4 text-[10px] text-gray-400 font-mono">Last Push: 2026-01-13 16:15</span>
                 </div>
 
                 <div className="flex items-center gap-1">

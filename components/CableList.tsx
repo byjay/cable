@@ -57,6 +57,10 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         }
     }, [selectedCableId]);
 
+    // Raw Data Modal State
+    const [showRawDataModal, setShowRawDataModal] = useState(false);
+    const [rawDataSource, setRawDataSource] = useState<Cable | null>(null);
+
     // Sorting State
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -96,12 +100,18 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         return cables.filter(c => selectedIds.has(c.id));
     };
 
-    // Toggle all checkboxes
+    // Toggle all checkboxes - FIXED: Select ALL filtered cables properly
     const handleToggleAll = (checked: boolean) => {
         if (checked) {
-            setSelectedIds(new Set(filteredCables.map(c => c.id)));
+            // Add all filtered IDs to selection
+            const newSet = new Set(selectedIds);
+            filteredCables.forEach(c => newSet.add(c.id));
+            setSelectedIds(newSet);
         } else {
-            setSelectedIds(new Set());
+            // Remove all filtered IDs from selection
+            const newSet = new Set(selectedIds);
+            filteredCables.forEach(c => newSet.delete(c.id));
+            setSelectedIds(newSet);
         }
     };
 
@@ -198,6 +208,8 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
     // Simplified Selection Logic
     const handleRowClick = (e: React.MouseEvent, cable: Cable, index: number) => {
+        // e.preventDefault(); // Prevent text selection side effects?
+
         const id = cable.id;
 
         if (e.ctrlKey || e.metaKey) {
@@ -213,21 +225,35 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
             if (lastIndex !== -1) {
                 const start = Math.min(lastIndex, index);
                 const end = Math.max(lastIndex, index);
-                const newSet = new Set(selectedIds);
+                const newSet = new Set(selectedIds); // Keep existing selection? Usually shift replaces or adds. 
+                // Standard behavior: Shift+Click adds range to existing 'anchor' but usually clears others if Ctrl not held. 
+                // Let's implement: Shift+Click extends selection from Anchor.
+
+                // For simplicity and user request "Still selects multiple":
+                // If strict single select is wanted without keys, we clear.
+
+                // Clear previous if NOT ctrl
+                // But ranges usually imply adding. Let's just do range add.
                 for (let i = start; i <= end; i++) {
                     if (filteredCables[i]) newSet.add(filteredCables[i].id);
                 }
                 setSelectedIds(newSet);
             }
         } else {
-            // Single select - Strictly clear others
-            const newSet = new Set([id]);
+            // STRICT Single select - Clear ALL others
+            const newSet = new Set();
+            newSet.add(id);
             setSelectedIds(newSet);
             setLastSelectedId(id);
         }
 
         // Notify parent
         onSelectCable(cable);
+    };
+
+    const handleViewRawData = (cable: Cable) => {
+        setRawDataSource(cable);
+        setShowRawDataModal(true);
     };
 
     const IconBtn = ({ icon: Icon, label, onClick, color = "text-gray-200" }: any) => (
@@ -261,18 +287,35 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 <Divider />
 
                 {/* Tools */}
-                <IconBtn icon={Calculator} label="Route All" onClick={onCalculateAll} color="text-gray-600" />
+                {/* Tools */}
+                <button
+                    onClick={onCalculateAll}
+                    className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded mx-1"
+                    title="Calculate All Routes"
+                >
+                    <Calculator size={12} /> ROUTE ALL
+                </button>
                 <button
                     onClick={() => onCalculateSelected(getSelectedCables())}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-green-600 hover:bg-green-500 text-white rounded mx-1"
+                    className={`flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-white rounded mx-1 transition-colors ${selectedIds.size > 0 ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-400 cursor-not-allowed'}`}
                     disabled={selectedIds.size === 0}
                     title="Route Selected"
                 >
-                    <Zap size={12} /> ROUTE ({selectedIds.size})
+                    <Zap size={12} /> ROUTE SELECTED ({selectedIds.size})
                 </button>
                 <IconBtn icon={Pin} label="Pin" color="text-gray-600" />
                 <IconBtn icon={Printer} label="Print" color="text-gray-600" />
                 <Divider />
+                <IconBtn icon={Printer} label="Print" color="text-gray-600" />
+                <Divider />
+                <button
+                    onClick={() => selectedCable && handleViewRawData(selectedCable)}
+                    className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold border rounded transition-colors ${selectedCable ? 'bg-gray-100 hover:bg-white text-gray-800 border-gray-400' : 'text-gray-300 border-transparent cursor-not-allowed'}`}
+                    disabled={!selectedCable}
+                    title="View Raw Data from Excel"
+                >
+                    <FileText size={12} /> RAW DATA
+                </button>
                 <IconBtn icon={FileSpreadsheet} label="Export" onClick={onExport} color="text-green-600" />
 
                 {/* Missing Length Filter Button with Badge */}
@@ -482,7 +525,8 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                             <input
                                                 type="checkbox"
                                                 title="Select All"
-                                                checked={filteredCables.length > 0 && selectedIds.size === filteredCables.length}
+                                                // Checked if ALL filtered cables are in selectedIds
+                                                checked={filteredCables.length > 0 && filteredCables.every(c => selectedIds.has(c.id))}
                                                 onChange={(e) => handleToggleAll(e.target.checked)}
                                                 className="w-3 h-3 cursor-pointer"
                                             />

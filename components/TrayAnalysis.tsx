@@ -2,7 +2,8 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, Route, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
-import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
+import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
+import { autoSolveSystem, solveSystem, solveSystemAtWidth, calculateBasicStats } from '../services/traySolverEnhanced';
 import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface TrayAnalysisProps {
@@ -40,7 +41,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         if (nodes.length > 0) {
             const service = new EnhancedRoutingService(nodes);
             setRoutingService(service);
-            
+
             // Calculate all routes
             const routes = cables.map(cable => {
                 if (cable.fromNode && cable.toNode) {
@@ -263,11 +264,10 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
 
                 {/* Routing Toggle */}
                 <button
-                    className={`px-3 py-1 rounded text-xs font-bold border ${
-                        showRouting 
-                            ? 'bg-blue-500 text-white border-blue-500' 
+                    className={`px-3 py-1 rounded text-xs font-bold border ${showRouting
+                            ? 'bg-blue-500 text-white border-blue-500'
                             : 'bg-gray-200 text-gray-700 border-gray-300'
-                    }`}
+                        }`}
                     onClick={() => setShowRouting(!showRouting)}
                 >
                     <Route size={12} className="inline mr-1" />
@@ -396,7 +396,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                                 <div className="text-xs text-gray-400">
                                     Width: {item.trayWidth}mm
                                 </div>
-                                
+
                                 {/* Quick Fill Button */}
                                 <button
                                     onClick={(e) => {
@@ -436,6 +436,28 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                                             Recommendation
                                         </h3>
                                         <p className="text-[10px] text-gray-500 mt-1">Based on OD & Fill {fillRatioLimit}%</p>
+                                    </div>
+
+                                    <div className="bg-white border rounded p-3 shadow-sm text-center">
+                                        <div className="text-xs text-gray-500 mb-1">Physical Analysis</div>
+                                        {(() => {
+                                            const stats = calculateBasicStats(solverData);
+                                            return (
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex justify-between text-[10px] border-b border-dashed pb-1">
+                                                        <span>Total OD:</span>
+                                                        <span className="font-bold text-blue-600">{stats.totalODSum.toFixed(1)} mm</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-[10px] border-b border-dashed pb-1">
+                                                        <span>Area Sum:</span>
+                                                        <span className="font-bold text-purple-600">{stats.totalAreaSum.toFixed(0)} mm²</span>
+                                                    </div>
+                                                    <div className="text-[9px] text-gray-400 mt-1">
+                                                        * Used for Tier Calculation
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
 
                                     <div className="bg-white border rounded p-3 shadow-sm text-center">

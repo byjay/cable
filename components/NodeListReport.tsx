@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Node } from '../types';
-import { Download, Search, Layers } from 'lucide-react';
+import { Download, Search, Layers, FileText, Trash2 } from 'lucide-react';
 import { ExcelService } from '../services/excelService';
 
 interface NodeListReportProps {
     nodes: Node[];
+    cables: Cable[]; // Added cables to align with App.tsx usage
 }
 
-const NodeListReport: React.FC<NodeListReportProps> = ({ nodes }) => {
+const NodeListReport: React.FC<NodeListReportProps> = ({ nodes, cables }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [deckFilter, setDeckFilter] = useState('');
+    const [showRawModal, setShowRawModal] = useState(false);
+    const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
     const decks = useMemo(() => {
         const deckSet = new Set<string>();
@@ -79,6 +82,7 @@ const NodeListReport: React.FC<NodeListReportProps> = ({ nodes }) => {
                             <th className="px-3 py-2 text-right">Link Length</th>
                             <th className="px-3 py-2 text-right">Area Size</th>
                             <th className="px-3 py-2 text-left">Type</th>
+                            <th className="px-3 py-2 text-center">Raw</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,11 +94,46 @@ const NodeListReport: React.FC<NodeListReportProps> = ({ nodes }) => {
                                 <td className="px-3 py-2 text-right text-yellow-400">{node.linkLength || 0}</td>
                                 <td className="px-3 py-2 text-right">{node.areaSize || '-'}</td>
                                 <td className="px-3 py-2">{node.type || '-'}</td>
+                                <td className="px-3 py-2 text-center">
+                                    <button
+                                        onClick={() => { setSelectedNode(node); setShowRawModal(true); }}
+                                        className="text-gray-400 hover:text-white"
+                                        title="View Raw Data"
+                                    >
+                                        <FileText size={14} />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* RAW DATA MODAL */}
+            {showRawModal && selectedNode && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowRawModal(false)}>
+                    <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-[600px] max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-seastar-600 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <FileText className="text-seastar-cyan" /> Raw Data: {selectedNode.name}
+                            </h3>
+                            <button onClick={() => setShowRawModal(false)} className="text-gray-400 hover:text-white"><Trash2 size={18} /></button>
+                        </div>
+                        <div className="p-4 overflow-y-auto">
+                            <table className="w-full text-sm text-gray-300">
+                                <tbody>
+                                    {Object.entries(selectedNode).map(([key, value]) => (
+                                        <tr key={key} className="border-b border-seastar-700">
+                                            <td className="py-2 text-seastar-cyan font-mono w-1/3">{key}</td>
+                                            <td className="py-2 font-bold break-all">{String(value)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
