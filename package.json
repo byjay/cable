@@ -2,6 +2,7 @@
   "name": "seastar-cable-manager",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://byjay.github.io/cable/",
   "type": "module",
   "scripts": {
     "dev": "vite",

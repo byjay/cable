@@ -14,7 +14,7 @@ export interface HistoryEntry {
 }
 
 const HISTORY_KEY = 'SCMY_HISTORY';
-const MAX_HISTORY_ENTRIES = 50;
+const MAX_HISTORY_ENTRIES = 5; // Reduced from 50 to prevent QuoteExceededError
 
 class HistoryServiceClass {
     private history: HistoryEntry[] = [];
@@ -40,8 +40,18 @@ class HistoryServiceClass {
                 this.history = this.history.slice(-MAX_HISTORY_ENTRIES);
             }
             localStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
-        } catch (e) {
+        } catch (e: any) {
             console.error('Failed to save history:', e);
+            // If quota exceeded, clear history and try to save just the latest
+            if (e.name === 'QuotaExceededError' || e.message === 'QuotaExceededError') {
+                console.warn('Storage Quota Exceeded. Clearing old history...');
+                this.history = this.history.slice(-1); // Keep only last entry
+                try {
+                    localStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
+                } catch (retryError) {
+                    console.error('Critical: Could not save even the last entry.', retryError);
+                }
+            }
         }
     }
 

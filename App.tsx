@@ -144,7 +144,13 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 }
             });
 
-            localStorage.setItem('app_data_version', DATA_VERSION);
+            try {
+                localStorage.setItem('app_data_version', DATA_VERSION);
+            } catch (e) {
+                console.error("Critical Error: Failed to save version info. LocalStorage might be full.", e);
+                // Last resort: clear everything to release space
+                localStorage.clear();
+            }
         }
     }, []);
 
