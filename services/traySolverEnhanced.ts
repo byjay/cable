@@ -37,7 +37,19 @@ export interface SystemResult {
   tiers: SingleTrayResult[];
   success: boolean;
   maxHeightPerTier: number;
+  totalAreaSum?: number; // Added for verification
+  totalODSum?: number; // Added for verification
 }
+
+export const calculateBasicStats = (cables: CableData[]) => {
+  let totalODSum = 0;
+  let totalAreaSum = 0;
+  cables.forEach(c => {
+    totalODSum += c.od;
+    totalAreaSum += Math.PI * Math.pow(c.od / 2, 2);
+  });
+  return { totalODSum, totalAreaSum };
+};
 
 export const MARGIN_X = 5;
 export const MAX_PILE_WIDTH = 0; // Not used in this logic but kept for interface
@@ -335,18 +347,28 @@ export const solveSingleTier = (
   };
 };
 
-export const autoSolveSystem = (
+export const solveSystem = (
   allCables: CableData[],
+  numberOfTiers: number = 1,
   maxHeightLimit: number = 50,
   targetFillRatioPercent: number = 60
 ): SystemResult => {
-  // Default to 1 tier for autoSolve if not specified, 
-  // but the system supports check for multiple tiers.
-  // However, the input usually implies a single node's cables.
-  // For single node, we treat it as 1 tier.
+  // 1. Calculate Physical Stats
+  const { totalODSum, totalAreaSum } = calculateBasicStats(allCables);
 
-  // Check if we need to split? No, usually a node has one tray.
-  const numberOfTiers = 1;
+  // 2. Determine Optimal Width if we want to "Auto-Solve"
+  // Logic: Area / (Height * FillRatio) = Required Width
+  // Adjusted for Multiple Tiers
+  const requiredTotalWidth = (totalAreaSum / maxHeightLimit) * (100 / targetFillRatioPercent);
+  const requiredWidthPerTier = requiredTotalWidth / numberOfTiers;
+
+  // Snap to standard
+  let targetWidth = getStandardTrayWidth(requiredWidthPerTier);
+
+  // Ensure we can at least fit the largest cable
+  const maxOD = Math.max(...allCables.map(c => c.od));
+  if (targetWidth < maxOD * 1.5) targetWidth = getStandardTrayWidth(maxOD * 1.5);
+  if (targetWidth < 300) targetWidth = 300; // Minimum sensible default
 
   const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
   const sorted = [...allCables].sort((a, b) => b.od - a.od);
@@ -355,25 +377,31 @@ export const autoSolveSystem = (
     tierBuckets[i % numberOfTiers].push(c);
   });
 
-  const initialResults = tierBuckets.map((bucket, idx) =>
-    solveSingleTier(bucket, idx, maxHeightLimit, targetFillRatioPercent, 3)
-  );
-
-  const maxTrayWidth = Math.max(...initialResults.map(r => r.width));
-
   const finalTierResults = tierBuckets.map((bucket, idx) => {
-    return solveSingleTierAtFixedWidth(bucket, idx, maxTrayWidth, maxHeightLimit, 3);
+    // Attempt with the calculated target width
+    let res = solveSingleTierAtFixedWidth(bucket, idx, targetWidth, maxHeightLimit, 3);
+
+    // If fail, try widening
+    if (!res.success) {
+      // Simple retry with wider tray
+      res = solveSingleTierAtFixedWidth(bucket, idx, targetWidth + 300, maxHeightLimit, 3);
+    }
+    return res;
   });
 
+  const actualSystemWidth = Math.max(...finalTierResults.map(r => r.width));
+
   return {
-    systemWidth: maxTrayWidth,
+    systemWidth: actualSystemWidth,
     tiers: finalTierResults,
     success: finalTierResults.every(r => r.success),
-    maxHeightPerTier: maxHeightLimit
-  };
+    maxHeightPerTier: maxHeightLimit,
+    totalAreaSum,
+    totalODSum
+  } as SystemResult;
 };
 
-export const solveSystem = autoSolveSystem;
+export const autoSolveSystem = solveSystem; // Alias for compatibility
 
 export const solveSystemAtWidth = (
   allCables: CableData[],
