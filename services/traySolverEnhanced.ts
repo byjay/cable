@@ -1,4 +1,47 @@
-import { CableData, PlacedCable, Point, SingleTrayResult, SystemResult, MARGIN_X, MAX_PILE_WIDTH, PILE_GAP } from '../types';
+import { Cable } from '../types';
+
+export interface CableData {
+  id: string;
+  name: string;
+  type: string;
+  od: number;
+  color?: string;
+  layer?: number; // Added for solver
+  x?: number; // Added for solver
+  y?: number; // Added for solver
+}
+
+export interface PlacedCable extends CableData {
+  x: number;
+  y: number;
+  layer: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface SingleTrayResult {
+  tierIndex: number;
+  width: number;
+  cables: PlacedCable[];
+  success: boolean;
+  fillRatio: number;
+  totalODSum: number;
+  totalCableArea: number;
+}
+
+export interface SystemResult {
+  systemWidth: number;
+  tiers: SingleTrayResult[];
+  success: boolean;
+  maxHeightPerTier: number;
+}
+
+export const MARGIN_X = 5;
+export const MAX_PILE_WIDTH = 0; // Not used in this logic but kept for interface
+export const PILE_GAP = 0;
 
 // OD >= 20mm must be on Layer 1 only (large cables cannot stack)
 const LARGE_CABLE_THRESHOLD = 20;
@@ -292,12 +335,19 @@ export const solveSingleTier = (
   };
 };
 
-export const solveSystem = (
+export const autoSolveSystem = (
   allCables: CableData[],
-  numberOfTiers: number,
-  maxHeightLimit: number,
-  targetFillRatioPercent: number
+  maxHeightLimit: number = 50,
+  targetFillRatioPercent: number = 60
 ): SystemResult => {
+  // Default to 1 tier for autoSolve if not specified, 
+  // but the system supports check for multiple tiers.
+  // However, the input usually implies a single node's cables.
+  // For single node, we treat it as 1 tier.
+
+  // Check if we need to split? No, usually a node has one tray.
+  const numberOfTiers = 1;
+
   const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
   const sorted = [...allCables].sort((a, b) => b.od - a.od);
 
@@ -323,32 +373,6 @@ export const solveSystem = (
   };
 };
 
-export const solveSystemAtWidth = (
-  allCables: CableData[],
-  numberOfTiers: number,
-  width: number,
-  maxHeightLimit: number,
-  targetFillRatioPercent: number
-): SystemResult => {
-  const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
-  const sorted = [...allCables].sort((a, b) => b.od - a.od);
-
-  sorted.forEach((c, i) => {
-    tierBuckets[i % numberOfTiers].push(c);
-  });
-
-  const finalTierResults = tierBuckets.map((bucket, idx) => {
-    return solveSingleTierAtFixedWidth(bucket, idx, width, maxHeightLimit, 3);
-  });
-
-  return {
-    systemWidth: width,
-    tiers: finalTierResults,
-    success: finalTierResults.every(r => r.success),
-    maxHeightPerTier: maxHeightLimit
-  };
-};
-
 function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, width: number, maxHeightLimit: number, stackingLimit: number): SingleTrayResult {
   const result = tryPlaceAtWidth(cables, width, maxHeightLimit, stackingLimit);
 
@@ -362,33 +386,3 @@ function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, wid
     totalCableArea: result.totalArea
   };
 }
-
-export const autoSolveSystem = (
-  allCables: CableData[],
-  maxHeightLimit: number,
-  targetFillRatioPercent: number = 60
-): SystemResult => {
-  // Start with single tier
-  let bestResult: SystemResult | null = null;
-  
-  // Try 1 to 3 tiers
-  for (let tiers = 1; tiers <= 3; tiers++) {
-    const result = solveSystem(allCables, tiers, maxHeightLimit, targetFillRatioPercent);
-    
-    if (!bestResult || result.success) {
-      bestResult = result;
-    }
-    
-    // If we found a successful solution, don't try more tiers
-    if (result.success) {
-      break;
-    }
-  }
-  
-  return bestResult || {
-    systemWidth: 100,
-    tiers: [],
-    success: false,
-    maxHeightPerTier: maxHeightLimit
-  };
-};

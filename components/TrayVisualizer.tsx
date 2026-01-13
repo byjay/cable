@@ -118,7 +118,7 @@ const TrayVisualizer: React.FC<TrayVisualizerProps> = ({ systemResult }) => {
                                     fontSize="12"
                                     fontWeight="900"
                                     fill="#334155"
-                                    T{idx + 1} ({tier.cables.length}개, {Math.min(100, Math.round(tier.fillRatio))}%)
+                                    text={`T${idx + 1} (${tier.cables.length}개, ${Math.min(100, Math.round(tier.fillRatio))}%)`}
                             </text>
 
                                 {/* Tray Beam */ }

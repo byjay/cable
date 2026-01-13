@@ -3,7 +3,7 @@ import { User, Lock, ArrowRight, ShieldCheck, Ship, Globe } from 'lucide-react';
 import { AuthService } from '../services/authService';
 
 // Hardcoded version to avoid import issues
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '6.0.0';
 
 interface LoginPanelProps {
     onLogin: () => void;

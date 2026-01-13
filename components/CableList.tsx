@@ -19,6 +19,7 @@ interface CableListProps {
     onExport: () => void;
     onUpdateCable?: (cable: Cable) => void; // New prop for editing
     initialFilter?: 'missingLength' | 'unrouted' | null;
+    selectedCableId?: string | null; // New prop for syncing selection
 }
 
 // Virtual scrolling constants
@@ -26,7 +27,7 @@ const ROW_HEIGHT = 24; // pixels per row
 const VISIBLE_ROWS = 30; // number of rows to render at once
 const BUFFER_ROWS = 10; // extra rows above/below viewport
 
-const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter, onUpdateCable }) => {
+const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter, onUpdateCable, selectedCableId }) => {
     // Selection State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -46,6 +47,15 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         if (initialFilter === 'missingLength') setShowMissingLength(true);
         if (initialFilter === 'unrouted') setShowUnrouted(true);
     }, [initialFilter]);
+
+    // Sync external selection (e.g. from 3D view)
+    useEffect(() => {
+        if (selectedCableId) {
+            setSelectedIds(new Set([selectedCableId]));
+            setLastSelectedId(selectedCableId);
+            // Optional: Scroll to item logic could be added here
+        }
+    }, [selectedCableId]);
 
     // Sorting State
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -210,8 +220,9 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 setSelectedIds(newSet);
             }
         } else {
-            // Single select
-            setSelectedIds(new Set([id]));
+            // Single select - Strictly clear others
+            const newSet = new Set([id]);
+            setSelectedIds(newSet);
             setLastSelectedId(id);
         }
 
@@ -329,6 +340,16 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
+                        {/* 3D View Button - NEW */}
+                        <button
+                            onClick={() => selectedCable && onView3D(selectedCable)}
+                            className="w-full mb-2 bg-seastar-cyan hover:bg-cyan-400 text-black text-xs font-bold py-1.5 rounded shadow flex items-center justify-center gap-1"
+                            disabled={!selectedCable}
+                        >
+                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            ROUTE 3D VIEW (3 MAPS)
+                        </button>
+
                         <div className="flex items-center gap-1 text-xs text-gray-700 cursor-pointer hover:bg-blue-50">
                             <div className="w-3 h-3 border border-gray-400 flex items-center justify-center text-[8px]">+</div>
                             <Folder size={12} className="text-yellow-500" />

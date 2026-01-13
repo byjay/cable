@@ -184,6 +184,9 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     // Simple Modals State
     const [activeModal, setActiveModal] = useState<string | null>(null);
 
+    // Cable Selection State for 3D View Integration
+    const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Effect: Sync currentUser (Modified for Dev Bypass)
@@ -365,6 +368,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     };
 
     const handleView3D = (cable: Cable) => {
+        setSelectedCableId(cable.id);
         if (!cable.calculatedPath && cable.path) {
             // If we have text path but no 3D path array, try to split text
             const derivedPath = cable.path.split(',').map(s => s.trim());
@@ -685,6 +689,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
 
     const onSelectCable = (cable: Cable) => {
         console.log("Selected cable:", cable.id);
+        setSelectedCableId(cable.id);
         if (cable.calculatedPath) {
             setRoutePath(cable.calculatedPath);
             // Optional: Switch to 3D view? Or just highlight logic
@@ -724,6 +729,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                         onExport={handleExport}
                         onUpdateCable={handleUpdateCable}
                         initialFilter={cableListFilter}
+                        selectedCableId={selectedCableId}
                     />
                 );
             case MainView.CABLE_TYPE:
@@ -741,6 +747,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                         cables={cables}
                         highlightPath={routePath}
                         deckHeights={deckHeights}
+                        selectedCableId={selectedCableId}
                         onClose={() => setCurrentView(MainView.SCHEDULE)}
                     />
                 );
