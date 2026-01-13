@@ -10,3 +10,5 @@ __pycache__
 .venv
 backend/cache_store
 backend/wd
+
+FILL.zip

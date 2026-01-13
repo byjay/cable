@@ -232,10 +232,11 @@ export const solveSingleTier = (
     let bestResult: { width: number, placed: PlacedCable[], fillRatio: number } | null = null;
     let bestDiff = Infinity;
 
-    // Search range: up to 1200mm (standard max usually) or based on user input, here used 4000 from original code but 900 is more standard
-    const MAX_WIDTH = 4000;
+    // Search range: up to 900mm (standard max width limit)
+    const MAX_WIDTH = 900;
 
     for (let widthTry = startWidth; widthTry <= MAX_WIDTH; widthTry += 100) {
+
         const result = tryPlaceAtWidth(cables, widthTry, maxHeightLimit, stackingLimit);
 
         if (result.success) {
@@ -297,7 +298,10 @@ export const solveSingleTier = (
 };
 
 function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, width: number, maxHeightLimit: number, stackingLimit: number): SingleTrayResult {
-    const result = tryPlaceAtWidth(cables, width, maxHeightLimit, stackingLimit);
+    // Enforce max width of 900mm
+    const clampedWidth = Math.min(width, 900);
+    const result = tryPlaceAtWidth(cables, clampedWidth, maxHeightLimit, stackingLimit);
+
 
     return {
         tierIndex,
@@ -368,7 +372,38 @@ export const autoSolveSystem = (
         }
     }
     // Fallback: If nothing fits under 900mm, return the 9-tier solution (likely the narrowest)
-    // Or return the one that failed but was closest? 
-    // Standard fallback is max tiers.
     return solveSystem(allCables, 9, maxHeightLimit, targetFillRatioPercent);
+};
+
+// Solve system with a fixed width (for manual width override)
+export const solveSystemAtWidth = (
+    allCables: CableData[],
+    numberOfTiers: number,
+    width: number,
+    maxHeightLimit: number,
+    targetFillRatioPercent: number
+): SystemResult => {
+    // Enforce max width of 900mm
+    const clampedWidth = Math.min(width, 900);
+
+    const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
+    const sorted = [...allCables].sort((a, b) => b.od - a.od);
+
+    // Distribute cables round-robin into tiers
+    sorted.forEach((c, i) => {
+        tierBuckets[i % numberOfTiers].push(c);
+    });
+
+    // Solve each tier with the fixed width
+    const finalTierResults = tierBuckets.map((bucket, idx) => {
+        return solveSingleTierAtFixedWidth(bucket, idx, clampedWidth, maxHeightLimit, 3);
+    });
+
+    return {
+        systemWidth: clampedWidth,
+
+        tiers: finalTierResults,
+        success: finalTierResults.every(r => r.success),
+        maxHeightPerTier: maxHeightLimit
+    };
 };

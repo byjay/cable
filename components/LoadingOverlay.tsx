@@ -1,14 +1,18 @@
 import React from 'react';
 
 interface LoadingOverlayProps {
+    isVisible?: boolean;
     message?: string;
     progress?: number;
 }
 
 const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
+    isVisible = false,
     message = "케이블 라우팅 중...",
     progress
 }) => {
+    if (!isVisible) return null;
+
     return (
         <div className="fixed inset-0 bg-seastar-900/95 flex flex-col items-center justify-center z-[9999]">
             {/* Rotating Logo */}
