@@ -16,6 +16,14 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     const [filterDeck, setFilterDeck] = useState('ALL');
     const [searchText, setSearchText] = useState('');
     const [solverResult, setSolverResult] = useState<SystemResult | null>(null);
+    const [routingService, setRoutingService] = useState<EnhancedRoutingService | null>(null);
+    const [showRouting, setShowRouting] = useState(false);
+    const [routeStart, setRouteStart] = useState('');
+    const [routeEnd, setRouteEnd] = useState('');
+    const [routeWaypoints, setRouteWaypoints] = useState('');
+    const [routeResult, setRouteResult] = useState<any>(null);
+    const [allRoutes, setAllRoutes] = useState<any[]>([]);
+    const [showQuickFill, setShowQuickFill] = useState(false);
 
     // FILL Configuration State
     const [numberOfTiers, setNumberOfTiers] = useState(1);
@@ -27,6 +35,31 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     // CACHE for solver results (key: nodeName + params)
     const solverCache = useRef<Map<string, SystemResult>>(new Map());
 
+    // Initialize routing service
+    useEffect(() => {
+        if (nodes.length > 0) {
+            const service = new EnhancedRoutingService(nodes);
+            setRoutingService(service);
+            
+            // Calculate all routes
+            const routes = cables.map(cable => {
+                if (cable.fromNode && cable.toNode) {
+                    const route = service.findRoute(cable.fromNode, cable.toNode);
+                    return {
+                        cableId: cable.id,
+                        cableName: cable.name,
+                        fromNode: cable.fromNode,
+                        toNode: cable.toNode,
+                        path: route.path,
+                        distance: route.distance,
+                        error: route.error
+                    };
+                }
+                return null;
+            }).filter(Boolean);
+            setAllRoutes(routes);
+        }
+    }, [nodes, cables]);
 
     // Calculate fill ratio for each node (Quick Check for List)
     const nodeAnalysis = useMemo(() => {
