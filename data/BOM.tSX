@@ -82,11 +82,6 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
   };
 
   const mergeFiles = (filesToMerge: any[]) => {
-    // [Logic Improvement] Multi-file merge strategy
-    // Ideally we merge sequentially. For now, let's take the first two for proof of concept or iterate.
-    // The user code specifically merged 2 files. Let's make it robust to handle the accumulated 'mergedData' + 'new file'.
-    // For simplicity adapting user's code directly for 2 files logic first.
-
     if (filesToMerge.length < 2) return;
 
     const [file1, file2] = filesToMerge; // merging first two for now
@@ -222,15 +217,15 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
   // New: Save to Master
   const handleSave = () => {
     if (onSaveToMaster) {
-      onSaveToMaster(mergedData);
-      alert(`Saved ${mergedData.length} rows to Master BOM.`);
+      onSaveToMaster(displayData);
+      alert(`Saved ${displayData.length} rows to Master BOM.`);
     }
   };
 
   // New: Trigger Pivot
   const handlePivot = () => {
     if (onPivotRequest) {
-      onPivotRequest(mergedData);
+      onPivotRequest(displayData);
     }
   };
 
@@ -238,34 +233,42 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-700 to-green-600 px-4 py-2 flex items-center gap-4 shadow-md shrink-0">
-        <div className="bg-white px-3 py-1 rounded text-sm font-semibold text-green-800 border border-green-800/10 shadow-sm">
-          Excel Data Processor (Advanced)
+      {/* Header - SDMS Standard Style */}
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 h-14">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-50 rounded-lg">
+            <Table className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-800">Excel Data Processor</h2>
+            <p className="text-[10px] text-slate-500 font-medium">Advanced BOM Import & Analysis</p>
+          </div>
         </div>
-        <div className="flex-1" />
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded text-sm transition-colors border border-white/20"
-        >
-          <Save size={16} />
-          <span>Save to Master</span>
-        </button>
-        <button
-          onClick={handlePivot}
-          className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 px-3 py-1.5 rounded text-sm font-bold shadow-sm transition-colors"
-        >
-          <PieChart size={16} />
-          <span>Pivot & Graph</span>
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all hover:shadow-sm"
+          >
+            <Save size={16} />
+            <span>Save to Master</span>
+          </button>
+          <button
+            onClick={handlePivot}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all hover:shadow hover:ring-2 hover:ring-blue-100"
+          >
+            <PieChart size={16} />
+            <span>Pivot Analysis</span>
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
-      <div className="border-b bg-gray-50 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <label className="flex flex-col items-center cursor-pointer hover:bg-gray-100 px-3 py-2 rounded transition-colors group">
-            <Upload size={24} className="text-yellow-600 mb-1 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-medium text-gray-600">Import Excel</span>
+      <div className="border-b border-slate-200 bg-slate-50/50 px-4 py-2 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-white px-3 py-1.5 rounded-md border border-transparent hover:border-slate-200 transition-all group">
+            <Upload size={16} className="text-blue-600 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-bold text-slate-600">Import Excel</span>
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -277,15 +280,15 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
 
           <button
             onClick={downloadResult}
-            className="flex flex-col items-center hover:bg-gray-100 px-3 py-2 rounded transition-colors group"
+            className="flex items-center gap-2 cursor-pointer hover:bg-white px-3 py-1.5 rounded-md border border-transparent hover:border-slate-200 transition-all group"
           >
-            <Download size={24} className="text-gray-600 mb-1 group-hover:text-green-600 transition-colors" />
-            <span className="text-xs font-medium text-gray-600">Export Result</span>
+            <Download size={16} className="text-slate-500 group-hover:text-blue-600 transition-colors" />
+            <span className="text-xs font-bold text-slate-600">Export Result</span>
           </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-green-500/20">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20">
             <Filter size={16} className="text-gray-400" />
             <input
               type="text"
@@ -297,9 +300,9 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
             />
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-100">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-green-800">Ready</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-100">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-[10px] font-bold text-emerald-700 uppercase">System Ready</span>
           </div>
         </div>
       </div>
@@ -307,11 +310,11 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Column Selector */}
-        <div className="w-72 border-r bg-gray-50 overflow-y-auto custom-scrollbar">
-          <div className="p-4">
-            <div className="bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold mb-4 flex items-center gap-2 shadow-sm">
-              <Filter size={14} />
-              PIVOT SLICERS
+        <div className="w-64 border-r border-slate-200 bg-white overflow-y-auto custom-scrollbar flex flex-col">
+          <div className="p-3 border-b border-slate-100 bg-slate-50/50">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <Filter size={12} />
+              Active Slicers
             </div>
 
             {/* Base Columns */}
@@ -421,26 +424,26 @@ const ExcelDataProcessor: React.FC<BOMProps> = ({ onSaveToMaster, onPivotRequest
       </div>
 
       {/* Footer */}
-      <div className="bg-gradient-to-r from-green-700 to-green-600 px-4 py-2 text-white text-xs flex items-center justify-between shrink-0 shadow-lg z-20">
-        <div className="flex items-center gap-6">
-          <span className="flex items-center gap-2">
-            <Table size={14} className="text-green-300" />
-            Total: <strong className="text-white text-sm">{mergedData.length.toLocaleString()}</strong> rows
+      <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between shrink-0 text-[10px] font-medium text-slate-500">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <Table size={12} className="text-slate-400" />
+            Total: <strong className="text-slate-700">{mergedData.length.toLocaleString()}</strong>
           </span>
-          <span className="flex items-center gap-2">
-            <Filter size={14} className="text-green-300" />
-            Shown: <strong className="text-white text-sm">{displayData.length.toLocaleString()}</strong> rows
+          <span className="flex items-center gap-1.5">
+            <Filter size={12} className="text-slate-400" />
+            Shown: <strong className="text-slate-700">{displayData.length.toLocaleString()}</strong>
           </span>
           {files.length > 0 && (
-            <span className="bg-green-800/50 px-2 py-1 rounded">
+            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100">
               Files: <strong>{files.length}</strong>
             </span>
           )}
         </div>
         <div>
           {pivotColumn && (
-            <span className="flex items-center gap-2 text-yellow-200">
-              Pivot Column: <strong className="text-white">{pivotColumn}</strong>
+            <span className="flex items-center gap-1.5">
+              Pivot Key: <strong className="bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded border border-yellow-200">{pivotColumn}</strong>
             </span>
           )}
         </div>
