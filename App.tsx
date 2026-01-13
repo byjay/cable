@@ -21,6 +21,7 @@ import Settings from './components/Settings';
 import CableGroup from './components/CableGroup';
 import ImportPanel from './components/ImportPanel';
 import WDExtractionView from './components/WDExtractionView';
+import PivotAnalyzer from './components/PivotAnalyzer';
 import { SimpleModal } from './components/SimpleModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { TraySpecContent, CableBindingContent, EquipCodeContent, TerminalQtyContent } from './components/StaticContent';
@@ -88,7 +89,9 @@ const MENU_STRUCTURE: MenuGroup[] = [
         id: 'report', title: 'Report', items: [
             { label: "Cable Requirement", action: "Cable Requirement" },
             { label: "Node List", action: "Node List Report" },
+            { label: "Node List", action: "Node List Report" },
             { label: "Tray Analysis", action: "Tray Analysis" },
+            { label: "Data Analytics", action: "Analytics", restricted: false }, // New Item
             { label: "History", action: "History" }
         ]
     },
@@ -608,7 +611,9 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             case "Schedule": setCurrentView(MainView.SCHEDULE); break;
             case "Node List": setCurrentView(MainView.REPORT_NODE); break;
             case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
+            case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
             case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
+            case "Analytics": setCurrentView(MainView.ANALYTICS); break;
 
             case "Cable List": setCurrentView(MainView.SCHEDULE); break;
             case "3D Config": setCurrentView(MainView.THREE_D); break;
@@ -776,7 +781,8 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             case 'SETTINGS': return <Settings />;
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
-            case 'Node List': return <NodeListReport nodes={nodes} cables={cables} />; // Added Node List View
+            case 'Node List': return <NodeListReport nodes={nodes} cables={cables} />;
+            case MainView.ANALYTICS: return <PivotAnalyzer data={cables} />; // Added Analytics View
 
             default:
                 return <div className="p-10 text-center text-gray-400">View Not Implemented: {currentView}</div>;
