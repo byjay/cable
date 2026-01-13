@@ -2,139 +2,160 @@
 
 Enterprise-grade cable routing and management system for shipbuilding industry.
 
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Cloud Run (Backend API)                     │
+│            https://seastar-api-xxxxx.run.app                │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
+│  │   FastAPI   │    │  StorageService  │    │   Parsers   │     │
+│  └─────────────┘    └─────────────┘    └─────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+                              ↑
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Standalone     │  │  SDMS Embedded   │  │  Mobile (Future) │
+│  (Netlify CDN)  │  │   Sub-Module     │  │                 │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
 seastar-cable-manager/
-├── App.tsx                 # Main application with menu, routing logic, views
-├── types.ts                # TypeScript interfaces (Cable, Node, RouteResult)
-├── index.tsx               # React entry point
-├── index.html              # HTML template
-├── vite.config.ts          # Vite build configuration
+├── App.tsx                    # Main application (44KB)
+├── types.ts                   # TypeScript interfaces
+├── index.tsx / index.html     # Entry points
+├── vite.config.ts             # Vite build configuration
+├── netlify.toml               # Netlify deploy settings
+├── package.json               # Dependencies
 │
-├── components/
-│   ├── CableList.tsx       # Cable table with selection, routing, filtering
-│   ├── Dashboard.tsx       # Statistics dashboard with charts
-│   ├── ThreeScene.tsx      # 3D visualization with Three.js
-│   ├── TrayAnalysis.tsx    # Tray fill ratio analysis (40% warning)
-│   ├── NodeManager.tsx     # Node/junction management
-│   ├── CableTypeManager.tsx# Cable type specifications
-│   ├── CableRequirementReport.tsx  # BOM calculation report
-│   └── GenericGrid.tsx     # Generic data table view
+├── components/                # 25 React components
+│   ├── Dashboard.tsx          # Statistics & charts
+│   ├── CableList.tsx          # Cable table (34KB)
+│   ├── ThreeScene.tsx         # 3D visualization
+│   ├── TrayAnalysis.tsx       # Tray fill ratio (40% warning)
+│   ├── WDExtractionView.tsx   # PDF/Excel extraction
+│   ├── NodeManager.tsx        # Node/junction management
+│   └── ...
 │
-├── services/
-│   ├── excelService.ts     # Excel import/export (XLSX)
-│   ├── routingService.ts   # Dijkstra's shortest path algorithm
-│   └── mockData.ts         # Sample data for development
+├── backend/
+│   ├── Dockerfile             # Cloud Run container
+│   ├── requirements.txt       # Python dependencies (11개)
+│   └── app/
+│       ├── main.py            # FastAPI entry point
+│       └── services/
+│           ├── storage.py     # 🔒 GCS + Local dual storage
+│           ├── parser.py      # Cable schedule parser
+│           ├── universal_parser.py  # Universal format parser
+│           ├── cad_service.py # DXF/CAD processing
+│           └── manager.py     # Extraction manager
 │
-└── public/
-    └── data/               # Excel data files (35k_node.xlsx, 35k_sch.xlsx)
+├── .github/workflows/
+│   └── deploy-backend.yml     # CI/CD to Cloud Run
+│
+└── services/
+    ├── excelService.ts        # Excel import/export
+    └── routingService.ts      # Dijkstra routing
 ```
+
+---
+
+## 🚀 Deployment
+
+### Backend: Google Cloud Run
+```bash
+# 1. Enable APIs
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com
+
+# 2. Create storage bucket
+gcloud storage buckets create gs://seastar-cable-manager-storage-XXXXX --location=asia-northeast3
+
+# 3. Deploy
+cd backend
+gcloud run deploy seastar-api \
+  --source . \
+  --region asia-northeast3 \
+  --allow-unauthenticated \
+  --set-env-vars BUCKET_NAME=seastar-cable-manager-storage-XXXXX
+```
+
+### Frontend: Netlify
+```bash
+# Build and deploy
+npm run build
+# → dist/ folder deploys to Netlify automatically via Git push
+```
+
+### Environment Variables
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `https://seastar-api-xxxxx.run.app` |
+| `BUCKET_NAME` | GCS bucket (backend) | `seastar-cable-manager-storage-38003` |
+
+---
+
+## 🔒 Security Architecture
+
+```
+[Developer] --(Push Code)--> [GitHub] --(Deploy)--> [Cloud Run]
+                                                        ↑
+[User PC] ----(Upload File)-----------------------------/
+                                                        ↓
+                                            [Google Cloud Storage]
+                                            (Private Bucket, Encrypted)
+```
+
+- **GitHub**: Code only (도면 파일 없음)
+- **Cloud Run**: Compute only (휘발성 메모리)
+- **GCS Bucket**: Secure data storage (암호화, IAM 제한)
 
 ---
 
 ## 🎯 Core Features
 
-### 1. Dashboard (대시보드)
-- **Total Cables**: 전체 케이블 수
-- **Total Length**: 전체 케이블 길이 (km)
-- **Routed Cables**: 라우팅 완료 비율 (%)
-- **Charts**: System별 분포, Top 10 긴 케이블, 노드 연결 통계
-
-### 2. Cable List (케이블 목록)
-| 기능 | 설명 |
-|------|------|
-| Route All | 모든 케이블 경로 자동 계산 |
-| Route Selected | 선택한 케이블만 계산 |
-| NO LENGTH Filter | 길이 없는 케이블 필터링 |
-| 3D View | 선택한 케이블 3D 시각화 |
-| Export | Excel 내보내기 |
-
-### 3. Tray Analysis (트레이 분석) ⚠️
-```
-충전율 공식:
-- Tray Capacity = Width × 60mm
-- Cable Area = π × (OD/2)²
-- Fill Ratio = (Total Cable Area / Tray Capacity) × 100%
-- ⚠️ 40% 초과 시 경고!
-```
-
-### 4. 3D Visualization (3D 보기)
-- **FROM Node**: 🟢 Green sphere
-- **TO Node**: 🔴 Red sphere
-- **Middle Nodes**: 🟡 Yellow cubes
-- **Route Path**: 💠 Cyan tube
-- **Labels**: Floating node names
-
-### 5. Data Persistence (데이터 저장)
-- ✅ Route All 완료 시 자동 저장 (localStorage)
-- ✅ 새로고침 후에도 데이터 유지
-- ✅ 변경 감지: fromNode/toNode/checkNode 변경 시 경로 리셋
+| Feature | Description |
+|---------|-------------|
+| **Dashboard** | 케이블 수, 총 길이, 라우팅 비율, 차트 |
+| **Cable List** | Route All, 3D View, Excel Export |
+| **Tray Analysis** | 충전율 계산 (40% 초과 경고) |
+| **3D Visualization** | Three.js 기반 경로 시각화 |
+| **Universal Parser** | 다양한 Excel 포맷 자동 인식 |
+| **CAD Designer** | DXF 파일 노드 네트워크 추출 |
+| **WD Extraction** | PDF/Excel 케이블 스케줄 파싱 |
 
 ---
 
-## 🖥️ Menu Structure
+## 🔧 Tech Stack
 
-```
-File           → Open Project, Save Project, Export, Exit
-Master         → Master Data, DB Update, Test (disabled)
-CableType      → Cable Type, Tray Spec, Cable Binding
-User           → User Mgmt, Switch Role, Log
-Ship           → Ship Select, Ship Definition, Deck Code, Equip Code
-Schedule       → Schedule, CableGroup
-Report         → Cable List, Node List, Cable Requirement, Tray Analysis, Cable Drum Inquiry
-Data Transfer  → Import, Export
-Option         → Settings, 3D Config
-```
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 19, Vite 6, TypeScript, Three.js, Recharts |
+| **Backend** | FastAPI, Uvicorn, Pydantic |
+| **Parsing** | pdfplumber, pandas, openpyxl, ezdxf |
+| **Storage** | Google Cloud Storage (Production), Local (Dev) |
+| **CI/CD** | GitHub Actions → Cloud Run |
+| **CDN** | Netlify |
 
 ---
 
-## 🗂️ Data Types
-
-### Cable Interface
-```typescript
-interface Cable {
-  id: string;           // Cable ID
-  name: string;         // CABLE_NAME
-  type: string;         // CABLE_TYPE
-  od: number;           // Outer Diameter (mm)
-  length: number;       // Calculated Length (m)
-  fromNode: string;     // FROM_NODE
-  toNode: string;       // TO_NODE
-  checkNode?: string;   // CHECK_NODE (waypoint)
-  fromRest?: number;    // FROM_REST margin
-  toRest?: number;      // TO_REST margin
-  calculatedPath?: string[];  // Route path nodes
-  calculatedLength?: number;  // Total routed length
-}
-```
-
-### Node Interface
-```typescript
-interface Node {
-  name: string;         // Node name
-  relation: string;     // Connected nodes (comma-separated)
-  linkLength: number;   // Edge weight for routing
-  x?: number;           // X coordinate
-  y?: number;           // Y coordinate
-  z?: number;           // Z coordinate (deck)
-  areaSize?: number;    // Tray width (mm)
-}
-```
-
----
-
-## 🚀 Quick Start
+## 📝 Quick Start
 
 ```bash
-# Install dependencies
+# Frontend
 npm install
+npm run dev          # http://localhost:5173
 
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
+# Backend
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload  # http://localhost:8000
 ```
 
 ---
@@ -149,21 +170,11 @@ Uses **Dijkstra's Shortest Path Algorithm**:
 
 ---
 
-## 🔧 Technologies
-
-- **React 18** + TypeScript
-- **Vite** - Build tool
-- **Three.js** - 3D visualization
-- **XLSX** - Excel import/export
-- **Tailwind CSS** - Styling
-- **Lucide Icons** - UI icons
-
----
-
 ## 📝 Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| V5.1 | 2024-12 | GCS Storage, Cloud Run Deploy, SDMS Integration |
 | V5.0 | 2024-12 | Full React rewrite, Tray Analysis, Data Persistence |
 | V4.0 | 2024-11 | 3D visualization, Dijkstra routing |
 | V3.0 | 2024-10 | Excel integration |

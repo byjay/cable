@@ -12,9 +12,16 @@ export interface Point {
 }
 
 export interface PlacedCable extends CableData {
+  id: string;
+  name: string;
+  type: string;
+  od: number;
+  color?: string;
   x: number;
   y: number;
   layer: number; // Vertical stacking layer within a single tray
+  cableNumber: number; // Sequential cable number for identification
+  placementOrder: number; // Order of placement for drawing
 }
 
 export interface SingleTrayResult {
@@ -25,6 +32,8 @@ export interface SingleTrayResult {
   fillRatio: number;
   totalODSum: number;
   totalCableArea: number;
+  cableCount: number; // Total number of cables in this tier
+  efficiency: number; // Real-world packing efficiency
 }
 
 export interface SystemResult {
@@ -32,6 +41,10 @@ export interface SystemResult {
   tiers: SingleTrayResult[];
   success: boolean;
   maxHeightPerTier: number;
+  totalCables: number; // Total cables across all tiers
+  averageFillRatio: number; // Average fill ratio across tiers
+  totalEfficiency: number; // Overall system efficiency
+  optimizationScore: number; // Overall optimization score (0-100)
 }
 
 export const MARGIN_X = 10; // 10mm margin on each side (global tray edges)

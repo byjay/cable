@@ -9,6 +9,6 @@
 # Redirect API calls to Cloud Run (optional proxy)
 [[redirects]]
   from = "/api/*"
-  to = "https://seastar-api-XXXXX.run.app/api/:splat"
+  to = "https://sdms-852813448686.asia-northeast3.run.app/api/:splat"
   status = 200
   force = true

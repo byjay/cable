@@ -1,4 +1,5 @@
 import { Node, RouteResult } from '../types';
+import { LevelMapService } from './levelMapService';
 
 interface Graph {
   [key: string]: { [neighbor: string]: number };
@@ -6,9 +7,11 @@ interface Graph {
 
 export class RoutingService {
   private graph: Graph = {};
+  private levelMapService: LevelMapService;
 
   constructor(nodes: Node[]) {
     this.buildGraph(nodes);
+    this.levelMapService = new LevelMapService(nodes);
   }
 
   private buildGraph(nodes: Node[]) {
@@ -35,14 +38,32 @@ export class RoutingService {
     });
   }
 
-  // Handle multiple waypoints: "Check1, Check2, Check3"
+  // Enhanced routing with level-aware navigation
   public findRoute(start: string, end: string, checkNodeStr?: string): RouteResult {
     const waypoints = checkNodeStr ? checkNodeStr.split(',').map(s => s.trim()).filter(s => s) : [];
 
     if (waypoints.length > 0) {
       return this.calculatePathWithWaypoints(start, end, waypoints);
     }
+    
+    // Try level-aware routing first
+    const levelRoute = this.levelMapService.findRoute(start, end);
+    if (levelRoute.distance >= 0 && levelRoute.path.length > 0) {
+      return levelRoute;
+    }
+    
+    // Fallback to original Dijkstra routing
     return this.dijkstra(start, end);
+  }
+
+  // Get level map visualization data
+  public getLevelMapData(): any {
+    return this.levelMapService.getLevelVisualizationData();
+  }
+
+  // Get navigation map for debugging
+  public getNavigationMap(): any {
+    return this.levelMapService.getNavigationMap();
   }
 
   private calculatePathWithWaypoints(start: string, end: string, waypoints: string[]): RouteResult {

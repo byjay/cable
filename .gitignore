@@ -5,3 +5,8 @@ dist
 ~$*
 *.tmp
 *.log
+__pycache__
+*.pyc
+.venv
+backend/cache_store
+backend/wd
