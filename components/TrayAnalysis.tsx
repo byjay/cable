@@ -185,6 +185,29 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         }, 10);
     };
 
+    // Quick fill function for each node
+    const handleQuickFill = (nodeData: NodeFillData) => {
+        const nodeCables = cables.filter(c => {
+            const hasId = nodeData.cables.includes(c.id);
+            const odValue = c.od || (c as any).CABLE_OUTDIA || 0;
+            return hasId && odValue > 0;
+        });
+
+        const cableData: CableData[] = nodeCables.map(c => ({
+            id: c.id,
+            name: c.name,
+            type: c.type,
+            od: c.od || (c as any).CABLE_OUTDIA || 10,
+            color: undefined
+        }));
+
+        if (cableData.length > 0) {
+            const solution = autoSolveSystem(cableData, maxHeightLimit, fillRatioLimit);
+            setSolverResult(solution);
+            setSelectedNode(nodeData);
+        }
+    };
+
     // Recalculate when parameters change
     useEffect(() => {
         if (selectedNode && solverData.length > 0) {
@@ -236,10 +259,50 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                     />
-                    <button className="bg-gray-200 hover:bg-gray-300 border border-gray-300 text-xs font-bold px-3 py-1 rounded text-gray-700">
-                        <Search size={12} />
-                    </button>
                 </div>
+
+                {/* Routing Toggle */}
+                <button
+                    className={`px-3 py-1 rounded text-xs font-bold border ${
+                        showRouting 
+                            ? 'bg-blue-500 text-white border-blue-500' 
+                            : 'bg-gray-200 text-gray-700 border-gray-300'
+                    }`}
+                    onClick={() => setShowRouting(!showRouting)}
+                >
+                    <Route size={12} className="inline mr-1" />
+                    {showRouting ? 'Hide Routing' : 'Show Routing'}
+                </button>
+
+                {/* Re-route All */}
+                {showRouting && (
+                    <button
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs font-bold border border-orange-500"
+                        onClick={() => {
+                            if (routingService) {
+                                const routes = cables.map(cable => {
+                                    if (cable.fromNode && cable.toNode) {
+                                        const route = routingService.findRoute(cable.fromNode, cable.toNode, routeWaypoints);
+                                        return {
+                                            cableId: cable.id,
+                                            cableName: cable.name,
+                                            fromNode: cable.fromNode,
+                                            toNode: cable.toNode,
+                                            path: route.path,
+                                            distance: route.distance,
+                                            error: route.error
+                                        };
+                                    }
+                                    return null;
+                                }).filter(Boolean);
+                                setAllRoutes(routes);
+                            }
+                        }}
+                    >
+                        <RefreshCw size={12} className="inline mr-1" />
+                        Re-route All
+                    </button>
+                )}
 
                 {/* FILL Controls */}
                 <div className="flex items-center gap-3 ml-auto">
@@ -333,6 +396,18 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                                 <div className="text-xs text-gray-400">
                                     Width: {item.trayWidth}mm
                                 </div>
+                                
+                                {/* Quick Fill Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleQuickFill(item);
+                                    }}
+                                    className="mt-2 px-2 py-1 bg-green-500 text-white rounded text-xs font-bold hover:bg-green-600"
+                                >
+                                    <Play size={10} className="inline mr-1" />
+                                    Quick Fill
+                                </button>
                             </div>
                         ))}
                     </div>
