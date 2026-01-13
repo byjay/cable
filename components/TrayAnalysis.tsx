@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
-import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, ChevronLeft, ChevronRight, Play, Settings2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, Route, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import TrayVisualizer from './TrayVisualizer';
-import { solveSystem, solveSystemAtWidth } from '../services/traySolver';
+import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolver';
+import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface TrayAnalysisProps {
     cables: Cable[];
