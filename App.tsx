@@ -75,35 +75,6 @@ const MENU_STRUCTURE: MenuGroup[] = [
         ]
     },
     {
-        id: 'master', title: 'Master', items: [
-            { label: "Master Data", action: "Master Data" },
-            { label: "DB Update", action: "DB Update", disabled: true },
-            { label: "Test", action: "Test", disabled: true }
-        ]
-    },
-    {
-        id: 'cabletype', title: 'CableType', items: [
-            { label: "Cable Type", action: "Cable Type" },
-            { label: "Tray Spec", action: "Tray Spec" },
-            { label: "Cable Binding", action: "Cable Binding" }
-        ]
-    },
-    {
-        id: 'user', title: 'User', items: [
-            { label: "User Mgmt", action: "User Mgmt" },
-            { label: "Switch User Role", action: "Switch Role" },
-            { label: "Log", action: "Log" }
-        ]
-    },
-    {
-        id: 'ship', title: 'Ship', items: [
-            { label: "Ship Select", action: "Ship Select", restricted: true },
-            { label: "Ship Definition", action: "Ship Definition" },
-            { label: "Deck Code", action: "Deck Code" },
-            { label: "Equip Code", action: "Equip Code" }
-        ]
-    },
-    {
         id: 'schedule', title: 'Schedule', items: [
             { label: "Cable List", action: "Schedule" },
             { label: "WD Extraction", action: "WD Extraction" },
@@ -116,14 +87,17 @@ const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'report', title: 'Report', items: [
             { label: "Cable Requirement", action: "Cable Requirement" },
+            { label: "Node List", action: "Node List Report" },
             { label: "Tray Analysis", action: "Tray Analysis" },
-            { label: "History Log", action: "History Log" }
+            { label: "History", action: "History" }
         ]
     },
     {
-        id: 'setting', title: 'Setting', items: [
-            { label: "Preference", action: "Preference" },
-            { label: "System Info", action: "System Info" }
+        id: 'tools', title: 'Tools', items: [
+            { label: "Settings", action: "Settings" },
+            { label: "User Mgmt", action: "User Mgmt" },
+            { label: "Switch User Role", action: "Switch Role" },
+            { label: "Log", action: "Log" }
         ]
     }
 ];
