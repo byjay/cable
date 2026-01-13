@@ -784,7 +784,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
 
     return (
         <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 font-sans overflow-hidden">
-            <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} />
+            {/* <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} /> */}
 
             <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
 
