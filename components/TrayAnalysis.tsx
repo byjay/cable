@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, Route, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import TrayVisualizerSimple from './TrayVisualizerSimple';
-import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolver';
+import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
+import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
 import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface TrayAnalysisProps {
@@ -421,7 +421,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                             <div className="h-[320px] flex border-b border-gray-300 bg-white">
                                 {/* Visualizer Area (70%) */}
                                 <div className="flex-1 border-r border-gray-200 relative">
-                                    <TrayVisualizerSimple systemResult={solverResult} />
+                                    <TrayVisualizerEnhanced systemResult={solverResult} fillRatioLimit={fillRatioLimit} />
                                     {/* Calculated Info Overlay */}
                                     <div className="absolute top-2 right-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none">
                                         W{solverResult.systemWidth} x H{maxHeightLimit} x {solverResult.tiers.length}단 | {selectedCables.length}개 (OD &gt; 0)
