@@ -49,9 +49,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
     if (step === 'LOGIN') {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-                {/* Background Effects */}
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498084393753-b411b2d26b34?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 filter blur-sm scale-110"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
+                {/* Video Background (Veo3 Integration Placeholder) */}
+                <div className="absolute inset-0 overflow-hidden">
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute w-full h-full object-cover opacity-60 scale-105"
+                    >
+                        <source src="/video/background.mp4" type="video/mp4" />
+                    </video>
+                </div>
+                {/* Gradient Overlay for Readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-slate-900/30"></div>
 
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/20 relative z-10 animate-in fade-in zoom-in duration-500">
                     <div className="text-center mb-8">
@@ -123,11 +134,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            <div className="max-w-4xl w-full">
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Shared Video Background */}
+            <div className="absolute inset-0 overflow-hidden">
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute w-full h-full object-cover opacity-40 scale-105"
+                >
+                    <source src="/video/background.mp4" type="video/mp4" />
+                </video>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-800/80"></div>
+
+            <div className="max-w-4xl w-full relative z-10">
                 <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h2 className="text-3xl font-black text-slate-900 mb-3">Select a Ship</h2>
-                    <p className="text-slate-500 text-lg">Choose a vessel to manage cable data</p>
+                    <h2 className="text-3xl font-black text-white mb-3">Select a Ship</h2>
+                    <p className="text-blue-200 text-lg">Choose a vessel to manage cable data</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -136,23 +161,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                             key={ship}
                             onClick={() => handleShipSelect(ship)}
                             className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left hover:shadow-xl ${selectedShip === ship
-                                    ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-500/20 scale-[1.02]'
-                                    : 'border-white bg-white hover:border-blue-300 hover:scale-[1.02]'
+                                ? 'border-blue-500 bg-blue-900/40 ring-4 ring-blue-500/20 scale-[1.02] backdrop-blur-md'
+                                : 'border-white/10 bg-white/5 hover:border-blue-400/50 hover:bg-white/10 hover:scale-[1.02] backdrop-blur-sm'
                                 } animate-in fade-in slide-in-from-bottom-8 duration-700`}
                             style={{ animationDelay: `${idx * 100}ms` }}
                         >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${selectedShip === ship ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${selectedShip === ship ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 group-hover:bg-blue-500 group-hover:text-white'
                                 }`}>
                                 <Ship size={24} />
                             </div>
-                            <h3 className={`font-bold text-lg mb-1 transition-colors ${selectedShip === ship ? 'text-blue-700' : 'text-slate-700'
+                            <h3 className={`font-bold text-lg mb-1 transition-colors ${selectedShip === ship ? 'text-blue-300' : 'text-slate-200'
                                 }`}>
                                 {ship}
                             </h3>
                             <p className="text-xs text-slate-400 font-medium">Cable Management System</p>
 
                             {selectedShip === ship && (
-                                <div className="absolute top-4 right-4 text-blue-600 animate-in zoom-in">
+                                <div className="absolute top-4 right-4 text-blue-400 animate-in zoom-in">
                                     <ShieldCheck size={20} />
                                 </div>
                             )}
@@ -167,8 +192,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                         className={`
                             flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl
                             ${selectedShip
-                                ? 'bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 active:scale-95 shadow-slate-900/30'
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30 hover:scale-105 active:scale-95'
+                                : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
                             }
                         `}
                     >
