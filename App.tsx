@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database
+    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database, Eye, CheckCircle
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeSceneUltra';
@@ -13,7 +13,6 @@ import TrayAnalysis from './components/TrayAnalysis';
 import DashboardView from './components/DashboardView';
 import NodeListReport from './components/NodeListReport';
 import DrumScheduleReport from './components/DrumScheduleReport';
-import UserManagement from './components/UserManagement';
 import ShipDefinition from './components/ShipDefinition';
 import MasterData from './components/MasterData';
 import HistoryViewer from './components/HistoryViewer';
@@ -32,9 +31,16 @@ import { HistoryService } from './services/historyService';
 import { Cable, Node, MainView, DeckConfig, GenericRow, CableType } from './types';
 import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
-import LoginPanel from './components/LoginPanel';
-import { AuthService } from './services/authService';
 import InstallationStatusView from './components/InstallationStatusView';
+
+// Auth & Admin Integration
+import LandingPage from './components/LandingPage';
+import { CableAuthProvider, useCableAuth } from './contexts/CableAuthContext';
+import CableUserManagement from './components/admin/CableUserManagement';
+import CableAdminConsole from './components/admin/CableAdminConsole';
+import CablePermissionEditor from './components/admin/CablePermissionEditor';
+import PermissionGuard from './components/PermissionGuard';
+import ColumnMapperModal from './components/ColumnMapperModal';
 
 // Default Deck Heights
 const DEFAULT_DECK_CONFIG: DeckConfig = {
@@ -60,6 +66,8 @@ interface MenuItem {
     action: string;
     disabled?: boolean;
     restricted?: boolean;
+    view?: string; // Directly map to view
+    role?: string[]; // Allowed roles
 }
 
 interface MenuGroup {
@@ -94,16 +102,18 @@ const MENU_STRUCTURE: MenuGroup[] = [
             { label: "Cable Requirement", action: "Cable Requirement" },
             { label: "Node List", action: "Node List Report" },
             { label: "Tray Analysis", action: "Tray Analysis" },
+            { label: "Installation Status", action: "Install Status", view: MainView.INSTALL_STATUS },
             { label: "Data Analytics", action: "Analytics", restricted: false },
             { label: "History", action: "History" }
         ]
     },
     {
-        id: 'tools', title: 'Tools', items: [
-            { label: "Settings", action: "Settings" },
-            { label: "User Mgmt", action: "User Mgmt" },
-            { label: "Switch User Role", action: "Switch Role" },
-            { label: "Log", action: "Log" }
+        id: 'admin', title: 'Admin', items: [
+            { label: "👥 User Management", action: "User Mgmt", view: MainView.USER_MGMT, restricted: true },
+            { label: "🔐 Permissions", action: "Permissions", view: MainView.PERMISSIONS, restricted: true },
+            { label: "⚙️ System Console", action: "Admin Console", view: MainView.ADMIN_CONSOLE },
+            { label: "🛠️ Settings", action: "Settings" },
+            { label: "📜 Audit Log", action: "Log" }
         ]
     }
 ];
@@ -114,9 +124,15 @@ export interface AppProps {
     integrationMode?: boolean; // If true, disable conflicting global styles or routing
 }
 
-const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => {
+// Inner Main App Component (Authenticated)
+const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => {
+    const { user, isSuperAdmin, logout } = useCableAuth();
+
+    // Auth context wrapper handles missing user, but check just in case
+    if (!user) return null;
+
     // Version Control
-    const DATA_VERSION = "2026-01-14 14:26:00";
+    const DATA_VERSION = "2026-01-14 15:30:00";
 
     // Enforce "R" or "S" Ship Type Constraint for SDMS Integration
     // If strict integration is required, we can block access here.
@@ -143,7 +159,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         if (currentVersion !== DATA_VERSION) {
             console.log(`Detected version change: ${currentVersion} -> ${DATA_VERSION}. Clearing data...`);
 
-            // Clear all SEASTAR related data
+            // Clear all SEASTAR related data (Keep Auth Data!)
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith('SEASTAR_')) {
                     localStorage.removeItem(key);
@@ -154,31 +170,9 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 localStorage.setItem('app_data_version', DATA_VERSION);
             } catch (e) {
                 console.error("Critical Error: Failed to save version info. LocalStorage might be full.", e);
-                // Last resort: clear everything to release space
-                localStorage.clear();
             }
         }
     }, []);
-
-    // Sync Initial Ship ID
-    useEffect(() => {
-        if (initialShipId) {
-            console.log("Integration Mode: Locking to Project", initialShipId);
-            // We rely on useProjectData initializing correctly or taking this effect
-            // Ideally useProjectData should accept initialId too, but setting shipId here works 
-            // because hooks run after effect
-        }
-    }, [initialShipId]);
-
-    // DEV BYPASS: Default to ADMIN for testing
-    const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser() || {
-        id: 'test-admin',
-        username: 'Test Admin',
-        role: 'ADMIN',
-        assignedShips: ['ALL'],
-        password: '',
-        createdAt: new Date().toISOString()
-    } as any);
 
     const [currentView, setCurrentView] = useState<string>(MainView.DASHBOARD);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -199,16 +193,16 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     // Cable Selection State for 3D View Integration
     const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // Column Mapper State
+    const [showColumnMapper, setShowColumnMapper] = useState(false);
+    const [pendingFile, setPendingFile] = useState<{ file: File, type: 'cables' | 'nodes' } | null>(null);
+    const [pendingExcelData, setPendingExcelData] = useState<any[]>([]);
+    const [pendingExcelHeaders, setPendingExcelHeaders] = useState<string[]>([]);
 
-    // Effect: Sync currentUser (Modified for Dev Bypass)
-    useEffect(() => {
-        const user = AuthService.getCurrentUser();
-        // Only override if we really want to enforce auth. For dev bypass, we keep the initial state if user is null.
-        if (user) {
-            setCurrentUser(user);
-        }
-    }, []);
+    // Loading State for mapper
+    const [isParsingExcel, setIsParsingExcel] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // CUSTOM HOOKS
     // We pass initialShipId to hook if possible, or ensure setShipId is called fast enough
@@ -224,6 +218,22 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         availableShips
     } = useProjectData();
 
+    // Effect to check if user has access to current ship, otherwise default to first available
+    useEffect(() => {
+        if (!user.shipAccess) return;
+
+        const hasAccess = user.shipAccess.includes('*') || user.shipAccess.includes(shipId);
+        if (!hasAccess) {
+            // Find first accessible ship
+            if (user.shipAccess.length > 0) {
+                const first = user.shipAccess[0];
+                setShipId(first);
+            } else {
+                alert("You have no ship access assigned. Please contact administrator.");
+            }
+        }
+    }, [user, shipId]);
+
     // Force ship update from props if needed (and different)
     useEffect(() => {
         if (initialShipId && shipId !== initialShipId) {
@@ -231,47 +241,15 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         }
     }, [initialShipId, shipId]);
 
-    // Handler for Manual Data Load
-    const handleDataLoadRequest = () => {
-        setShowShipModal(true);
-    };
-
-    const executeDataLoad = async (targetShipId: string) => {
-        console.log("🚀 Executing Manual Data Load for:", targetShipId);
-        await loadProjectData(targetShipId);
-        setShowShipModal(false);
-    };
-
-
-    const handleLogin = () => {
-        const user = AuthService.getCurrentUser();
-        setCurrentUser(user);
-        // If user has specific ships, set one of them as default if current is not allowed
-        if (user && !AuthService.canAccessShip(user, shipId)) {
-            // Find first accessible ship
-            const firstShip = AVAILABLE_SHIPS.find(s => AuthService.canAccessShip(user, s.id));
-            if (firstShip) setShipId(firstShip.id);
-        }
-    };
-
     const handleLogout = () => {
-        AuthService.logout();
-        setCurrentUser(null);
+        logout();
         setCurrentView(MainView.DASHBOARD);
     };
-
-    // Filter Ships based on Role
-    const accessibleShips = AVAILABLE_SHIPS.filter(ship => AuthService.canAccessShip(currentUser, ship.id));
-
-    // Security Guard: If not logged in, show Login Panel
-    if (!currentUser) {
-        return <LoginPanel onLogin={handleLogin} />;
-    }
 
     // Save Data - Defined early to be passed to hooks
     const saveShipData = (overrideCables?: Cable[]) => {
         const targetCables = overrideCables || cables;
-        if (!AuthService.isAdmin(currentUser)) {
+        if (!isSuperAdmin && user.role !== 'MANAGER' && user.role !== 'ADMIN') {
             alert("Access Denied: You do not have permission to save data.");
             return;
         }
@@ -331,23 +309,112 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     }, [isDataLoading, shipId]);
 
     // Handlers
-    const handleImportExcel = async (type: 'cables' | 'nodes', file: File) => {
+
+    // File Upload Handler (Raw) -> Detects format -> Opens Mapper if needed
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsParsingExcel(true);
         setIsProcessing(true);
+
         try {
-            if (type === 'nodes') {
-                const rawNodes = await ExcelService.importFromExcel(file);
-                const processedNodes = ExcelService.mapRawToNode(rawNodes);
-                setNodes(processedNodes);
+            const rawData = await ExcelService.importFromExcel(file);
+            const headers = Object.keys(rawData[0] || {});
+            const fileType = ExcelService.detectFileType(headers);
+
+            console.log("Detected File Type:", fileType);
+
+            if (fileType === 'CABLE') {
+                // Determine if we need mapper (simplified check: if standard Cable format fits poorly)
+                // For now, ALWAYS show mapper for Cables to ensure quality as per instructions
+                setPendingExcelData(rawData);
+                setPendingExcelHeaders(headers);
+                setPendingFile({ file, type: 'cables' });
+                setShowColumnMapper(true);
+            } else if (fileType === 'NODE') {
+                // For nodes, standard import is usually safer, but could use mapper too.
+                // Let's stick to standard for now unless requested
+                const mappedNodes = ExcelService.mapRawToNode(rawData);
+                setNodes(mappedNodes);
+                const dataToSave = { cables, nodes: mappedNodes, cableTypes, deckHeights };
+                localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
+                setCurrentView(MainView.REPORT_NODE);
+                alert(`Imported ${mappedNodes.length} Nodes successfully.`);
+            } else if (fileType === 'TYPE') {
+                setCableTypes(rawData as GenericRow[]);
+                const dataToSave = { cables, nodes, cableTypes: rawData, deckHeights };
+                localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
+                setCurrentView(MainView.CABLE_TYPE);
+                alert(`Imported ${rawData.length} Cable Types.`);
             } else {
-                const rawCables = await ExcelService.importFromExcel(file);
-                const processedCables = ExcelService.mapRawToCable(rawCables);
-                setCables(processedCables);
+                setGenericData(rawData as GenericRow[]);
+                setGenericTitle(`Data: ${file.name}`);
+                setCurrentView(MainView.GENERIC_GRID);
+                alert(`Imported ${rawData.length} records as Generic Data.`);
             }
         } catch (error) {
-            console.error("Import failed:", error);
-            alert("Import failed. See console for details.");
+            console.error(error);
+            alert("Failed to parse Excel file.");
+        } finally {
+            setIsParsingExcel(false);
+            setIsProcessing(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    // Callback from Column Mapper
+    const handleMapperConfirm = (transformedData: any[]) => {
+        setShowColumnMapper(false);
+        if (!pendingFile) return;
+
+        setIsProcessing(true);
+        try {
+            if (pendingFile.type === 'cables') {
+                const newCables = ExcelService.mapRawToCable(transformedData);
+
+                // Merge logic (copied from previous impl)
+                const oldCableMap = new Map<string, Cable>(cables.map(c => [c.name, c]));
+                let resetCount = 0;
+                let preservedCount = 0;
+
+                const mergedCables = newCables.map(newCable => {
+                    const oldCable = oldCableMap.get(newCable.name);
+                    if (oldCable) {
+                        const nodeChanged =
+                            oldCable.fromNode !== newCable.fromNode ||
+                            oldCable.toNode !== newCable.toNode;
+
+                        if (nodeChanged) {
+                            resetCount++;
+                            return { ...newCable, calculatedPath: undefined, calculatedLength: undefined, length: 0, path: '' };
+                        }
+                        preservedCount++;
+                        return {
+                            ...newCable,
+                            calculatedPath: oldCable.calculatedPath,
+                            calculatedLength: oldCable.calculatedLength,
+                            length: oldCable.length || newCable.length,
+                            path: oldCable.path || newCable.path
+                        };
+                    }
+                    return newCable;
+                });
+
+                setCables(mergedCables);
+                const dataToSave = { cables: mergedCables, nodes, cableTypes, deckHeights };
+                localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
+                setCurrentView(MainView.SCHEDULE);
+
+                alert(`Successfully imported ${mergedCables.length} cables using custom mapping!`);
+                if (resetCount > 0) handleAutoRouting();
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error applying mapped data.");
         } finally {
             setIsProcessing(false);
+            setPendingFile(null);
         }
     };
 
@@ -425,126 +492,6 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         }
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsProcessing(true);
-        setTimeout(async () => {
-            try {
-                const rawData = await ExcelService.importFromExcel(file);
-                const headers = Object.keys(rawData[0] || {});
-                const fileType = ExcelService.detectFileType(headers);
-
-                if (fileType === 'CABLE') {
-                    const newCables = ExcelService.mapRawToCable(rawData);
-
-                    // Change Detection: Compare with existing cables
-                    const oldCableMap = new Map<string, Cable>(cables.map(c => [c.name, c]));
-                    let resetCount = 0;
-                    let preservedCount = 0;
-
-                    const mergedCables = newCables.map(newCable => {
-                        const oldCable = oldCableMap.get(newCable.name);
-                        if (oldCable) {
-                            // Check if routing-related fields changed
-                            const nodeChanged =
-                                oldCable.fromNode !== newCable.fromNode ||
-                                oldCable.toNode !== newCable.toNode ||
-                                oldCable.checkNode !== newCable.checkNode;
-
-                            if (nodeChanged) {
-                                // Reset route/length data for changed cables
-                                resetCount++;
-                                return {
-                                    ...newCable,
-                                    calculatedPath: undefined,
-                                    calculatedLength: undefined,
-                                    length: 0,
-                                    path: ''
-                                };
-                            }
-                            // Preserve existing route data for unchanged cables
-                            preservedCount++;
-                            return {
-                                ...newCable,
-                                calculatedPath: oldCable.calculatedPath,
-                                calculatedLength: oldCable.calculatedLength,
-                                length: oldCable.length || newCable.length,
-                                path: oldCable.path || newCable.path
-                            };
-                        }
-                        return newCable; // New cable, no previous data
-                    });
-
-                    setCables(mergedCables);
-                    // PERSIST TO SHIP DATA
-                    const dataToSave = { cables: mergedCables, nodes, cableTypes, deckHeights };
-                    localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
-                    setCurrentView(MainView.SCHEDULE);
-
-                    // Show detailed import message
-                    let msg = `Imported ${mergedCables.length} Cables.`;
-                    if (resetCount > 0) {
-                        msg += `\n⚠️ ${resetCount} cable(s) had node changes - route data RESET!`;
-                    }
-                    if (preservedCount > 0) {
-                        msg += `\n✅ ${preservedCount} cable(s) route data preserved.`;
-                    }
-
-                    // Trigger auto-routing for new/reset cables
-                    if (resetCount > 0 || newCables.length > cables.length) {
-                        alert(`${msg}\n\nStarting automatic route calculation for ${mergedCables.length} cables...`);
-                        // Use a timeout to allow state to update
-                        setTimeout(() => {
-                            // We need to pass the NEW mergedCables directly because state might not be updated yet in this closure
-                            // But handleAutoRouting uses hook state... wait, handleAutoRouting calls originalHandleAutoRouting which uses hook state 'cables'
-                            // Hook state 'cables' is updated via setCables(mergedCables).
-                            // This might be tricky.
-                            // Better: call calculateAllRoutes with argument if supported, or rely on effect?
-                            // Hook supports nothing?
-                            // Actually, let's trust React state update slightly or force it.
-                            handleAutoRouting();
-                        }, 500);
-                    } else {
-                        alert(msg);
-                    }
-                    const missingLength = mergedCables.filter(c => !c.length || c.length === 0).length;
-                    if (missingLength > 0) {
-                        msg += `\n⚠️ ${missingLength} cable(s) have NO length calculated!`;
-                    }
-                    alert(msg);
-                } else if (fileType === 'NODE') {
-                    const mappedNodes = ExcelService.mapRawToNode(rawData);
-                    setNodes(mappedNodes);
-                    // PERSIST TO SHIP DATA
-                    const dataToSave = { cables, nodes: mappedNodes, cableTypes, deckHeights };
-                    localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
-                    setCurrentView(MainView.REPORT_NODE);
-                    alert(`Imported ${mappedNodes.length} Nodes successfully. Graph Updated and saved to Ship DB.`);
-                } else if (fileType === 'TYPE') {
-                    setCableTypes(rawData as GenericRow[]);
-                    // PERSIST TO SHIP DATA
-                    const dataToSave = { cables, nodes, cableTypes: rawData, deckHeights };
-                    localStorage.setItem(`SEASTAR_DATA_${shipId}`, JSON.stringify(dataToSave));
-                    setCurrentView(MainView.CABLE_TYPE);
-                    alert(`Imported ${rawData.length} Cable Types and saved.`);
-                } else {
-                    setGenericData(rawData as GenericRow[]);
-                    setGenericTitle(`Data: ${file.name}`);
-                    setCurrentView(MainView.GENERIC_GRID);
-                    alert(`Imported ${rawData.length} records as Generic Data.`);
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Failed to import Excel file. Please check the file format.");
-            } finally {
-                setIsProcessing(false);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-            }
-        }, 500);
-    };
-
     const handleExport = () => {
         setIsProcessing(true);
         setTimeout(() => {
@@ -598,61 +545,36 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         }, 500);
     };
 
-    const handleMenuAction = (action: string) => {
+    const handleMenuAction = (item: MenuItem) => {
         setActiveMenu(null);
-        switch (action) {
-            case "Open Project": triggerFileUpload(); break;
-            case "Save Project": saveShipData(); break;
-            case "Export": handleExport(); break;
-            case "Exit":
-                if (integrationMode) {
-                    alert("Cannot exit module in integration mode.");
-                    return;
-                }
-                if (confirm("Reload Application?")) window.location.reload();
-                break;
-            case "Switch Role":
-                alert("Please Logout and Login as a different user.");
-                break;
-            case "DB Update": alert("DB Update functionality not yet implemented."); break;
-            case "Test": alert("Test functionality not yet implemented."); break;
-            case "Cable Type": setCurrentView(MainView.CABLE_TYPE); break;
-            case "Ship Select":
-                if (initialShipId) {
-                    alert("Ship selection is locked to the current project.");
-                    return;
-                }
-                if (AuthService.isAdmin(currentUser)) setShowShipModal(true);
-                else alert("Access Denied.");
-                break;
-            case "Deck Code": setShowDeckModal(true); break;
+        if (item.action === "Open Project") {
+            triggerFileUpload();
+            return;
+        }
+        if (item.action === "Save Project") { saveShipData(); return; }
+        if (item.action === "Export") { handleExport(); return; }
+        if (item.action === "Exit") {
+            if (integrationMode) { alert("Cannot exit module in integration mode."); return; }
+            logout();
+            return;
+        }
+        if (item.view) {
+            setCurrentView(item.view);
+            return;
+        }
+
+        switch (item.action) {
+            // Legacy actions mapping
+            case "Load Data": setShowShipModal(true); break;
             case "Schedule": setCurrentView(MainView.SCHEDULE); break;
-            case "Node List Report": setCurrentView(MainView.REPORT_NODE); break;
+            case "Node List": setCurrentView(MainView.REPORT_NODE); break;
             case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
             case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
             case "Analytics": setCurrentView(MainView.ANALYTICS); break;
-
-            case "Cable List": setCurrentView(MainView.SCHEDULE); break;
-            case "3D Config": setCurrentView(MainView.THREE_D); break;
-            case "Master Data": setCurrentView('MASTER_DATA'); break;
-            case "User Mgmt": setCurrentView('USER_MGMT'); break;
-            case "Ship Definition": setCurrentView('SHIP_DEF'); break;
-            case "Cable Drum Inquiry": setCurrentView('DRUM_SCHEDULE'); break;
-            case "Log": setCurrentView('HISTORY'); break;
+            case "History": setCurrentView('HISTORY'); break;
             case "Settings": setCurrentView('SETTINGS'); break;
-            case "CableGroup": setCurrentView('CABLE_GROUP'); break;
-            case "WD Extraction":
-                setCurrentView(MainView.WD_EXTRACTION);
-                break;
-            case "Import": setCurrentView('IMPORT'); break;
-
-            // Simple Modals
-            case "Tray Spec": setActiveModal('TRAY_SPEC'); break;
-            case "Cable Binding": setActiveModal('CABLE_BINDING'); break;
-            case "Equip Code": setActiveModal('EQUIP_CODE'); break;
-            case "Terminal Qty": setActiveModal('TERMINAL_QTY'); break;
-
-            default: console.log("Action not implemented:", action);
+            // Add other logical mappings if view not explicitly set
+            default: console.log("Action fallthrough:", item.action);
         }
     };
 
@@ -663,20 +585,23 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    // Helper: Filter Menu Items based on Integration Mode
-    const getFilteredMenuItems = (items: MenuItem[]) => {
-        return items.filter(item => {
-            // Hide "Exit" in integration mode
+    const MenuDropdown: React.FC<{ group: MenuGroup }> = ({ group }) => {
+        // Filter items based on permission
+        const visibleItems = group.items.filter(item => {
+            // 1. Integration Check
             if (integrationMode && item.action === 'Exit') return false;
-            // Hide "Ship Select" if ship is locked via props
-            if (initialShipId && item.action === 'Ship Select') return false;
+            // 2. Restricted Check
+            if (item.restricted && !isSuperAdmin) return false;
+            // 3. Admin View Check
+            if (item.view === MainView.USER_MGMT && !isSuperAdmin) return false;
+            if (item.view === MainView.PERMISSIONS && !isSuperAdmin) return false;
+            // 4. Role Check (future extensibility)
+            if (item.role && !item.role.includes(user.role)) return false;
+
             return true;
         });
-    };
 
-    const MenuDropdown: React.FC<{ group: MenuGroup }> = ({ group }) => {
-        const visibleItems = getFilteredMenuItems(group.items);
-        if (visibleItems.length === 0) return null; // Don't show empty groups
+        if (visibleItems.length === 0) return null;
 
         return (
             <div className="relative" onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === group.id ? null : group.id); }}>
@@ -686,23 +611,21 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 {activeMenu === group.id && (
                     <div className="absolute top-full left-0 w-56 bg-seastar-800 border border-seastar-600 shadow-xl rounded-b-lg z-50 animate-in fade-in slide-in-from-top-2 duration-100">
                         {visibleItems.map((item, idx) => (
-                            !item.restricted || AuthService.isAdmin(currentUser) ? (
-                                <div
-                                    key={idx}
-                                    className={`px-4 py-2 text-xs border-b border-seastar-700/50 last:border-0 
-                                ${item.disabled
-                                            ? 'text-gray-600 cursor-not-allowed'
-                                            : 'text-gray-300 hover:bg-seastar-cyan hover:text-seastar-900 cursor-pointer'
-                                        }`}
-                                    onClick={(e) => {
-                                        if (!item.disabled) handleMenuAction(item.action);
-                                        e.stopPropagation();
-                                    }}
-                                >
-                                    {item.label}
-                                    {item.restricted && <Lock size={10} className="inline ml-2 text-yellow-500" />}
-                                </div>
-                            ) : null
+                            <div
+                                key={idx}
+                                className={`px-4 py-2 text-xs border-b border-seastar-700/50 last:border-0 
+                            ${item.disabled
+                                        ? 'text-gray-600 cursor-not-allowed'
+                                        : 'text-gray-300 hover:bg-seastar-cyan hover:text-seastar-900 cursor-pointer'
+                                    }`}
+                                onClick={(e) => {
+                                    if (!item.disabled) handleMenuAction(item);
+                                    e.stopPropagation();
+                                }}
+                            >
+                                {item.label}
+                                {item.restricted && <Lock size={10} className="inline ml-2 text-yellow-500" />}
+                            </div>
                         ))}
                     </div>
                 )}
@@ -776,6 +699,8 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 return <CableRequirementReport cables={cables} onExport={handleExport} onCreatePOS={handleExport} />;
             case MainView.TRAY_ANALYSIS:
                 return <TrayAnalysis cables={cables} nodes={nodes} />;
+            case MainView.INSTALL_STATUS:
+                return <InstallationStatusView cables={cables} />;
             case MainView.THREE_D:
                 return (
                     <ThreeScene
@@ -798,200 +723,184 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 }} />;
 
             // New Menu Views
-            case 'MASTER_DATA': return <MasterData />;
-            case 'USER_MGMT': return <UserManagement />;
-            case 'SHIP_DEF': return <ShipDefinition />;
-            case 'DRUM_SCHEDULE': return <DrumScheduleReport cables={cables} />;
-            case 'HISTORY': return <HistoryViewer history={HistoryService.getHistory()} />;
-            case 'SETTINGS': return <Settings />;
-            case 'CABLE_GROUP': return <CableGroup cables={cables} />;
-            case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
-            case MainView.REPORT_NODE: return <NodeListReport nodes={nodes} cables={cables} />;
-            case MainView.INSTALL_STATUS: return <InstallationStatusView cables={cables} />;
-            case MainView.ANALYTICS: return <PivotAnalyzer data={cables} />;
+            case MainView.USER_MGMT:
+                return <PermissionGuard requireSuperAdmin><CableUserManagement /></PermissionGuard>;
+            case MainView.PERMISSIONS:
+                return <PermissionGuard requireSuperAdmin><CablePermissionEditor /></PermissionGuard>;
+            case MainView.ADMIN_CONSOLE:
+                return <PermissionGuard><CableAdminConsole /></PermissionGuard>;
+            case 'HISTORY':
+                return <HistoryViewer onRestore={(snapshot) => {
+                    // Restore logic
+                    alert("Snapshot restore functionality coming soon.");
+                }} />;
+            case 'SETTINGS':
+                return <Settings deckHeights={deckHeights} updateDeckHeight={updateDeckHeight} />;
 
             default:
-                return <div className="p-10 text-center text-gray-400">View Not Implemented: {currentView}</div>;
+                return (
+                    <div className="flex items-center justify-center h-full text-gray-400 flex-col">
+                        <Monitor size={64} className="mb-4 text-gray-600" />
+                        <h2 className="text-xl font-semibold">Welcome to Cable Manager</h2>
+                        <p>Select an option from the menu enabled for your role ({user.role})</p>
+                    </div>
+                );
         }
     };
 
     return (
-        <div className="flex flex-col h-screen text-gray-100 font-sans overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
-            {/* <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} /> */}
-
-            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} title="Upload Excel Data" />
-
-            {/* Simple Modals */}
-            {activeModal && (
-                <SimpleModal
-                    title={activeModal.replace('_', ' ')}
-                    onClose={() => setActiveModal(null)}
-                >
-                    {activeModal === 'TRAY_SPEC' && <TraySpecContent />}
-                    {activeModal === 'CABLE_BINDING' && <CableBindingContent />}
-                    {activeModal === 'EQUIP_CODE' && <EquipCodeContent />}
-                    {activeModal === 'TERMINAL_QTY' && <TerminalQtyContent />}
-                </SimpleModal>
-            )}
-
-            {/* HEADER */}
-            <div className="h-10 bg-seastar-800 border-b border-seastar-600 flex items-center justify-between px-4 shadow-md z-20 select-none">
-                <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-seastar-neon to-blue-600 rounded flex items-center justify-center shadow-neon">
-                        <Terminal size={14} className="text-white" />
-                    </div>
-                    <span className="font-bold text-lg tracking-tight">
-                        <span className="text-white">SEASTAR</span>
-                        <span className="text-seastar-cyan">CMS</span>
-                    </span>
-                    <span className="text-[10px] text-gray-500 ml-1 border border-gray-600 px-1 rounded">v{DATA_VERSION}</span>
-
-                </div>
-
-                <div className="flex items-center gap-1">
-                    <button
-                        className={`px-3 py-1 text-sm hover:bg-seastar-700 rounded flex items-center gap-1 ${currentView === MainView.DASHBOARD ? 'bg-seastar-700 text-seastar-neon font-bold' : 'text-gray-300'}`}
-                        onClick={() => setCurrentView(MainView.DASHBOARD)}
-                    >
-                        <Home size={12} /> Dashboard
-                    </button>
-
-                    <div className="h-4 w-px bg-seastar-700 mx-1"></div>
-
-                    {MENU_STRUCTURE.map(group => <MenuDropdown key={group.id} group={group} />)}
-
-                    <div className="h-4 w-px bg-seastar-700 mx-2"></div>
-                    <button onClick={triggerFileUpload} className="p-1 hover:text-seastar-neon" title="Open Excel"><Upload size={16} /></button>
-                    <button onClick={handleExport} className="p-1 hover:text-seastar-neon" title="Export Excel"><FileSpreadsheet size={16} /></button>
-
-                    <button
-                        className={`ml-4 px-3 py-1 text-xs font-bold rounded border ${currentView === MainView.THREE_D ? 'bg-seastar-pink text-seastar-900 border-seastar-pink' : 'border-seastar-700 text-seastar-pink hover:bg-seastar-800'}`}
-                        onClick={() => setCurrentView(currentView === MainView.THREE_D ? MainView.SCHEDULE : MainView.THREE_D)}
-                    >
-                        {currentView === MainView.THREE_D ? "BACK TO GRID" : "3D VIEW"}
-                    </button>
-                </div>
-            </div>
-
-            {/* MAIN WORKSPACE */}
-            <main className="flex-1 flex flex-col overflow-hidden bg-seastar-900 relative">
-                <div className="flex-1 p-2 overflow-hidden flex flex-col">
-                    {renderContent()}
-                </div>
-            </main>
-
-            {/* STATUS BAR */}
-            <div className="h-6 bg-seastar-800 border-t border-seastar-700 flex items-center px-4 text-[10px] text-gray-400 select-none justify-between">
-                <div className="flex items-center gap-6">
-                    <span className="flex items-center gap-1 text-seastar-cyan font-bold">
-                        <Terminal size={10} /> Developer: designsir@seastargo.com
-                    </span>
-                    <span className="flex items-center gap-1 cursor-pointer hover:text-white" onClick={handleLogout} title="Click to Logout">
-                        <User size={10} /> User: <span className={currentUser.role === 'ADMIN' ? 'text-yellow-400 font-bold' : 'text-gray-400'}>
-                            {currentUser.username} ({currentUser.role})
-                        </span>
-                        <span className="text-[9px] text-red-400 ml-1 border border-red-900 px-1 rounded hover:bg-red-900/50">LOGOUT</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <Ship size={10} /> Ship: <span className="text-yellow-400 font-mono">{shipId}</span>
-                        {!AuthService.canAccessShip(currentUser, shipId) && <span className="text-red-500 font-bold ml-1">(ACCESS DENIED)</span>}
-                    </span>
-                    <span>Cables: <span className="text-white">{cables.length}</span></span>
-                </div>
+        <div className="flex flex-col h-screen bg-gray-50 text-gray-900 font-sans overflow-hidden">
+            {/* Header */}
+            <div className="bg-seastar-900 text-white shadow-md z-30 flex-none h-12 flex items-center justify-between px-4 border-b border-seastar-700">
                 <div className="flex items-center gap-4">
-                    {isLoading && (
-                        <span className="flex items-center gap-1 text-yellow-400 animate-pulse font-bold">
-                            <Loader2 size={10} className="animate-spin" /> PROCESSING...
-                        </span>
+                    <div className="font-bold text-lg tracking-tight flex items-center gap-2 text-seastar-cyan">
+                        <Wifi size={20} className="text-seastar-cyan animate-pulse-slow" />
+                        SEASTAR <span className="text-gray-400 font-light text-sm">Cable Manager 2.0</span>
+                    </div>
+
+                    {/* Ship Selector in Header */}
+                    <div className="flex items-center bg-seastar-800 rounded px-2 py-0.5 border border-seastar-600">
+                        <Ship size={14} className="text-seastar-cyan mr-2" />
+                        <span className="text-xs text-gray-300 mr-2">Project:</span>
+                        <select
+                            value={shipId}
+                            onChange={(e) => {
+                                // Check access
+                                if (user.shipAccess?.includes('*') || user.shipAccess?.includes(e.target.value)) {
+                                    setShipId(e.target.value);
+                                } else {
+                                    alert("Access Denied for this ship.");
+                                }
+                            }}
+                            className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"
+                        >
+                            {availableShips.map(ship => (
+                                <option key={ship.id} value={ship.id} className="bg-seastar-900 text-white">
+                                    {ship.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Role Badge */}
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${user.role === 'SUPER_ADMIN' ? 'bg-purple-900 border-purple-500 text-purple-200' :
+                            user.role === 'ADMIN' ? 'bg-red-900 border-red-500 text-red-200' :
+                                'bg-blue-900 border-blue-500 text-blue-200'
+                        }`}>
+                        {user.role}
+                    </span>
+                </div>
+
+                {/* Menus */}
+                <div className="flex items-center gap-1">
+                    {MENU_STRUCTURE.map(group => (
+                        <MenuDropdown key={group.id} group={group} />
+                    ))}
+                </div>
+
+                {/* Right Side Status */}
+                <div className="flex items-center gap-4">
+                    {isRouting && (
+                        <div className="flex items-center gap-2 text-xs bg-seastar-800 px-3 py-1 rounded-full animate-pulse border border-yellow-500/30">
+                            <Activity size={14} className="text-yellow-400" />
+                            <span className="text-yellow-200 font-mono">
+                                Routing: {routingProgress.total > 0 ? `${Math.round((routingProgress.current / routingProgress.total) * 100)}%` : 'Init...'}
+                            </span>
+                        </div>
                     )}
+
+                    <div className="text-xs text-gray-500 font-mono hidden md:block">
+                        Build: {DATA_VERSION}
+                    </div>
+
+                    {/* Profile/Logout */}
+                    <div className="flex items-center gap-2 border-l border-seastar-700 pl-4 ml-2">
+                        <div className="text-right hidden lg:block">
+                            <div className="text-xs font-bold text-white">{user.name}</div>
+                            <div className="text-[10px] text-gray-400">{user.email}</div>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            title="Sign Out"
+                            className="p-1.5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded transition-colors"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* SHIP SELECTION MODAL */}
-            {showShipModal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-[500px] p-6 animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-4 border-b border-seastar-700 pb-2">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Ship size={18} className="text-seastar-neon" /> Select Vessel
-                            </h3>
-                            <button onClick={() => setShowShipModal(false)} className="text-gray-400 hover:text-white" title="Close Vessel Selection"><X size={18} /></button>
-                        </div>
-                        <div className="grid gap-2 mb-6">
-                            {accessibleShips.map(ship => (
-                                <button
-                                    key={ship.id}
-                                    className={`flex items-center justify-between p-4 rounded border text-left transition-all
-                                ${shipId === ship.id
-                                            ? 'bg-seastar-700 border-seastar-neon shadow-[0_0_10px_rgba(0,243,255,0.2)]'
-                                            : 'bg-seastar-900 border-seastar-700 hover:bg-seastar-700/50 hover:border-gray-500'}`}
-                                    onClick={() => {
-                                        setShipId(ship.id);
-                                        setShowShipModal(false);
-                                    }}
-                                >
-                                    <div>
-                                        <div className={`font-bold ${shipId === ship.id ? 'text-seastar-neon' : 'text-white'}`}>{ship.id}</div>
-                                        <div className="text-xs text-gray-400">{ship.name}</div>
-                                    </div>
-                                    {shipId === ship.id && <div className="text-seastar-neon text-xs font-bold">ACTIVE</div>}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="text-xs text-gray-500 text-center">
-                            Switching ships will load the corresponding dataset from the database.
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-hidden relative">
+                {renderContent()}
 
-            {/* DECK MODAL */}
-            {showDeckModal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-[400px] p-6 animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-4 border-b border-seastar-700 pb-2">
-                            <h3 className="text-lg font-bold text-white">Deck Configuration (Elevation)</h3>
-                            <button onClick={() => setShowDeckModal(false)} className="text-gray-400 hover:text-white" title="Close Deck Configuration"><X size={18} /></button>
-                        </div>
-                        <div className="space-y-2">
-                            {Object.entries(deckHeights).map(([deck, height]) => (
-                                <div key={deck} className="flex items-center justify-between bg-seastar-900 p-2 rounded border border-seastar-700">
-                                    <span className="font-mono text-seastar-cyan">{deck}</span>
-                                    <input
-                                        type="number"
-                                        className="w-24 bg-black border border-gray-600 rounded px-2 py-1 text-right text-white"
-                                        value={height}
-                                        onChange={(e) => updateDeckHeight(deck, e.target.value)}
-                                        title={`Height for ${deck} deck`}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+                {/* Column Mapper Modal */}
+                {showColumnMapper && (
+                    <ColumnMapperModal
+                        excelHeaders={pendingExcelHeaders}
+                        excelData={pendingExcelData}
+                        onConfirm={handleMapperConfirm}
+                        onCancel={() => { setShowColumnMapper(false); setPendingFile(null); }}
+                    />
+                )}
+            </div>
 
-            {/* GLOBAL STATUS BAR (User Requested) */}
-            {(isRouting || isProcessing) && (
-                <div className="fixed bottom-0 left-0 right-0 z-[100] bg-seastar-900/95 border-t border-seastar-neon p-2 flex items-center justify-center space-x-4 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-5">
-                    <Loader2 className="w-5 h-5 text-seastar-neon animate-spin" />
-                    <div className="text-seastar-cyan font-bold font-mono tracking-wider">
-                        {isRouting
-                            ? `라우팅 처리 중... ${routingProgress}% (${Math.round(cables.length * routingProgress / 100)}/${cables.length})`
-                            : "시스템 처리 중... (SYSTEM PROCESSING)"}
-                    </div>
-                    <div className="h-2 w-48 bg-gray-700 rounded overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-200"
-                            style={{ width: isRouting ? `${routingProgress}%` : '0%' }}
-                        ></div>
-                    </div>
-                    <div className="text-seastar-neon font-bold font-mono text-lg">{routingProgress}%</div>
-                </div>
-            )}
+            {/* Hidden File Input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileChange}
+            />
 
-
+            {/* Global Overlays */}
+            {isLoading && <LoadingOverlay message={isProcessing ? "Processing Data..." : "Initializing..."} />}
+            {activeModal === 'TRAY_SPEC' && <SimpleModal title="Tray Specification" onClose={() => setActiveModal(null)}><TraySpecContent /></SimpleModal>}
+            {activeModal === 'CABLE_BINDING' && <SimpleModal title="Cable Binding Standard" onClose={() => setActiveModal(null)}><CableBindingContent /></SimpleModal>}
+            {activeModal === 'EQUIP_CODE' && <SimpleModal title="Equipment Code Table" onClose={() => setActiveModal(null)}><EquipCodeContent /></SimpleModal>}
+            {activeModal === 'TERMINAL_QTY' && <SimpleModal title="Terminal Quantity Standard" onClose={() => setActiveModal(null)}><TerminalQtyContent /></SimpleModal>}
         </div>
+    );
+};
+
+// Outer App Wrapper with Auth Provider
+const App: React.FC<AppProps> = (props) => {
+    return (
+        <CableAuthProvider>
+            <AuthWrapper {...props} />
+        </CableAuthProvider>
+    );
+};
+
+// Auth Logic Wrapper
+const AuthWrapper: React.FC<AppProps> = (props) => {
+    const { isAuthenticated, loading, user, setShipAccess } = useCableAuth();
+
+    // Loading State
+    if (loading) {
+        return (
+            <div className="h-screen w-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+                <div className="text-sm font-medium animate-pulse">Initializing Secure Environment...</div>
+            </div>
+        );
+    }
+
+    // Not Authenticated -> Show Landing Page
+    if (!isAuthenticated || !user) {
+        return <LandingPage onShipSelected={(shipId) => {
+            // Note: Landing page updates auth context login. 
+            // If we are here, user is meant to be logged out.
+            // Actually LandingPage handles login internally now.
+        }} />;
+    }
+
+    // Authenticated -> Show Main App
+    return (
+        <React.Suspense fallback={<LoadingOverlay message="Loading Module..." />}>
+            <MainApp {...props} />
+        </React.Suspense>
     );
 };
 
