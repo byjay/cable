@@ -15,6 +15,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
     const [routePath, setRoutePath] = useState<string[]>([]);
     const [autoRouted, setAutoRouted] = useState(false);
     const [isRouting, setIsRouting] = useState(false);
+    const [routingProgress, setRoutingProgress] = useState(0); // 0-100 percentage
 
     // Initialize Routing Service when nodes change
     useEffect(() => {
@@ -118,6 +119,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
     const calculateAllRoutes = useCallback(async () => {
         if (!routingService) return;
         setIsRouting(true);
+        setRoutingProgress(0);
 
         return new Promise<void>((resolve) => {
             // Use setTimeout to allow UI to update to loading state
@@ -156,6 +158,8 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                     }
 
                     processed = end;
+                    setRoutingProgress(Math.round((processed / total) * 100));
+
                     if (processed < total) {
                         // Schedule next chunk
                         setTimeout(processChunk, 10);
@@ -231,6 +235,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
         routingService,
         routePath, setRoutePath,
         isRouting,
+        routingProgress,
         calculateRoute,
         calculateAllRoutes,
         calculateSelectedRoutes,

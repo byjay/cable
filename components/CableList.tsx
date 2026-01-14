@@ -176,10 +176,8 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     };
 
     const handleRowClick = (e: React.MouseEvent, cable: Cable, index: number) => {
-        // 3D View Integration
-        if (onView3D) {
-            onView3D(cable);
-        }
+        // 3D View is triggered by the Eye icon button ONLY (not row click)
+        // This prevents accidental 3D navigation when selecting rows
 
         const id = cable.id;
         let newSet: Set<string>;
@@ -191,6 +189,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
             else newSet.add(id);
             setLastSelectedId(id);
         } else if (e.shiftKey && lastSelectedId) {
+
             // Range
             newSet = new Set(selectedIds); // Keep existing? No, usually shift click replaces except for range
             // Standard OS behavior: Shift+Click extends selection from anchor. 
