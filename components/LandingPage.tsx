@@ -166,9 +166,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                 </div>
 
                 {/* Footer Video Integration */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                    <CableNetworkBackground />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/50 z-10" />
+                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover opacity-40"
+                    >
+                        <source src="/video/login.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/80 z-10" />
                 </div>
 
                 {/* Footer Info */}

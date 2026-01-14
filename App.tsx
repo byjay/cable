@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database, Eye, CheckCircle
+    ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database, Eye, CheckCircle,
+    FolderOpen, FileDown, List, Network, Layers, Circle, MapPin, FileText, BarChart3, PieChart, ShieldCheck, Clock
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeSceneUltra';
@@ -37,6 +38,12 @@ import CablePermissionEditor from './components/admin/CablePermissionEditor';
 import PermissionGuard from './components/PermissionGuard';
 import ColumnMapperModal from './components/ColumnMapperModal';
 
+// [DEV] Orphaned Components Integration
+import PivotAnalyzer from './components/PivotAnalyzer';
+import DataVerification from './components/DataVerification';
+import NodeListReportLegacy from './components/NodeListReport'; // Renamed to avoid conflict with new NodeListReport
+import ThreeSceneEnhanced from './components/ThreeSceneFinal'; // Experimental 3D
+
 // Constants
 const AVAILABLE_SHIPS = [
     { id: "HK2401", name: "HK2401 - 35K Product Carrier" },
@@ -53,50 +60,61 @@ interface MenuItem {
     restricted?: boolean;
     view?: string;
     role?: string[];
+    icon?: React.ElementType; // Added icon property
 }
 
 interface MenuGroup {
     id: string;
     title: string;
     items: MenuItem[];
+    requiredRole?: string[]; // Added requiredRole property
 }
 
 const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'file', title: '파일 (File)', items: [
-            { label: "📂 데이터 불러오기 (엑셀)", action: "Load Data" },
-            { label: "프로젝트 열기", action: "Open Project" },
-            { label: "프로젝트 저장", action: "Save Project", restricted: true },
-            { label: "내보내기 (Export)", action: "Export" },
+            { label: "📂 데이터 불러오기 (엑셀)", action: "Load Data", icon: FolderOpen },
+            { label: "프로젝트 열기", action: "Open Project", icon: Database },
+            { label: "프로젝트 저장", action: "Save Project", restricted: true, icon: Save },
+            { label: "내보내기 (Export)", action: "Export", icon: FileDown },
             { label: "종료 (Exit)", action: "Exit" }
         ]
     },
     {
         id: 'schedule', title: '스케줄 (Schedule)', items: [
-            { label: "케이블 리스트 (Cable List)", action: "Schedule" },
-            { label: "결선 작업 (WD Extraction)", action: "WD Extraction" },
-            { label: "케이블 그룹 (Cable Group)", action: "CableGroup" },
-            { label: "드럼 스케줄 (Drum Schedule)", action: "Drum Schedule" },
-            { label: "노드 리스트 (Node List)", action: "Node List" },
-            { label: "가져오기 (Import)", action: "Import" }
+            { label: "케이블 리스트 (Cable List)", action: "Schedule", icon: List },
+            { label: "결선 작업 (WD Extraction)", action: "WD Extraction", icon: Network },
+            { label: "케이블 그룹 (Cable Group)", action: "CableGroup", icon: Layers },
+            { label: "드럼 스케줄 (Drum Schedule)", action: "Drum Schedule", icon: Circle },
+            { label: "노드 리스트 (Node List)", action: "Node List", icon: MapPin },
+            { label: "가져오기 (Import)", action: "Import", icon: Upload }
         ]
     },
     {
         id: 'report', title: '레포트 (Report)', items: [
-            { label: "물량 산출서 (BOM)", action: "Cable Req" },
-            { label: "트레이 용량 분석", action: "Tray Analysis" },
-            { label: "📈 설치 현황판", action: "Installation Status", view: MainView.INSTALL_STATUS },
-            { label: "3D 시각화", action: "3D View" },
-            { label: "마스터 데이터", action: "Master Data" }
+            { label: "물량 산출서 (BOM)", action: "Cable Req", icon: FileText },
+            { label: "트레이 용량 분석", action: "Tray Analysis", icon: BarChart3 },
+            { label: "📈 설치 현황판", action: "Installation Status", view: MainView.INSTALL_STATUS, icon: Activity },
+            { label: "3D 시각화", action: "3D View", icon: Box },
+            { label: "마스터 데이터", action: "Master Data", icon: SettingsIcon }
         ]
     },
     {
-        id: 'admin', title: '관리자 (Admin)', items: [
-            { label: "사용자 관리", action: "User Mgmt", view: MainView.USER_MGMT, restricted: true },
-            { label: "권한 설정", action: "Permissions", view: MainView.PERMISSIONS, restricted: true },
-            { label: "시스템 콘솔", action: "Admin Console", view: MainView.ADMIN_CONSOLE },
-            { label: "설정", action: "Settings" },
-            { label: "감사 로그 (Audit List)", action: "Log" }
+        id: 'admin', title: '관리자 (Admin)', requiredRole: ['SUPER_ADMIN'], items: [
+            { label: "사용자 관리", action: "User Mgmt", view: MainView.USER_MGMT, restricted: true, icon: User },
+            { label: "권한 설정", action: "Permissions", view: MainView.PERMISSIONS, restricted: true, icon: Lock },
+            { label: "시스템 콘솔", action: "Admin Console", view: MainView.ADMIN_CONSOLE, icon: Terminal },
+            { label: "설정", action: "Settings", icon: SettingsIcon },
+            { label: "감사 로그 (Audit List)", action: "Log", icon: Eye }
+        ]
+    },
+    {
+        id: 'dev', title: '개발자 도구 (Dev Tools)', requiredRole: ['SUPER_ADMIN', 'ADMIN'], items: [
+            { label: "피벗 분석", action: "Dev_Pivot", icon: PieChart },
+            { label: "데이터 무결성", action: "Dev_DataHealth", icon: ShieldCheck },
+            { label: "히스토리 로그", action: "Dev_History", icon: Clock },
+            { label: "Legacy 노드 리스트", action: "Dev_NodeListLegacy", icon: FileText },
+            { label: "3D 레벨 맵 (Exp)", action: "Dev_3DLevel", icon: Box }
         ]
     }
 ];
@@ -228,6 +246,22 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
             case "Analytics": setCurrentView(MainView.ANALYTICS); break;
             case "Settings": setCurrentView('SETTINGS'); break;
+
+            // [FIX] 5-Point Restoration
+            case "3D View": setCurrentView(MainView.THREE_D); break;
+            case "Master Data": setCurrentView(MainView.CABLE_TYPE); break;
+            case "CableGroup": setCurrentView('CABLE_GROUP'); break;
+            case "Drum Schedule": setCurrentView('DRUM_SCHEDULE'); break;
+            case "WD Extraction": setCurrentView(MainView.WD_EXTRACTION); break;
+            case "Import": fileInputRef.current?.click(); break;
+
+            // [DEV] Tools
+            case "Dev_DataHealth": setCurrentView('DEV_DATA_HEALTH'); break;
+            case "Dev_Pivot": setCurrentView('DEV_PIVOT'); break;
+            case "Dev_History": setCurrentView('HISTORY'); break; // Already mapped
+            case "Dev_NodeListLegacy": setCurrentView('DEV_NODE_LEGACY'); break;
+            case "Dev_3DLevel": setCurrentView('DEV_3D_LEVEL'); break;
+
             default: break;
         }
     };
@@ -319,8 +353,19 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             case MainView.USER_MGMT: return <PermissionGuard requireSuperAdmin><CableUserManagement /></PermissionGuard>;
             case MainView.PERMISSIONS: return <PermissionGuard requireSuperAdmin><CablePermissionEditor /></PermissionGuard>;
             case MainView.ADMIN_CONSOLE: return <PermissionGuard><CableAdminConsole /></PermissionGuard>;
-            case 'HISTORY': return <HistoryViewer onRestore={() => { }} />;
+            case 'HISTORY': return <HistoryViewer projectId={shipId} onRestore={(c, n, t) => { setCables(c); setNodes(n); setCableTypes(t); saveData(c, n, t, deckHeights); alert("Restored!"); }} />;
             case 'SETTINGS': return <Settings deckHeights={deckHeights} updateDeckHeight={(d, v) => setDeckHeights(prev => ({ ...prev, [d]: parseFloat(v) || 0 }))} />;
+
+            // [FIX] 5-Point Integration
+            case 'CABLE_GROUP': return <CableGroup cables={cables} />;
+            case 'DRUM_SCHEDULE': return <DrumScheduleReport cables={cables} />;
+
+            // [DEV] Tools
+            case 'DEV_DATA_HEALTH': return <DataVerification cables={cables} nodes={nodes} />;
+            case 'DEV_PIVOT': return <PivotAnalyzer data={cables} title="Cable Data Pivot" />;
+            case 'DEV_NODE_LEGACY': return <NodeListReport nodes={nodes} cables={cables} />;
+            case 'DEV_3D_LEVEL': return <ThreeSceneEnhanced nodes={nodes} deckHeights={deckHeights} showLevelMap={true} />;
+
             default: return <div>Select View</div>;
         }
     };

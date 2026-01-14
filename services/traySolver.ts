@@ -1,14 +1,59 @@
+import { Cable, Node } from '../types';
 
-import { CableData, PlacedCable, Point, SingleTrayResult, SystemResult, MARGIN_X, MAX_PILE_WIDTH, PILE_GAP } from '../types';
+// Defines structure for Tray Visualization logic
+export interface TrayCableData extends Cable {
+    // Enhancing standard Cable with fields needed for tray calc if missing
+    od: number; // Diameter
+    displayIndex?: number;
+    x?: number;
+    y?: number;
+    layer?: number;
+}
 
-// OD >= 20mm must be on Layer 1 only (large cables cannot stack)
-const LARGE_CABLE_THRESHOLD = 20;
+export interface PlacedCable extends TrayCableData {
+    x: number;
+    y: number;
+    layer: number; // Vertical stacking layer within a single tray
+}
 
-// Target fill rate for optimization
-const TARGET_FILL_RATE = 50;
+export interface SingleTrayResult {
+    tierIndex: number;
+    width: number; // Required width for this specific tier
+    cables: PlacedCable[];
+    success: boolean;
+    fillRatio: number;
+    totalODSum: number;
+    totalCableArea: number;
+    maxStackHeight: number; // Actual height of the cable pile
+}
 
-// If fill rate is below this and 1 layer fits, don't force multi-layer
-const LOW_FILL_THRESHOLD = 35;
+export interface SystemResult {
+    systemWidth: number; // The max width among all tiers
+    tiers: SingleTrayResult[];
+    success: boolean;
+    maxHeightPerTier: number;
+    optimizationMatrix?: MatrixCell[][]; // Optional matrix for visualization
+}
+
+export interface MatrixCell {
+    tiers: number;
+    width: number;
+    area: number;
+    fillRatio: number;
+    success: boolean; // Physically fits
+    isOptimal: boolean; // Meets fill ratio limit
+}
+
+export interface Point {
+    x: number;
+    y: number;
+}
+
+export const MARGIN_X = 10; // 10mm margin on each side (global tray edges)
+const MIN_WIDTH = 100;
+const MAX_WIDTH = 1000;
+const WIDTH_STEP = 100; // 100mm 단위
+const PHYSICAL_SIM_HEIGHT_LIMIT = 500; // Simulation allows stacking up to 500mm regardless of user setting (Soft Limit)
 
 const dist = (p1: Point, p2: Point): number => {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
@@ -24,386 +69,249 @@ const checkCollision = (cables: PlacedCable[], x: number, y: number, r: number):
     return false;
 };
 
-// Check if cable is physically supported (touches floor OR sits on another cable)
-const isPhysicallySupported = (placed: PlacedCable[], x: number, y: number, r: number): boolean => {
-    // If touching floor (y = r means center at radius, bottom at 0)
-    if (y <= r + 0.5) return true;
-
-    // Must be resting on at least one cable below
-    // A cable is "resting on" another if they are tangent (touching)
+const isSupported = (placed: PlacedCable[], x: number, y: number, r: number): boolean => {
+    if (y <= r + 1.0) return true; // Floor
     for (const c of placed) {
+        if (c.y >= y) continue;
         const d = dist({ x, y }, { x: c.x, y: c.y });
-        const touchDist = r + c.od / 2;
-        // If distance equals touch distance (within tolerance) and new cable is above
-        if (Math.abs(d - touchDist) < 1.0 && y > c.y) {
-            return true;
+        if (d <= (c.od / 2 + r) + 1.0) {
+            if (Math.abs(c.x - x) < (c.od / 2 + r) * 0.9) return true;
         }
     }
     return false;
 };
 
-const checkOverhang = (placed: PlacedCable[], x: number, y: number, r: number): boolean => {
-    return !isPhysicallySupported(placed, x, y, r);
-};
-
-const getTangentPoints = (c1: PlacedCable, c2: PlacedCable, r: number): Point[] => {
-    const r1 = c1.od / 2 + r;
-    const r2 = c2.od / 2 + r;
-    const d = dist({ x: c1.x, y: c1.y }, { x: c2.x, y: c2.y });
-    if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return [];
-    const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
-    const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
-    const x2 = c1.x + (a * (c2.x - c1.x)) / d;
-    const y2 = c1.y + (a * (c2.y - c1.y)) / d;
-    return [
-        { x: x2 + (h * (c2.y - c1.y)) / d, y: y2 - (h * (c2.x - c1.x)) / d },
-        { x: x2 - (h * (c2.y - c1.y)) / d, y: y2 + (h * (c2.x - c1.x)) / d },
-    ];
-};
-
 const determineLayer = (y: number, r: number, placed: PlacedCable[], x: number): number => {
-    if (y <= r + 0.5) return 1;
+    if (y <= r + 2.0) return 1;
     const below = placed.filter(c => Math.abs(c.x - x) < (c.od / 2 + r) && c.y < y);
     if (below.length === 0) return 1;
     return Math.max(...below.map(c => c.layer)) + 1;
 };
 
-// Find position with priority for stacking (prefer higher layers for small cables)
-const findDensePositionWithStacking = (
-    cable: CableData,
+// 중력 기반 위치 찾기 (높이 제한을 엄격하게 적용하지 않고 물리적으로 가능한 위치 탐색)
+const findGravityPosition = (
+    cable: TrayCableData,
     placed: PlacedCable[],
     xMin: number,
-    xMax: number,
-    maxHeightLimit: number,
-    maxLayersAllowed: number,
-    preferStacking: boolean // If true, prefer higher layers
+    xMax: number
 ): { point: Point, layer: number } | null => {
     const r = cable.od / 2;
-    const candidates: { p: Point, layer: number, score: number }[] = [];
+    const candidates: Point[] = [];
 
-    // Find the rightmost floor position
-    let lastFloorX = xMin - r;
-    const floorCables = placed.filter(c => c.y <= c.od / 2 + 0.5).sort((a, b) => b.x - a.x);
-    if (floorCables.length > 0) {
-        lastFloorX = floorCables[0].x + floorCables[0].od / 2;
-    } else {
-        lastFloorX = xMin;
-    }
+    candidates.push({ x: xMin + r, y: r });
 
-    // Floor position (layer 1)
-    candidates.push({ p: { x: lastFloorX + r, y: r }, layer: 1, score: preferStacking ? 100 : 1 });
-
-    // If stacking is allowed and cable is small enough
-    if (maxLayersAllowed > 1 && cable.od < LARGE_CABLE_THRESHOLD) {
-        // Find stacking positions on top of existing cables
-        for (let i = 0; i < placed.length; i++) {
-            // Position directly on top of a single cable
-            const topY = placed[i].y + placed[i].od / 2 + r;
-            if (topY + r <= maxHeightLimit) {
-                const layer = determineLayer(topY, r, placed, placed[i].x);
-                if (layer <= maxLayersAllowed) {
-                    candidates.push({
-                        p: { x: placed[i].x, y: topY },
-                        layer,
-                        score: preferStacking ? (layer * -10) : (layer * 10) // Prefer higher layers if preferStacking
-                    });
-                }
-            }
-
-            // Tangent positions between cables
-            const tPoints = getTangentPoints(placed[i], { ...placed[i], y: -placed[i].od / 2, od: placed[i].od, id: '', name: '', type: '', layer: 0, x: placed[i].x } as PlacedCable, r);
-            tPoints.forEach(tp => {
-                const layer = determineLayer(tp.y, r, placed, tp.x);
-                candidates.push({ p: tp, layer, score: preferStacking ? (layer * -10) : (layer * 10) });
-            });
-
-            for (let j = i + 1; j < placed.length; j++) {
-                const pts = getTangentPoints(placed[i], placed[j], r);
-                pts.forEach(tp => {
-                    const layer = determineLayer(tp.y, r, placed, tp.x);
-                    candidates.push({ p: tp, layer, score: preferStacking ? (layer * -10) : (layer * 10) });
-                });
-            }
+    for (const c of placed) {
+        candidates.push({ x: c.x + c.od / 2 + r + 0.1, y: r });
+        for (let angle = 15; angle <= 165; angle += 15) {
+            const rad = (angle * Math.PI) / 180;
+            const tx = c.x + Math.cos(rad) * (c.od / 2 + r);
+            const ty = c.y + Math.sin(rad) * (c.od / 2 + r);
+            candidates.push({ x: tx, y: ty });
         }
     }
 
-    // Filter valid positions
-    const valid = candidates.filter(c => {
-        if (isNaN(c.p.x) || isNaN(c.p.y)) return false;
-        if (c.p.x - r < xMin - 0.1 || c.p.x + r > xMax + 0.1) return false;
-        if (c.p.y < r - 0.1 || c.p.y + r > maxHeightLimit + 0.1) return false;
-        if (c.layer > maxLayersAllowed) return false;
-        if (cable.od >= LARGE_CABLE_THRESHOLD && c.layer > 1) return false;
-        if (checkCollision(placed, c.p.x, c.p.y, r)) return false;
-        if (c.layer > 1 && checkOverhang(placed, c.p.x, c.p.y, r)) return false;
+    const validCandidates = candidates.filter(p => {
+        if (p.x - r < xMin - 0.5 || p.x + r > xMax + 0.5) return false;
+        if (p.y + r > PHYSICAL_SIM_HEIGHT_LIMIT) return false; // Hard physical limit (500mm)
+        if (checkCollision(placed, p.x, p.y, r)) return false;
+        if (!isSupported(placed, p.x, p.y, r)) return false;
         return true;
     });
 
-    if (valid.length === 0) return null;
+    if (validCandidates.length === 0) return null;
 
-    // Sort by score (lower is better when preferStacking)
-    if (preferStacking) {
-        valid.sort((a, b) => {
-            // Prefer higher layers first
-            if (a.layer !== b.layer) return b.layer - a.layer;
-            // Then left to right
-            return a.p.x - b.p.x;
-        });
-    } else {
-        valid.sort((a, b) => {
-            if (Math.abs(a.p.x - b.p.x) > 5) return a.p.x - b.p.x;
-            return a.p.y - b.p.y;
-        });
-    }
+    validCandidates.sort((a, b) => {
+        const yDiff = a.y - b.y;
+        if (Math.abs(yDiff) > 1.0) return yDiff;
+        return a.x - b.x;
+    });
 
-    return { point: valid[0].p, layer: valid[0].layer };
+    const best = validCandidates[0];
+    const layer = determineLayer(best.y, r, placed, best.x);
+
+    return { point: best, layer };
 };
 
-const getStandardTrayWidth = (w: number): number => {
-    if (w <= 0) return 100;
-    return Math.ceil(w / 100) * 100;
+// Custom Sort Function: System -> OD (Desc) -> From Node
+const customSortCables = (cables: TrayCableData[]): TrayCableData[] => {
+    return [...cables].sort((a, b) => {
+        // 1. System (Ascending)
+        const sysA = a.system || '';
+        const sysB = b.system || '';
+        if (sysA !== sysB) return sysA.localeCompare(sysB);
+
+        // 2. OD (Descending)
+        if (b.od !== a.od) return b.od - a.od;
+
+        // 3. Name (Ascending)
+        return (a.id || '').localeCompare(b.id || '');
+    });
 };
 
-// Try to place cables at a specific width, prioritizing 3-layer stacking for small cables
-const tryPlaceAtWidth = (
-    cables: CableData[],
-    width: number,
-    maxHeightLimit: number,
-    stackingLimit: number
-): { placed: PlacedCable[], success: boolean, fillRatio: number, totalArea: number } => {
-    const sortedCables = [...cables].sort((a, b) => b.od - a.od);
-    const totalArea = cables.reduce((acc, c) => acc + Math.PI * Math.pow(c.od / 2, 2), 0);
-
+function attemptFit(cables: TrayCableData[], width: number): { success: boolean, placed: PlacedCable[], maxStackHeight: number } {
+    // Use custom sort before packing
+    const sorted = customSortCables(cables);
     let placed: PlacedCable[] = [];
-    let allFit = true;
+    let maxStackHeight = 0;
 
-    // First pass: place large cables (OD >= 20mm) on layer 1
-    const largeCables = sortedCables.filter(c => c.od >= LARGE_CABLE_THRESHOLD);
-    const smallCables = sortedCables.filter(c => c.od < LARGE_CABLE_THRESHOLD);
-
-    // Place large cables first (they must be on layer 1)
-    for (const cable of largeCables) {
-        const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit, 1, false);
+    for (const cable of sorted) {
+        const res = findGravityPosition(cable, placed, MARGIN_X, width - MARGIN_X);
         if (res) {
             placed.push({ ...cable, x: res.point.x, y: res.point.y, layer: res.layer });
+            maxStackHeight = Math.max(maxStackHeight, res.point.y + cable.od / 2);
         } else {
-            allFit = false;
-            break;
+            return { success: false, placed, maxStackHeight };
         }
     }
+    return { success: true, placed, maxStackHeight };
+}
 
-    // Place small cables - floor first, then stack on top
-    if (allFit) {
-        for (const cable of smallCables) {
-            // Try floor first (preferStacking = false), then allow stacking
-            const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit, stackingLimit, false);
-            if (res) {
-                placed.push({ ...cable, x: res.point.x, y: res.point.y, layer: res.layer });
-            } else {
-                allFit = false;
-                break;
-            }
-        }
-    }
-
-    const fillRatio = (totalArea / (width * maxHeightLimit)) * 100;
-
-    return { placed, success: allFit, fillRatio, totalArea };
-};
+// ---- Public Solvers ----
 
 export const solveSingleTier = (
-    cables: CableData[],
+    cables: TrayCableData[],
     tierIndex: number,
     maxHeightLimit: number,
     targetFillRatioPercent: number,
-    stackingLimit: number
+    fixedWidth?: number
 ): SingleTrayResult => {
-    if (cables.length === 0) {
-        return { tierIndex, width: 100, cables: [], success: true, fillRatio: 0, totalODSum: 0, totalCableArea: 0 };
-    }
-
     const totalArea = cables.reduce((acc, c) => acc + Math.PI * Math.pow(c.od / 2, 2), 0);
+    const totalODSum = cables.reduce((a, c) => a + c.od, 0);
 
-    // Calculate minimum width based on area
-    const minOccupancyWidth = (totalArea / maxHeightLimit) * (100 / TARGET_FILL_RATE);
-    const startWidth = getStandardTrayWidth(Math.max(minOccupancyWidth, 100));
-
-    // Try multiple widths and find the one closest to 60% fill rate
-    let bestResult: { width: number, placed: PlacedCable[], fillRatio: number } | null = null;
-    let bestDiff = Infinity;
-
-    // Search range: up to 900mm (standard max width limit)
-    const MAX_WIDTH = 900;
-
-    for (let widthTry = startWidth; widthTry <= MAX_WIDTH; widthTry += 100) {
-
-        const result = tryPlaceAtWidth(cables, widthTry, maxHeightLimit, stackingLimit);
-
-        if (result.success) {
-            const diff = Math.abs(result.fillRatio - TARGET_FILL_RATE);
-
-            // If this is closer to 60%, use it
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                bestResult = { width: widthTry, placed: result.placed, fillRatio: result.fillRatio };
-            }
-
-            // If fill rate drops below 30%, stop searching (too big)
-            if (result.fillRatio < 30) {
-                break;
-            }
-        }
+    if (cables.length === 0) {
+        return { tierIndex, width: 100, cables: [], success: true, fillRatio: 0, totalODSum: 0, totalCableArea: 0, maxStackHeight: 0 };
     }
 
-    // If no result found, try again without restrictions (just find FIRST that fits)
-    if (!bestResult) {
-        for (let widthTry = 100; widthTry <= MAX_WIDTH; widthTry += 100) {
-            const result = tryPlaceAtWidth(cables, widthTry, maxHeightLimit, stackingLimit);
-            if (result.success) {
-                bestResult = { width: widthTry, placed: result.placed, fillRatio: result.fillRatio };
-                break;
-            }
-        }
-    }
-
-    if (!bestResult) {
+    // 1. 고정 폭 시뮬레이션
+    if (fixedWidth) {
+        const res = attemptFit(cables, fixedWidth);
+        const fill = (totalArea / (fixedWidth * maxHeightLimit)) * 100;
         return {
-            tierIndex,
-            width: MAX_WIDTH,
-            cables: [],
-            success: false,
-            fillRatio: 0,
-            totalODSum: cables.reduce((a, c) => a + c.od, 0),
-            totalCableArea: totalArea
+            tierIndex, width: fixedWidth, cables: res.placed,
+            success: res.success, fillRatio: fill, totalODSum, totalCableArea: totalArea, maxStackHeight: res.maxStackHeight
         };
     }
 
-    // Special case: if fill < 35% and we can fit in 1 layer, recalculate with 1 layer only
-    if (bestResult.fillRatio < LOW_FILL_THRESHOLD) {
-        const singleLayerResult = tryPlaceAtWidth(cables, bestResult.width, maxHeightLimit, 1);
-        if (singleLayerResult.success) {
-            bestResult.placed = singleLayerResult.placed;
+    // 2. 자동 최적화
+    const minTheoreticalWidth = (totalArea * 100) / (maxHeightLimit * targetFillRatioPercent);
+    const startWidth = Math.max(MIN_WIDTH, Math.ceil(minTheoreticalWidth / WIDTH_STEP) * WIDTH_STEP);
+
+    for (let w = startWidth; w <= MAX_WIDTH; w += WIDTH_STEP) {
+        const trayArea = w * maxHeightLimit;
+        const fill = (totalArea / trayArea) * 100;
+
+        const res = attemptFit(cables, w);
+
+        if (res.success) {
+            return {
+                tierIndex, width: w, cables: res.placed, success: true,
+                fillRatio: fill, totalODSum, totalCableArea: totalArea, maxStackHeight: res.maxStackHeight
+            };
         }
     }
 
+    // 실패 시 최대 폭
+    const failRes = attemptFit(cables, MAX_WIDTH);
     return {
-        tierIndex,
-        width: bestResult.width,
-        cables: bestResult.placed,
-        success: true,
-        fillRatio: bestResult.fillRatio,
-        totalODSum: cables.reduce((a, c) => a + c.od, 0),
-        totalCableArea: totalArea
+        tierIndex, width: MAX_WIDTH, cables: failRes.placed,
+        success: failRes.success && failRes.placed.length === cables.length,
+        fillRatio: (totalArea / (MAX_WIDTH * maxHeightLimit)) * 100,
+        totalODSum, totalCableArea: totalArea, maxStackHeight: failRes.maxStackHeight
     };
 };
 
-function solveSingleTierAtFixedWidth(cables: CableData[], tierIndex: number, width: number, maxHeightLimit: number, stackingLimit: number): SingleTrayResult {
-    // Enforce max width of 900mm
-    const clampedWidth = Math.min(width, 900);
-    const result = tryPlaceAtWidth(cables, clampedWidth, maxHeightLimit, stackingLimit);
+export const calculateOptimizationMatrix = (
+    allCables: TrayCableData[],
+    maxHeight: number,
+    targetFill: number
+): MatrixCell[][] => {
+    const widths = [200, 300, 400, 500, 600, 700, 800, 900];
+    const tierCounts = [1, 2, 3, 4, 5, 6];
+    const matrix: MatrixCell[][] = [];
 
+    const totalCableArea = allCables.reduce((acc, c) => acc + Math.PI * Math.pow(c.od / 2, 2), 0);
 
-    return {
-        tierIndex,
-        width,
-        cables: result.placed,
-        success: result.success,
-        fillRatio: result.fillRatio,
-        totalODSum: cables.reduce((a, c) => a + c.od, 0),
-        totalCableArea: result.totalArea
-    };
-}
+    // Prepare sorted buckets for matrix calculation to be consistent
+    const sortedAll = customSortCables(allCables);
 
+    for (const t of tierCounts) {
+        const row: MatrixCell[] = [];
+        const tierBuckets: TrayCableData[][] = Array.from({ length: t }, () => []);
 
-// --- MAIN ENTRY POINT ---
-// Auto-calculates optimal tiers (1-9) if maxTiers not strictly fixed? 
-// Original code took numberOfTiers as input. We can implement a function that finds optimal tiers if needed.
-// For now, we replicate solveSystem from original file.
+        // Distribution strategy: Round Robin
+        sortedAll.forEach((c, i) => tierBuckets[i % t].push(c));
+
+        // Find worst case tier to check validity
+        const worstTierCables = tierBuckets.reduce((prev, curr) =>
+            curr.reduce((a, c) => a + c.od, 0) > prev.reduce((a, c) => a + c.od, 0) ? curr : prev
+        );
+
+        for (const w of widths) {
+            const area = w * maxHeight * t;
+            const systemFill = (totalCableArea / area) * 100;
+
+            const res = attemptFit(worstTierCables, w);
+
+            const isOptimal = systemFill <= targetFill && res.success;
+
+            row.push({
+                tiers: t,
+                width: w,
+                area: area,
+                fillRatio: systemFill,
+                success: res.success,
+                isOptimal
+            });
+        }
+        matrix.push(row);
+    }
+    return matrix;
+};
 
 export const solveSystem = (
-    allCables: CableData[],
+    allCables: TrayCableData[],
     numberOfTiers: number,
     maxHeightLimit: number,
     targetFillRatioPercent: number
 ): SystemResult => {
-    const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
-    const sorted = [...allCables].sort((a, b) => b.od - a.od);
+    const tierBuckets: TrayCableData[][] = Array.from({ length: numberOfTiers }, () => []);
+    const sorted = customSortCables(allCables); // Apply Custom Sort
+    sorted.forEach((c, i) => tierBuckets[i % numberOfTiers].push(c));
 
-    // Distribute cables round-robin into tiers
-    sorted.forEach((c, i) => {
-        tierBuckets[i % numberOfTiers].push(c);
-    });
+    const tierResults = tierBuckets.map((bucket, idx) => solveSingleTier(bucket, idx, maxHeightLimit, targetFillRatioPercent));
+    const maxTrayWidth = Math.max(...tierResults.map(r => r.width));
 
-    // Solve each tier individually first to find required widths
-    const initialResults = tierBuckets.map((bucket, idx) =>
-        solveSingleTier(bucket, idx, maxHeightLimit, targetFillRatioPercent, 3)
-    );
-
-    // Find max width required by any tier
-    const maxTrayWidth = Math.max(...initialResults.map(r => r.width));
-
-    // Recalculate all tiers with the unified max width to ensure alignment
-    const finalTierResults = tierBuckets.map((bucket, idx) => {
-        return solveSingleTierAtFixedWidth(bucket, idx, maxTrayWidth, maxHeightLimit, 3);
-    });
+    const finalTierResults = tierBuckets.map((bucket, idx) => solveSingleTier(bucket, idx, maxHeightLimit, targetFillRatioPercent, maxTrayWidth));
+    const matrix = calculateOptimizationMatrix(allCables, maxHeightLimit, targetFillRatioPercent);
 
     return {
         systemWidth: maxTrayWidth,
         tiers: finalTierResults,
         success: finalTierResults.every(r => r.success),
-        maxHeightPerTier: maxHeightLimit
+        maxHeightPerTier: maxHeightLimit,
+        optimizationMatrix: matrix
     };
 };
 
-export const autoSolveSystem = (
-    allCables: CableData[],
-    maxHeightLimit: number,
-    targetFillRatioPercent: number = 60
-): SystemResult => {
-    // Try 1 tier, then 2, ... up to 9
-    // User preference: Find best fit within 900mm. 
-    // Usually implies minimizing tiers while satisfying Width <= 900.
-    for (let tiers = 1; tiers <= 9; tiers++) {
-        const result = solveSystem(allCables, tiers, maxHeightLimit, targetFillRatioPercent);
-
-        // If successful and width is within standard limit (900mm)
-        if (result.success && result.systemWidth <= 900) {
-            return result;
-        }
-    }
-    // Fallback: If nothing fits under 900mm, return the 9-tier solution (likely the narrowest)
-    return solveSystem(allCables, 9, maxHeightLimit, targetFillRatioPercent);
-};
-
-// Solve system with a fixed width (for manual width override)
 export const solveSystemAtWidth = (
-    allCables: CableData[],
+    allCables: TrayCableData[],
     numberOfTiers: number,
     width: number,
     maxHeightLimit: number,
     targetFillRatioPercent: number
 ): SystemResult => {
-    // Enforce max width of 900mm
-    const clampedWidth = Math.min(width, 900);
+    const tierBuckets: TrayCableData[][] = Array.from({ length: numberOfTiers }, () => []);
+    const sorted = customSortCables(allCables); // Apply Custom Sort
+    sorted.forEach((c, i) => tierBuckets[i % numberOfTiers].push(c));
 
-    const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
-    const sorted = [...allCables].sort((a, b) => b.od - a.od);
-
-    // Distribute cables round-robin into tiers
-    sorted.forEach((c, i) => {
-        tierBuckets[i % numberOfTiers].push(c);
-    });
-
-    // Solve each tier with the fixed width
-    const finalTierResults = tierBuckets.map((bucket, idx) => {
-        return solveSingleTierAtFixedWidth(bucket, idx, clampedWidth, maxHeightLimit, 3);
-    });
+    const finalTierResults = tierBuckets.map((bucket, idx) => solveSingleTier(bucket, idx, maxHeightLimit, targetFillRatioPercent, width));
+    const matrix = calculateOptimizationMatrix(allCables, maxHeightLimit, targetFillRatioPercent);
 
     return {
-        systemWidth: clampedWidth,
-
+        systemWidth: width,
         tiers: finalTierResults,
         success: finalTierResults.every(r => r.success),
-        maxHeightPerTier: maxHeightLimit
+        maxHeightPerTier: maxHeightLimit,
+        optimizationMatrix: matrix
     };
 };
