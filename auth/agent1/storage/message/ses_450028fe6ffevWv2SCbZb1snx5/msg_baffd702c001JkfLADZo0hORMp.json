@@ -1,0 +1,22 @@
+{
+  "id": "msg_baffd702c001JkfLADZo0hORMp",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "role": "user",
+  "time": {
+    "created": 1768184180789
+  },
+  "summary": {
+    "title": "SDMS backend diagnosis and security review findings",
+    "diffs": []
+  },
+  "agent": "general",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  },
+  "tools": {
+    "todowrite": false,
+    "todoread": false,
+    "task": false
+  }
+}

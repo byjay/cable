@@ -1,0 +1,17 @@
+{
+  "id": "prt_baffdd7ad001uxSCw6Gb3e7qLv",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffdd340001viXceu4eUM3Iju",
+  "type": "tool",
+  "callID": "chatcmpl-tool-5786c6a0d0cf4f5699a2a88d81fb08b8",
+  "tool": "read",
+  "state": {
+    "status": "running",
+    "input": {
+      "filePath": "/target/package.json"
+    },
+    "time": {
+      "start": 1768184207288
+    }
+  }
+}

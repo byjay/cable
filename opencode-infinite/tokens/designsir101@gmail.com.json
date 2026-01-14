@@ -1,0 +1,376 @@
+{
+    "telemetry.machineId": "c420e7841b3687bdc66e7d16962231dba6b02ab1c76ba16be35ab978562da8b9",
+    "telemetry.sqmId": "{573ED56E-BFF5-4F78-A488-EB3603D21B93}",
+    "telemetry.devDeviceId": "c9abf3b9-7ce3-4d9d-9838-66adcc889c0b",
+    "backupWorkspaces": {
+        "workspaces": [],
+        "folders": [
+            {
+                "folderUri": "file:///f%3A/genmini/japness/JAP_BONG_fam"
+            },
+            {
+                "folderUri": "file:///c%3A/Users/FREE/Desktop/seastar_new"
+            },
+            {
+                "folderUri": "file:///f%3A/genmini/sdms"
+            },
+            {
+                "folderUri": "file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8"
+            }
+        ],
+        "emptyWindows": [
+            {
+                "backupFolder": "1767946623529"
+            },
+            {
+                "backupFolder": "1768010782084"
+            },
+            {
+                "backupFolder": "1768016993121"
+            },
+            {
+                "backupFolder": "1768044717529"
+            },
+            {
+                "backupFolder": "1768045236894"
+            }
+        ]
+    },
+    "windowControlHeight": 35,
+    "profileAssociations": {
+        "workspaces": {
+            "file:///f%3A/genmini/mook%EA%B0%95%EC%A2%8C%20%EC%9E%90%EB%8F%99%EC%9E%AC%EC%83%9D/%EB%8F%99%EC%98%81%EC%83%81/%EC%99%84%EC%84%B1%EC%BD%94%EB%93%9C": "__default__profile__",
+            "file:///f%3A/genmini/SEASTAR": "__default__profile__",
+            "file:///f%3A/genmini/%ED%99%88%ED%8E%98%EC%9D%B4%EC%A7%80": "__default__profile__",
+            "file:///f%3A/%21%21%21%EC%A7%84%ED%96%89%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%9C%A0%EC%9D%BC/LOADOUT-BEAM_%EC%B5%9C%EC%A2%85%ED%8C%8C%EC%9D%BC/test": "__default__profile__",
+            "file:///c%3A/lisp": "__default__profile__",
+            "file:///c%3A/Users/FREE": "__default__profile__",
+            "file:///f%3A/genmini/JAP_251125": "__default__profile__",
+            "file:///c%3A/Users/FREE/.gemini/antigravity/playground/binary-copernicus": "__default__profile__",
+            "file:///f%3A/genmini/%ED%99%88%ED%8E%98%EC%9D%B4%EC%A7%80/SEASTAR": "__default__profile__",
+            "file:///f%3A/genmini/GEN_POST/jap1": "__default__profile__",
+            "file:///f%3A/genmini/japness/%EB%B3%80%ED%99%98": "__default__profile__",
+            "file:///d%3A/": "__default__profile__",
+            "file:///f%3A/test": "__default__profile__",
+            "file:///f%3A/genmini/lotto": "__default__profile__",
+            "file:///f%3A/genmini/japness/%EB%B3%80%ED%99%98/JAP_BONG/js": "__default__profile__",
+            "file:///f%3A/genmini/japness/%EB%B3%80%ED%99%98/JAP_BONG": "__default__profile__",
+            "file:///f%3A/genmini/cad_help": "__default__profile__",
+            "file:///f%3A/genmini/%EC%84%B8%EA%B3%84%EC%97%AC%ED%96%89/fukuoka": "__default__profile__",
+            "file:///f%3A/%21%21%21%EC%A7%84%ED%96%89%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%9C%A0%EC%9D%BC/LOADOUT-BEAM_%EC%B5%9C%EC%A2%85%ED%8C%8C%EC%9D%BC/11.%20%EC%9A%A9%EC%A0%91%EB%B2%88%ED%98%B8%EB%A6%AC%EC%8A%A4%ED%8A%B8": "__default__profile__",
+            "file:///f%3A/genmini/%EC%9B%8C%EB%93%9C%ED%94%84%EB%A0%88%EC%8A%A4": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/3d-dxf-auto-viewer": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/weld-master": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/cad_python": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/seastarwork": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/cad": "__default__profile__",
+            "file:///f%3A/genmini/CABLE%20MANEGE1": "__default__profile__",
+            "file:///f%3A/genmini/CABLE%20MANEGE1/seastar-cable-manager": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/sdms": "__default__profile__",
+            "file:///f%3A/genmini/SSTDMS_project": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/sdms/Sdms_v3": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/seastarwork/tools/excel": "__default__profile__",
+            "file:///f%3A/genmini/sdms": "__default__profile__",
+            "file:///f%3A/genmini/japness/%EB%B3%80%ED%99%98/fam": "__default__profile__",
+            "file:///c%3A/Users/FREE/.gemini/antigravity/playground/primordial-photon": "__default__profile__",
+            "file:///f%3A/genmini/japness/JAP_BONG_PRO": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/cad-pdf": "__default__profile__",
+            "file:///c%3A/Users/FREE/Downloads": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/a": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/cad-pdf%20v2": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/test": "__default__profile__",
+            "file:///c%3A/Users/FREE/.gemini/antigravity/playground/ionized-astro": "__default__profile__",
+            "file:///f%3A/genmini/japness/JAP_BONG_fam": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/seastarwork/seastar_new": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/seastar_new": "__default__profile__",
+            "file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8": "__default__profile__"
+        },
+        "emptyWindows": {
+            "1767946623529": "__default__profile__",
+            "1768010782084": "__default__profile__",
+            "1768016993121": "__default__profile__",
+            "1768044717529": "__default__profile__",
+            "1768045236894": "__default__profile__"
+        }
+    },
+    "theme": "vs-dark",
+    "themeBackground": "#1f1f1f",
+    "windowSplash": {
+        "zoomLevel": 0,
+        "baseTheme": "vs-dark",
+        "colorInfo": {
+            "foreground": "#cccccc",
+            "background": "#1f1f1f",
+            "editorBackground": "#1f1f1f",
+            "titleBarBackground": "#181818",
+            "titleBarBorder": "#2b2b2b",
+            "activityBarBackground": "#181818",
+            "activityBarBorder": "#2b2b2b",
+            "sideBarBackground": "#181818",
+            "sideBarBorder": "#2b2b2b",
+            "statusBarBackground": "#181818",
+            "statusBarBorder": "#2b2b2b",
+            "statusBarNoFolderBackground": "#1f1f1f"
+        },
+        "layoutInfo": {
+            "sideBarSide": "left",
+            "editorPartMinWidth": 220,
+            "titleBarHeight": 35,
+            "activityBarWidth": 42,
+            "sideBarWidth": 300,
+            "auxiliaryBarWidth": 300,
+            "statusBarHeight": 22,
+            "windowBorder": false
+        }
+    },
+    "windowsState": {
+        "lastActiveWindow": {
+            "folder": "file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8",
+            "backupPath": "C:\\Users\\FREE\\AppData\\Roaming\\Antigravity\\Backups\\5d44ccbe6b1f8f92fc2728f756562307",
+            "uiState": {
+                "mode": 0,
+                "x": 2280,
+                "y": 140,
+                "width": 1200,
+                "height": 800
+            }
+        },
+        "openedWindows": [
+            {
+                "folder": "file:///f%3A/genmini/sdms",
+                "backupPath": "C:\\Users\\FREE\\AppData\\Roaming\\Antigravity\\Backups\\9d27d5ea5e7ad39ac3ba74b6146e92b5",
+                "uiState": {
+                    "mode": 1,
+                    "x": 2880,
+                    "y": 0,
+                    "width": 960,
+                    "height": 1040
+                }
+            },
+            {
+                "folder": "file:///f%3A/genmini/japness/JAP_BONG_fam",
+                "backupPath": "C:\\Users\\FREE\\AppData\\Roaming\\Antigravity\\Backups\\e091632c8eda1bab71b00a5e86152d2a",
+                "uiState": {
+                    "mode": 1,
+                    "x": 1660,
+                    "y": 143,
+                    "width": 1200,
+                    "height": 800
+                }
+            },
+            {
+                "folder": "file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8",
+                "backupPath": "C:\\Users\\FREE\\AppData\\Roaming\\Antigravity\\Backups\\5d44ccbe6b1f8f92fc2728f756562307",
+                "uiState": {
+                    "mode": 0,
+                    "x": 2280,
+                    "y": 140,
+                    "width": 1200,
+                    "height": 800
+                }
+            }
+        ]
+    },
+    "windowSplashWorkspaceOverride": {
+        "layoutInfo": {
+            "sideBarWidth": 300,
+            "auxiliaryBarWidth": 300,
+            "workspaces": {
+                "0c230e1c256bb4576229023d23243dcc": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "1a120f74c0516d6804b3f5424f6e535c": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "a5ad9569baedeeda0b44b1a9957580b7": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "8c501c107287d59154ced8e6f0e620b4": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "27a6166187a8f045291cff6350206e10": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "fa39c730d39869e4a89a161701158604": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "04a168c59e6c804ef944f8b50848a30b": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "3e60abc91a4f74eb29789d7d4eb82e90": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "bd25007959478842439ebdb8ebc7d3fa": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "733b70dcfd8aa58f0f1ef0f1b3554b34": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d06488bbe8855a95a7a1965410e1bd53": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "c73b98f44384a059c5c0a16a3740d287": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "31040bde52ae8a5e4771c073af594ff3": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "dd90ece399c4bfa86654f9ead102b792": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d48758595deadeee0d9f49a4373a4088": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d6d4bb4f420e419c86996bea363f5280": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "58c2795e40b829c15790fe67638b8a71": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "16f82040c8f368b65c77e48be991022d": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d8e7d85cca626e2e8763aa25c2e77b2e": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "c36f8af106cd0ce79cae7a8ae9a207a0": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "6f54ebf2a0a75cf26c0af7d48b3d3bfb": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "c9479ca9d565ef5126cadf4d22e76b83": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "81c04b2d0f080dae3a5e61ed18de6738": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "95c956a6aac08c48f8133191bbe2118e": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "8ec60729b3c0197650750360b5111fe8": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "78b92c321d02ea062f3ecbc9e95ff40a": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "1df041df9bed44e244feb9e2b27f25fb": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "08966ea081936767e6a3e9440b302ede": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d7601a9f8b167d22aba9c16d3d0347b3": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "a2142ab69adb3e69e56c979a44a77dce": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "0d94dff994ef7917adbbadf110a44d82": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "981ce58be42fd502db3a570245cb433f": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "e7e4e8f514276257b548312efa992082": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "63d428186554b5f0e7f2c28bef6a695c": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "c1b5ce37bd26bce997e0246a71095319": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d42c2056a36da1c7095fe6e8eb17268f": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "a5f4634066091d5a8d660fe90a561871": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "1932cb246b761682dd121f8e69447a03": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "762c3282d1d869be527ed2a4dc20d25e": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "7da0770f346d801bf723bd8ccd3db0d5": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "0877b2276caf4a4d7c272dfb90b2ad0b": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d81e92ad45c2db6bbe59b173fc9927a1": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "f906c61bcabda08c51f29e1a51486a54": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "a3280b771930c7e05d4f3eed6eca65ad": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                },
+                "d822e55f15308f4111d9637137478304": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                }
+            }
+        }
+    },
+    "jetski.agentManagerWindowClosed": false,
+    "unifiedStateSync.hasTrajectorySummariesMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasPlanningModeMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasArtifactReviewPolicyMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasTerminalAutoExecutionPolicyMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasTerminalAllowedCommandsMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasTerminalDeniedCommandsMigrated": true,
+    "antigravityUnifiedStateSync.agentPreferences.hasAgentFileAccessMigration": true,
+    "antigravityUnifiedStateSync.editorPreferences.hasShowSelectionPopupMigrated": true,
+    "antigravityUnifiedStateSync.editorPreferences.hasDemoModeEnabledMigrated": true,
+    "antigravityUnifiedStateSync.tabPreferences.hasMigrated": true,
+    "antigravityUnifiedStateSync.browserPreferences.hasBrowserAllowlistMigrated": true,
+    "antigravityUnifiedStateSync.browserPreferences.hasBrowserLaunchPreferencesMigrated": true,
+    "antigravityUnifiedStateSync.browserPreferences.hasAddedLocalhostToAllowlist": true
+}

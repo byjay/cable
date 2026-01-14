@@ -1,0 +1,17 @@
+{
+  "id": "msg_bafe8f810001vFCdRLSDg11Uc6",
+  "sessionID": "ses_450170819ffeXvxkvQT7erJnk0",
+  "role": "user",
+  "time": {
+    "created": 1768182839312
+  },
+  "summary": {
+    "title": "Deep-dive: F:\\genmini\\sdms project at /target\n\n",
+    "diffs": []
+  },
+  "agent": "build",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  }
+}

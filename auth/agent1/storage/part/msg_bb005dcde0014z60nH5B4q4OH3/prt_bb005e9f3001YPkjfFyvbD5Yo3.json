@@ -1,0 +1,27 @@
+{
+  "id": "prt_bb005e9f3001YPkjfFyvbD5Yo3",
+  "sessionID": "ses_44ffa5ddfffechczCzZPVIn6Z0",
+  "messageID": "msg_bb005dcde0014z60nH5B4q4OH3",
+  "type": "tool",
+  "callID": "call_ec5dace6a7d644909b1b6e22",
+  "tool": "bash",
+  "state": {
+    "status": "completed",
+    "input": {
+      "command": "find . -name \"*.py\" -o -name \"*.js\" -o -name \"*.ts\" -o -name \"*.json\" | head -20",
+      "description": "Find Python, JavaScript, TypeScript, and JSON files"
+    },
+    "output": "./.opencode/node_modules/@opencode-ai/plugin/dist/example.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/example.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/index.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/index.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/shell.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/shell.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/tool.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/tool.js\n./.opencode/node_modules/@opencode-ai/plugin/package.json\n./.opencode/node_modules/@opencode-ai/sdk/dist/client.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/client.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/client.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/client.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/index.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/index.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/types.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/types.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/utils.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/utils.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client.gen.d.ts\n",
+    "title": "Find Python, JavaScript, TypeScript, and JSON files",
+    "metadata": {
+      "output": "./.opencode/node_modules/@opencode-ai/plugin/dist/example.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/example.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/index.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/index.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/shell.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/shell.js\n./.opencode/node_modules/@opencode-ai/plugin/dist/tool.d.ts\n./.opencode/node_modules/@opencode-ai/plugin/dist/tool.js\n./.opencode/node_modules/@opencode-ai/plugin/package.json\n./.opencode/node_modules/@opencode-ai/sdk/dist/client.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/client.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/client.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/client.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/index.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/index.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/types.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/types.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/utils.gen.d.ts\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client/utils.gen.js\n./.opencode/node_modules/@opencode-ai/sdk/dist/gen/client.gen.d.ts\n",
+      "exit": 0,
+      "description": "Find Python, JavaScript, TypeScript, and JSON files",
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184736259,
+      "end": 1768184736334
+    }
+  }
+}

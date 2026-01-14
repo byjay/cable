@@ -1,0 +1,10 @@
+﻿{
+    "skills":  {
+                   "required":  [
+                                    "error-handling",
+                                    "systematic-debugging",
+                                    "test-driven-development",
+                                    "code-review-checklist"
+                                ]
+               }
+}

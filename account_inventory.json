@@ -1,0 +1,42 @@
+{
+    "accounts": [
+        {
+            "email": "designsir101@gmail.com",
+            "tier": "Premium",
+            "current_usage": 0.45,
+            "last_used": "2026-01-12T14:00:00Z",
+            "reset_cycle_days": 1,
+            "assignment": "agent1"
+        },
+        {
+            "email": "designsir102@gmail.com",
+            "tier": "Premium",
+            "current_usage": 0.12,
+            "last_used": "2026-01-12T13:30:00Z",
+            "reset_cycle_days": 1,
+            "assignment": "agent2"
+        },
+        {
+            "email": "designsir2@gmail.com",
+            "tier": "Premium",
+            "current_usage": 0.05,
+            "last_used": "2026-01-12T14:05:00Z",
+            "reset_cycle_days": 1,
+            "assignment": "agent4"
+        },
+        {
+            "email": "elecgisanim@gmail.com",
+            "tier": "Standard",
+            "current_usage": 0.02,
+            "last_used": "2026-01-12T14:05:00Z",
+            "reset_cycle_days": 7,
+            "assignment": "agent5"
+        }
+    ],
+    "rotation_policy": {
+        "warning_threshold": 0.90,
+        "emergency_threshold": 0.98,
+        "duplicate_prevention": true
+    },
+    "usage_history": []
+}

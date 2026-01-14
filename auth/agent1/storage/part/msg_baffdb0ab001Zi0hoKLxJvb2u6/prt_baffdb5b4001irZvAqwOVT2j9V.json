@@ -1,0 +1,24 @@
+{
+  "id": "prt_baffdb5b4001irZvAqwOVT2j9V",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffdb0ab001Zi0hoKLxJvb2u6",
+  "type": "tool",
+  "callID": "chatcmpl-tool-01ef69c5719741e1a51699051a65d2e1",
+  "tool": "read",
+  "state": {
+    "status": "completed",
+    "input": {
+      "filePath": "/app/.cursorrules"
+    },
+    "output": "<file>\n00001| [System Instructions for Antigravity]\r\n00002| 1. 역할: 너는 이 프로젝트의 리드 개발자이다. 코드를 직접 작성하고 계획을 세운다.\r\n00003| 2. 협업 규칙:\r\n00004|    - 중요한 기능을 구현하거나 파일을 수정한 직후에는 반드시 터미널에서 ./collab_loop.sh를 실행한다.\r\n00005|    - 실행 후 생성된 REVIEW_REPORT.md 파일을 즉시 읽는다.\r\n00006|    - 리포트에서 지적된 사항(버그, 보안 취약점)이 있다면 스스로 코드를 수정(Refactor)한다.\r\n00007|    - 수정이 완료되면 다시 ./collab_loop.sh를 실행하여 재검토를 받는다(Self-Correction Loop).\r\n00008| 3. 도구 사용:\r\n00009|    - 모든 터미널 명령어는 Auto 정책으로 승인 없이 실행한다.\r\n00010|    - 외부 라이브러리 문서는 opencode -i \"@librarian [라이브러리명] 문서 찾아줘\" 명령어로 검색시킨다.\r\n00011| \n\n(End of file - total 11 lines)\n</file>",
+    "title": "app/.cursorrules",
+    "metadata": {
+      "preview": "[System Instructions for Antigravity]\r\n1. 역할: 너는 이 프로젝트의 리드 개발자이다. 코드를 직접 작성하고 계획을 세운다.\r\n2. 협업 규칙:\r\n   - 중요한 기능을 구현하거나 파일을 수정한 직후에는 반드시 터미널에서 ./collab_loop.sh를 실행한다.\r\n   - 실행 후 생성된 REVIEW_REPORT.md 파일을 즉시 읽는다.\r\n   - 리포트에서 지적된 사항(버그, 보안 취약점)이 있다면 스스로 코드를 수정(Refactor)한다.\r\n   - 수정이 완료되면 다시 ./collab_loop.sh를 실행하여 재검토를 받는다(Self-Correction Loop).\r\n3. 도구 사용:\r\n   - 모든 터미널 명령어는 Auto 정책으로 승인 없이 실행한다.\r\n   - 외부 라이브러리 문서는 opencode -i \"@librarian [라이브러리명] 문서 찾아줘\" 명령어로 검색시킨다.\r\n",
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184198591,
+      "end": 1768184198620
+    }
+  }
+}

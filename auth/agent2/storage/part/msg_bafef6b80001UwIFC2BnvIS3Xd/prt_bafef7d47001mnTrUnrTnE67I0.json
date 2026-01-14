@@ -1,0 +1,17 @@
+{
+  "id": "prt_bafef7d47001mnTrUnrTnE67I0",
+  "sessionID": "ses_4501095f0ffel524MNQze3GO6r",
+  "messageID": "msg_bafef6b80001UwIFC2BnvIS3Xd",
+  "type": "step-finish",
+  "reason": "tool-calls",
+  "cost": 0,
+  "tokens": {
+    "input": 44,
+    "output": 231,
+    "reasoning": 0,
+    "cache": {
+      "read": 11360,
+      "write": 0
+    }
+  }
+}

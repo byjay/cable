@@ -1,0 +1,32 @@
+[
+  {
+    "content": "Analyze existing codebase structure and identify SDMS project components",
+    "id": "1",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Perform comprehensive security analysis of backend files",
+    "id": "2",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Review code quality and architecture patterns",
+    "id": "3",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Create integrated consensus report with findings and recommendations",
+    "id": "4",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Generate necessary code files for SDMS project improvements",
+    "id": "5",
+    "priority": "medium",
+    "status": "pending"
+  }
+]

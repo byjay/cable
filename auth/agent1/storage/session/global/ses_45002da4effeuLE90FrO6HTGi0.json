@@ -1,0 +1,16 @@
+{
+  "id": "ses_45002da4effeuLE90FrO6HTGi0",
+  "version": "1.1.13",
+  "projectID": "global",
+  "directory": "/app",
+  "title": "SDMS Backend Deep Diagnosis and Consensus Review",
+  "time": {
+    "created": 1768184161713,
+    "updated": 1768184178995
+  },
+  "summary": {
+    "additions": 0,
+    "deletions": 0,
+    "files": 0
+  }
+}

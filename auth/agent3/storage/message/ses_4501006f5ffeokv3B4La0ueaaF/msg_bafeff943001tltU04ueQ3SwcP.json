@@ -1,0 +1,17 @@
+{
+  "id": "msg_bafeff943001tltU04ueQ3SwcP",
+  "sessionID": "ses_4501006f5ffeokv3B4La0ueaaF",
+  "role": "user",
+  "time": {
+    "created": 1768183298372
+  },
+  "summary": {
+    "title": "Deep-dive into F:\\genmini\\sdms mapped as /target: quality, security, architecture improvements",
+    "diffs": []
+  },
+  "agent": "build",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  }
+}

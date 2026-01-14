@@ -1,0 +1,17 @@
+{
+  "id": "prt_baff4c1e30011am9W1x4Yqh1XF",
+  "sessionID": "ses_4500b711fffeqyTlyCV7FY76ku",
+  "messageID": "msg_baff4bd260010RTQ4U2vViNqZY",
+  "type": "tool",
+  "callID": "chatcmpl-tool-601b2645a3764996848735e22283d4a5",
+  "tool": "read",
+  "state": {
+    "status": "running",
+    "input": {
+      "filePath": "/target/PROJECT_STRUCTURE.md"
+    },
+    "time": {
+      "start": 1768183611881
+    }
+  }
+}

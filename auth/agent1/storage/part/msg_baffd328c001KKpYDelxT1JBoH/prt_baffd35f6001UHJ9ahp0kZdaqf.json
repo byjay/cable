@@ -1,0 +1,24 @@
+{
+  "id": "prt_baffd35f6001UHJ9ahp0kZdaqf",
+  "sessionID": "ses_45002da4effeuLE90FrO6HTGi0",
+  "messageID": "msg_baffd328c001KKpYDelxT1JBoH",
+  "type": "tool",
+  "callID": "chatcmpl-tool-feadf3b4177640f58cc14f84de2b083e",
+  "tool": "read",
+  "state": {
+    "status": "completed",
+    "input": {
+      "filePath": "/app/START_HERE.md"
+    },
+    "output": "<file>\n00001| # START HERE (opencode-collab)\r\n00002| \r\n00003| 이 폴더는 무료 모델 기반(OpenCode + Gemini) 협업 루프를 빠르게 시작하기 위한 템플릿입니다.\r\n00004| \r\n00005| ## 1) 이 폴더를 워크스페이스로 열기\r\n00006| - IDE에서 `C:\\Users\\FREE\\CascadeProjects\\opencode-collab` 를 워크스페이스로 열어주세요.\r\n00007| \r\n00008| ## 2) PowerShell 세션 PATH 갱신(권장)\r\n00009| 새로 설치한 도구가 PowerShell에서 바로 안 잡히는 경우가 있어, 아래 스크립트를 먼저 실행하세요.\r\n00010| \r\n00011| ```powershell\r\n00012| ./setup_path.ps1\r\n00013| ```\r\n00014| \r\n00015| ## 3) Google 인증(필수)\r\n00016| ```powershell\r\n00017| opencode auth login\r\n00018| ```\r\n00019| - Provider: Google\r\n00020| - 인증: Antigravity(Current Session) 또는 안내되는 OAuth\r\n00021| \r\n00022| ## 4) 로컬 협업 루프 실행\r\n00023| 코드 변경 후 아래를 실행하면 reviewer 에이전트가 `REVIEW_REPORT.md`를 작성합니다.\r\n00024| \r\n00025| ```powershell\r\n00026| ./collab_loop.ps1\r\n00027| ```\r\n00028| \r\n00029| ## 5) (선택) Docker 3-Agent 모드\r\n00030| ### 5-1. 컨테이너 띄우기\r\n00031| ```powershell\r\n00032| docker compose up -d\r\n00033| ```\r\n00034| \r\n00035| ### 5-2. 컨테이너별 OpenCode 설치\r\n00036| ```powershell\r\n00037| docker exec agent1 npm install -g opencode-ai\r\n00038| docker exec agent1 npx oh-my-opencode install --no-tui --gemini=yes\r\n00039| \r\n00040| docker exec agent2 npm install -g opencode-ai\r\n00041| docker exec agent2 npx oh-my-opencode install --no-tui --gemini=yes\r\n00042| \r\n00043| docker exec agent3 npm install -g opencode-ai\r\n00044| docker exec agent3 npx oh-my-opencode install --no-tui --gemini=yes\r\n00045| ```\r\n00046| \r\n00047| ### 5-3. 컨테이너별 Google 로그인(매우 중요)\r\n00048| 아래를 각각 실행하고, 브라우저에서 반드시 서로 다른 Google 계정으로 로그인하세요.\r\n00049| \r\n00050| ```powershell\r\n00051| docker exec -it agent1 opencode auth login\r\n00052| docker exec -it agent2 opencode auth login\r\n00053| docker exec -it agent3 opencode auth login\r\n00054| ```\r\n00055| \r\n00056| ### 5-4. 오케스트레이터 실행\r\n00057| ```powershell\r\n00058| python orchestrator.py \"프로젝트 목표\"\r\n00059| ```\r\n00060| \r\n00061| ## 파일 안내\r\n00062| - `.opencode/oh-my-opencode.json`: 프로젝트 레벨 에이전트 설정\r\n00063| - `collab_loop.ps1`: PowerShell용 리뷰 트리거\r\n00064| - `docker-compose.yml`: 3개 컨테이너 에이전트 구성\r\n00065| - `.antigravity/instructions.md`: 운영 규칙\r\n00066| \n\n(End of file - total 66 lines)\n</file>",
+    "title": "app/START_HERE.md",
+    "metadata": {
+      "preview": "# START HERE (opencode-collab)\r\n\r\n이 폴더는 무료 모델 기반(OpenCode + Gemini) 협업 루프를 빠르게 시작하기 위한 템플릿입니다.\r\n\r\n## 1) 이 폴더를 워크스페이스로 열기\r\n- IDE에서 `C:\\Users\\FREE\\CascadeProjects\\opencode-collab` 를 워크스페이스로 열어주세요.\r\n\r\n## 2) PowerShell 세션 PATH 갱신(권장)\r\n새로 설치한 도구가 PowerShell에서 바로 안 잡히는 경우가 있어, 아래 스크립트를 먼저 실행하세요.\r\n\r\n```powershell\r\n./setup_path.ps1\r\n```\r\n\r\n## 3) Google 인증(필수)\r\n```powershell\r\nopencode auth login\r\n```\r\n- Provider: Google\r\n- 인증: Antigravity(Current Session) 또는 안내되는 OAuth\r",
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184165885,
+      "end": 1768184165900
+    }
+  }
+}

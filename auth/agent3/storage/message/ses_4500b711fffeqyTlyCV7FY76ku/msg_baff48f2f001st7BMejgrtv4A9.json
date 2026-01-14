@@ -1,0 +1,17 @@
+{
+  "id": "msg_baff48f2f001st7BMejgrtv4A9",
+  "sessionID": "ses_4500b711fffeqyTlyCV7FY76ku",
+  "role": "user",
+  "time": {
+    "created": 1768183598895
+  },
+  "summary": {
+    "title": "Deep dive: F:\\genmini\\sdms mapped /target analysis",
+    "diffs": []
+  },
+  "agent": "build",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  }
+}

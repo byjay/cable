@@ -1,0 +1,22 @@
+{
+  "id": "msg_bafef9735001NWVKesc6AqsTs3",
+  "sessionID": "ses_4501068ddffeAtgOsYQfHy033I",
+  "role": "user",
+  "time": {
+    "created": 1768183273279
+  },
+  "summary": {
+    "title": "SDMS project deep diagnostic for /target path",
+    "diffs": []
+  },
+  "agent": "general",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  },
+  "tools": {
+    "todowrite": false,
+    "todoread": false,
+    "task": false
+  }
+}

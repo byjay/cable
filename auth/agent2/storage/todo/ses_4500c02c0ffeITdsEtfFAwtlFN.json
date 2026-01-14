@@ -1,0 +1,38 @@
+[
+  {
+    "content": "Explore project structure and identify frontend technologies",
+    "id": "1",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Analyze code quality and patterns",
+    "id": "2",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Evaluate security vulnerabilities and best practices",
+    "id": "3",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Assess architecture and component organization",
+    "id": "4",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Review UX/UI implementation and accessibility",
+    "id": "5",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Generate comprehensive improvement recommendations",
+    "id": "6",
+    "priority": "medium",
+    "status": "pending"
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "id": "msg_bafed8438001kgQGSDObnbAhvm",
+  "sessionID": "ses_450127c80ffeBB12M6E0mIlruN",
+  "role": "assistant",
+  "time": {
+    "created": 1768183137336,
+    "completed": 1768183145264
+  },
+  "parentID": "msg_bafed83aa001LfwGRS55gjCqNa",
+  "modelID": "big-pickle",
+  "providerID": "opencode",
+  "mode": "build",
+  "agent": "build",
+  "path": {
+    "cwd": "/app",
+    "root": "/"
+  },
+  "cost": 0,
+  "tokens": {
+    "input": 141,
+    "output": 229,
+    "reasoning": 0,
+    "cache": {
+      "read": 11264,
+      "write": 0
+    }
+  },
+  "finish": "tool-calls"
+}

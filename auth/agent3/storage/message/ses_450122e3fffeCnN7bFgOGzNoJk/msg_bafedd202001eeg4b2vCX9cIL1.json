@@ -1,0 +1,17 @@
+{
+  "id": "msg_bafedd202001eeg4b2vCX9cIL1",
+  "sessionID": "ses_450122e3fffeCnN7bFgOGzNoJk",
+  "role": "user",
+  "time": {
+    "created": 1768183157250
+  },
+  "summary": {
+    "title": "Deep-dive: SDMS project security, performance, architecture review",
+    "diffs": []
+  },
+  "agent": "build",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  }
+}

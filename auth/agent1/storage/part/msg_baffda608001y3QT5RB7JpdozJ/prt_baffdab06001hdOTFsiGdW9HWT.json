@@ -1,0 +1,24 @@
+{
+  "id": "prt_baffdab06001hdOTFsiGdW9HWT",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffda608001y3QT5RB7JpdozJ",
+  "type": "tool",
+  "callID": "chatcmpl-tool-99ad58266d5543c69c4c141eac9c3375",
+  "tool": "glob",
+  "state": {
+    "status": "completed",
+    "input": {
+      "pattern": "**/*.yaml"
+    },
+    "output": "No files found",
+    "title": "app",
+    "metadata": {
+      "count": 0,
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184195873,
+      "end": 1768184197108
+    }
+  }
+}

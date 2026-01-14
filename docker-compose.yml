@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  agent1:
+    image: node:18-bullseye
+    container_name: agent1
+    volumes:
+      - .:/app
+      - C:/Users/FREE/.config/opencode:/root/.config/opencode
+      - C:/Users/FREE/.local/share/opencode:/root/.local/share/opencode
+      - C:/Users/FREE/.opencode/skills:/root/.local/share/opencode/skills
+      - F:/genmini/japness/JAP_BONG_fam:/target
+    working_dir: /app
+    command: tail -f /dev/null
+
+  agent2:
+    image: node:18-bullseye
+    container_name: agent2
+    volumes:
+      - .:/app
+      - C:/Users/FREE/.config/opencode:/root/.config/opencode
+      - C:/Users/FREE/.local/share/opencode:/root/.local/share/opencode
+      - C:/Users/FREE/.opencode/skills:/root/.local/share/opencode/skills
+      - F:/genmini/japness/JAP_BONG_fam:/target
+    working_dir: /app
+    command: tail -f /dev/null
+
+  agent3:
+    image: node:18-bullseye
+    container_name: agent3
+    volumes:
+      - .:/app
+      - C:/Users/FREE/.config/opencode:/root/.config/opencode
+      - C:/Users/FREE/.local/share/opencode:/root/.local/share/opencode
+      - C:/Users/FREE/.opencode/skills:/root/.local/share/opencode/skills
+      - F:/genmini/japness/JAP_BONG_fam:/target
+    working_dir: /app
+    command: tail -f /dev/null
+
+  agent4:
+    image: node:18-bullseye
+    container_name: agent4
+    volumes:
+      - .:/app
+      - C:/Users/FREE/.config/opencode:/root/.config/opencode
+      - C:/Users/FREE/.local/share/opencode:/root/.local/share/opencode
+      - C:/Users/FREE/.opencode/skills:/root/.local/share/opencode/skills
+      - F:/genmini/japness/JAP_BONG_fam:/target
+    working_dir: /app
+    command: tail -f /dev/null
+
+  agent5:
+    image: node:18-bullseye
+    container_name: agent5
+    volumes:
+      - .:/app
+      - C:/Users/FREE/.config/opencode:/root/.config/opencode
+      - C:/Users/FREE/.local/share/opencode:/root/.local/share/opencode
+      - C:/Users/FREE/.opencode/skills:/root/.local/share/opencode/skills
+      - F:/genmini/japness/JAP_BONG_fam:/target
+    working_dir: /app
+    command: tail -f /dev/null

@@ -1,0 +1,27 @@
+{
+  "id": "prt_bb0060621001V92FxHrZavzS1T",
+  "sessionID": "ses_44ffa5ddfffechczCzZPVIn6Z0",
+  "messageID": "msg_bb005fb9e001bVwGbSfb3IffQr",
+  "type": "tool",
+  "callID": "call_406f8779e5bf41a69e1aa826",
+  "tool": "bash",
+  "state": {
+    "status": "completed",
+    "input": {
+      "command": "find . -name \"*sdms*\" -o -name \"*database*\" -o -name \"*db*\" -o -name \"*schema*\" -o -name \"*model*\" | head -20",
+      "description": "Search for SDMS, database, schema, and model files"
+    },
+    "output": "./.opencode/node_modules/zod/src/v3/standard-schema.ts\n./.opencode/node_modules/zod/src/v3/tests/firstpartyschematypes.test.ts\n./.opencode/node_modules/zod/src/v3/tests/standard-schema.test.ts\n./.opencode/node_modules/zod/src/v4/classic/schemas.ts\n./.opencode/node_modules/zod/src/v4/classic/tests/standard-schema.test.ts\n./.opencode/node_modules/zod/src/v4/classic/tests/to-json-schema.test.ts\n./.opencode/node_modules/zod/src/v4/core/json-schema.ts\n./.opencode/node_modules/zod/src/v4/core/schemas.ts\n./.opencode/node_modules/zod/src/v4/core/standard-schema.ts\n./.opencode/node_modules/zod/src/v4/core/to-json-schema.ts\n./.opencode/node_modules/zod/src/v4/mini/schemas.ts\n./.opencode/node_modules/zod/v3/standard-schema.cjs\n./.opencode/node_modules/zod/v3/standard-schema.d.cts\n./.opencode/node_modules/zod/v3/standard-schema.d.ts\n./.opencode/node_modules/zod/v3/standard-schema.js\n./.opencode/node_modules/zod/v4/classic/schemas.cjs\n./.opencode/node_modules/zod/v4/classic/schemas.d.cts\n./.opencode/node_modules/zod/v4/classic/schemas.d.ts\n./.opencode/node_modules/zod/v4/classic/schemas.js\n./.opencode/node_modules/zod/v4/core/json-schema.cjs\n",
+    "title": "Search for SDMS, database, schema, and model files",
+    "metadata": {
+      "output": "./.opencode/node_modules/zod/src/v3/standard-schema.ts\n./.opencode/node_modules/zod/src/v3/tests/firstpartyschematypes.test.ts\n./.opencode/node_modules/zod/src/v3/tests/standard-schema.test.ts\n./.opencode/node_modules/zod/src/v4/classic/schemas.ts\n./.opencode/node_modules/zod/src/v4/classic/tests/standard-schema.test.ts\n./.opencode/node_modules/zod/src/v4/classic/tests/to-json-schema.test.ts\n./.opencode/node_modules/zod/src/v4/core/json-schema.ts\n./.opencode/node_modules/zod/src/v4/core/schemas.ts\n./.opencode/node_modules/zod/src/v4/core/standard-schema.ts\n./.opencode/node_modules/zod/src/v4/core/to-json-schema.ts\n./.opencode/node_modules/zod/src/v4/mini/schemas.ts\n./.opencode/node_modules/zod/v3/standard-schema.cjs\n./.opencode/node_modules/zod/v3/standard-schema.d.cts\n./.opencode/node_modules/zod/v3/standard-schema.d.ts\n./.opencode/node_modules/zod/v3/standard-schema.js\n./.opencode/node_modules/zod/v4/classic/schemas.cjs\n./.opencode/node_modules/zod/v4/classic/schemas.d.cts\n./.opencode/node_modules/zod/v4/classic/schemas.d.ts\n./.opencode/node_modules/zod/v4/classic/schemas.js\n./.opencode/node_modules/zod/v4/core/json-schema.cjs\n",
+      "exit": 0,
+      "description": "Search for SDMS, database, schema, and model files",
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184743469,
+      "end": 1768184744519
+    }
+  }
+}

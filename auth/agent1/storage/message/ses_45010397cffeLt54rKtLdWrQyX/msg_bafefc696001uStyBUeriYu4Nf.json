@@ -1,0 +1,22 @@
+{
+  "id": "msg_bafefc696001uStyBUeriYu4Nf",
+  "sessionID": "ses_45010397cffeLt54rKtLdWrQyX",
+  "role": "user",
+  "time": {
+    "created": 1768183285403
+  },
+  "summary": {
+    "title": "SDMS /target deep diagnostic report findings and recommendations",
+    "diffs": []
+  },
+  "agent": "general",
+  "model": {
+    "providerID": "opencode",
+    "modelID": "big-pickle"
+  },
+  "tools": {
+    "todowrite": false,
+    "todoread": false,
+    "task": false
+  }
+}

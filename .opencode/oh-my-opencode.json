@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "google_auth": true,
+  "agents": {
+    "Sisyphus": {
+      "model": "google/gemini-2.0-flash-thinking-exp",
+      "description": "메인 작업 관리자 (무료 고성능 모델 대체)"
+    },
+    "reviewer": {
+      "model": "google/gemini-2.0-flash",
+      "description": "코드 리뷰 및 보안 점검 (빠른 속도)",
+      "systemPrompt": "너는 까다로운 시니어 개발자다. 코드를 비판적으로 분석하고 REVIEW_REPORT.md에 한국어로 결과를 저장해라."
+    },
+    "tester": {
+      "model": "google/gemini-2.0-flash",
+      "description": "테스트 케이스 생성 및 실행"
+    },
+    "explore": {
+      "model": "google/gemini-2.0-flash",
+      "description": "파일 탐색 및 구조 분석"
+    }
+  },
+  "ralph_loop": {
+    "enabled": true,
+    "default_max_iterations": 10
+  }
+}

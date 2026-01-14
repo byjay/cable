@@ -1,0 +1,24 @@
+{
+  "id": "prt_baffdaa79001FEYeRYRfj9NhfZ",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffda608001y3QT5RB7JpdozJ",
+  "type": "tool",
+  "callID": "chatcmpl-tool-76ea7a5761f341ea8f331ede44299125",
+  "tool": "glob",
+  "state": {
+    "status": "completed",
+    "input": {
+      "pattern": "**/*.yml"
+    },
+    "output": "/app/docker-compose.yml",
+    "title": "app",
+    "metadata": {
+      "count": 1,
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184195722,
+      "end": 1768184197019
+    }
+  }
+}

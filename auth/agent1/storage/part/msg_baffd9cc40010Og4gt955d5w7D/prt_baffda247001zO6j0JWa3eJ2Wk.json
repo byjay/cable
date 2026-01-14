@@ -1,0 +1,24 @@
+{
+  "id": "prt_baffda247001zO6j0JWa3eJ2Wk",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffd9cc40010Og4gt955d5w7D",
+  "type": "tool",
+  "callID": "chatcmpl-tool-52504f89f11f467e9c2d04a2eeff77b0",
+  "tool": "glob",
+  "state": {
+    "status": "completed",
+    "input": {
+      "pattern": "**/*.py"
+    },
+    "output": "/app/smart_orchestrator.py\n/app/todo_app.py\n/app/orchestrator.py\n/app/repro_bug.py\n/app/test.py",
+    "title": "app",
+    "metadata": {
+      "count": 5,
+      "truncated": false
+    },
+    "time": {
+      "start": 1768184193619,
+      "end": 1768184194364
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "prt_baff01778001UVYNRVKNSA6MT7",
+  "sessionID": "ses_4501006f5ffeokv3B4La0ueaaF",
+  "messageID": "msg_baff01356001o23KKpLiPdxCAz",
+  "type": "tool",
+  "callID": "chatcmpl-tool-2967ab1279db44fcaee6506772c22943",
+  "tool": "read",
+  "state": {
+    "status": "running",
+    "input": {
+      "filePath": "/target/README.md"
+    },
+    "time": {
+      "start": 1768183306110
+    }
+  }
+}

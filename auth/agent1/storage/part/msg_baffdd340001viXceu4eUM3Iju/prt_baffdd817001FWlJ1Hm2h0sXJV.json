@@ -1,0 +1,17 @@
+{
+  "id": "prt_baffdd817001FWlJ1Hm2h0sXJV",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffdd340001viXceu4eUM3Iju",
+  "type": "tool",
+  "callID": "chatcmpl-tool-a959913b0eb14daabb583f7f798904a3",
+  "tool": "read",
+  "state": {
+    "status": "running",
+    "input": {
+      "filePath": "/target/docker-compose.yml"
+    },
+    "time": {
+      "start": 1768184207395
+    }
+  }
+}

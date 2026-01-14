@@ -1,0 +1,25 @@
+{
+  "id": "prt_baffdb4d1001mgw2vKzgDQdmr0",
+  "sessionID": "ses_450028fe6ffevWv2SCbZb1snx5",
+  "messageID": "msg_baffdb0ab001Zi0hoKLxJvb2u6",
+  "type": "tool",
+  "callID": "chatcmpl-tool-4dacdbc5c3894396a4fc1b80e1b284c2",
+  "tool": "read",
+  "state": {
+    "status": "completed",
+    "input": {
+      "filePath": "/app/opencode-infinite/tokens/elecgisanim@gmail.com.json",
+      "limit": 20
+    },
+    "output": "<file>\n00001| {\n00002|     \"telemetry.machineId\": \"c420e7841b3687bdc66e7d16962231dba6b02ab1c76ba16be35ab978562da8b9\",\n00003|     \"telemetry.sqmId\": \"{573ED56E-BFF5-4F78-A488-EB3603D21B93}\",\n00004|     \"telemetry.devDeviceId\": \"c9abf3b9-7ce3-4d9d-9838-66adcc889c0b\",\n00005|     \"backupWorkspaces\": {\n00006|         \"workspaces\": [],\n00007|         \"folders\": [\n00008|             {\n00009|                 \"folderUri\": \"file:///f%3A/genmini/sdms\"\n00010|             },\n00011|             {\n00012|                 \"folderUri\": \"file:///f%3A/genmini/japness/JAP_BONG_fam\"\n00013|             },\n00014|             {\n00015|                 \"folderUri\": \"file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8\"\n00016|             }\n00017|         ],\n00018|         \"emptyWindows\": []\n00019|     },\n00020|     \"windowControlHeight\": 35,\n\n(File has more lines. Use 'offset' parameter to read beyond line 20)\n</file>",
+    "title": "app/opencode-infinite/tokens/elecgisanim@gmail.com.json",
+    "metadata": {
+      "preview": "{\n    \"telemetry.machineId\": \"c420e7841b3687bdc66e7d16962231dba6b02ab1c76ba16be35ab978562da8b9\",\n    \"telemetry.sqmId\": \"{573ED56E-BFF5-4F78-A488-EB3603D21B93}\",\n    \"telemetry.devDeviceId\": \"c9abf3b9-7ce3-4d9d-9838-66adcc889c0b\",\n    \"backupWorkspaces\": {\n        \"workspaces\": [],\n        \"folders\": [\n            {\n                \"folderUri\": \"file:///f%3A/genmini/sdms\"\n            },\n            {\n                \"folderUri\": \"file:///f%3A/genmini/japness/JAP_BONG_fam\"\n            },\n            {\n                \"folderUri\": \"file:///c%3A/Users/FREE/Desktop/%EB%A6%AC%EC%8A%A4%ED%8A%B8\"\n            }\n        ],\n        \"emptyWindows\": []\n    },\n    \"windowControlHeight\": 35,",
+      "truncated": true
+    },
+    "time": {
+      "start": 1768184198365,
+      "end": 1768184198391
+    }
+  }
+}
