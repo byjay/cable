@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database, Eye, CheckCircle,
-    FolderOpen, FileDown, List, Network, Layers, Circle, MapPin, FileText, BarChart3, PieChart, ShieldCheck, Clock
+    FolderOpen, FileDown, List, Network, Layers, Circle, MapPin, FileText, BarChart3, PieChart, ShieldCheck, Clock, Calculator
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeSceneUltra';
@@ -18,6 +18,7 @@ import HistoryViewer from './components/HistoryViewer';
 import Settings from './components/Settings';
 import CableGroup from './components/CableGroup';
 import WDExtractionView from './components/WDExtractionView';
+import TrayFill from './components/TrayFill';
 import { SimpleModal } from './components/SimpleModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { TraySpecContent } from './components/StaticContent';
@@ -86,6 +87,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
             { label: "결선 작업 (WD Extraction)", action: "WD Extraction", icon: Network },
             { label: "케이블 그룹 (Cable Group)", action: "CableGroup", icon: Layers },
             { label: "드럼 스케줄 (Drum Schedule)", action: "Drum Schedule", icon: Circle },
+            { label: "🧠 트레이 최적화 (Tray Fill)", action: "TrayFill", icon: Calculator },
             { label: "노드 리스트 (Node List)", action: "Node List", icon: MapPin },
             { label: "가져오기 (Import)", action: "Import", icon: Upload }
         ]
@@ -187,6 +189,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
     const [genericTitle, setGenericTitle] = useState<string>('');
     const [activeModal, setActiveModal] = useState<string | null>(null);
     const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
+    const [selectedNode, setSelectedNode] = useState<string | null>(null);
     const [showColumnMapper, setShowColumnMapper] = useState(false);
     const [pendingFile, setPendingFile] = useState<{ file: File, type: 'cables' | 'nodes' } | null>(null);
     const [pendingExcelData, setPendingExcelData] = useState<any[]>([]);
@@ -253,6 +256,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             case "CableGroup": setCurrentView('CABLE_GROUP'); break;
             case "Drum Schedule": setCurrentView('DRUM_SCHEDULE'); break;
             case "WD Extraction": setCurrentView(MainView.WD_EXTRACTION); break;
+            case "TrayFill": setCurrentView('TRAY_FILL'); break;
             case "Import": fileInputRef.current?.click(); break;
 
             // [DEV] Tools
@@ -359,6 +363,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             // [FIX] 5-Point Integration
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'DRUM_SCHEDULE': return <DrumScheduleReport cables={cables} />;
+            case 'TRAY_FILL': return <TrayFill cables={cables} nodes={nodes} selectedNode={selectedNode} onNodeSelect={setSelectedNode} />;
 
             // [DEV] Tools
             case 'DEV_DATA_HEALTH': return <DataVerification cables={cables} nodes={nodes} />;
