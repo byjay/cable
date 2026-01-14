@@ -89,9 +89,8 @@ const MENU_STRUCTURE: MenuGroup[] = [
         id: 'report', title: 'Report', items: [
             { label: "Cable Requirement", action: "Cable Requirement" },
             { label: "Node List", action: "Node List Report" },
-            { label: "Node List", action: "Node List Report" },
             { label: "Tray Analysis", action: "Tray Analysis" },
-            { label: "Data Analytics", action: "Analytics", restricted: false }, // New Item
+            { label: "Data Analytics", action: "Analytics", restricted: false },
             { label: "History", action: "History" }
         ]
     },
@@ -113,7 +112,7 @@ export interface AppProps {
 
 const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => {
     // Version Control
-    const DATA_VERSION = "2.2";
+    const DATA_VERSION = "6.0.0";
 
     // Enforce "R" or "S" Ship Type Constraint for SDMS Integration
     // If strict integration is required, we can block access here.
@@ -609,8 +608,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                 break;
             case "Deck Code": setShowDeckModal(true); break;
             case "Schedule": setCurrentView(MainView.SCHEDULE); break;
-            case "Node List": setCurrentView(MainView.REPORT_NODE); break;
-            case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
+            case "Node List Report": setCurrentView(MainView.REPORT_NODE); break;
             case "Cable Requirement": setCurrentView(MainView.REPORT_BOM); break;
             case "Tray Analysis": setCurrentView(MainView.TRAY_ANALYSIS); break;
             case "Analytics": setCurrentView(MainView.ANALYTICS); break;
@@ -701,10 +699,18 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     const onSelectCable = (cable: Cable) => {
         console.log("Selected cable:", cable.id);
         setSelectedCableId(cable.id);
-        if (cable.calculatedPath) {
-            setRoutePath(cable.calculatedPath);
-            // Optional: Switch to 3D view? Or just highlight logic
-            // setCurrentView(MainView.THREE_D);
+
+        // Robust Path Resolution (Fix for "Not Working" issue)
+        let pathData: string[] = [];
+        if (cable.calculatedPath && cable.calculatedPath.length > 0) {
+            pathData = cable.calculatedPath;
+        } else if (cable.path) {
+            pathData = cable.path.split(',').map(s => s.trim()).filter(s => s);
+        }
+
+        if (pathData.length > 0) {
+            setRoutePath(pathData);
+            console.log("Updated Route Path:", pathData);
         }
     };
 
@@ -781,8 +787,8 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             case 'SETTINGS': return <Settings />;
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
-            case 'Node List': return <NodeListReport nodes={nodes} cables={cables} />;
-            case MainView.ANALYTICS: return <PivotAnalyzer data={cables} />; // Added Analytics View
+            case MainView.REPORT_NODE: return <NodeListReport nodes={nodes} cables={cables} />;
+            case MainView.ANALYTICS: return <PivotAnalyzer data={cables} />;
 
             default:
                 return <div className="p-10 text-center text-gray-400">View Not Implemented: {currentView}</div>;
@@ -790,7 +796,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     };
 
     return (
-        <div className="flex flex-col h-screen bg-seastar-900 text-gray-100 font-sans overflow-hidden">
+        <div className="flex flex-col h-screen text-gray-100 font-sans overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
             {/* <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} /> */}
 
             <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
@@ -819,7 +825,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                         <span className="text-seastar-cyan">CMS</span>
                     </span>
                     <span className="text-[10px] text-gray-500 ml-1 border border-gray-600 px-1 rounded">v{DATA_VERSION}</span>
-                    <span className="ml-4 text-[10px] text-gray-400 font-mono">Last Push: 2026-01-13 16:15</span>
+                    <span className="ml-4 text-[10px] text-gray-400 font-mono">Last Push: 2026-01-13 16:55</span>
                 </div>
 
                 <div className="flex items-center gap-1">

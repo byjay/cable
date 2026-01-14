@@ -90,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cables, nodes, onViewUnrouted }) 
   );
 
   return (
-    <div className="h-full flex flex-col p-4 overflow-y-auto bg-seastar-900 text-white">
+    <div className="h-full flex flex-col p-4 overflow-y-auto text-white">
       <DataVerification cables={cables} nodes={nodes} />
 
       <div className="flex items-center justify-between mb-6">

@@ -5,7 +5,7 @@ from pathlib import Path
 from ..models.schemas import ExtractedCable, SystemType
 
 class AdvancedCableParser:
-    CIRCUIT_PATTERN = re.compile(r'\b([PLCFNAS][\dA-Z-]{4,6})\b')
+    CIRCUIT_PATTERN = re.compile(r'\b([A-Z][\dA-Z-]{3,19})\b')
     CABLE_TYPE_PATTERN = re.compile(r'\b((?:[FDTMS][DYSM]?[YP]?[CS]?-?\d{1,3}|5P(?:YC)?-?\d+|RG-?\w+|CAT-?\d+)(?:\(\d+A\))?)\b')
     ROOM_PATTERN = re.compile(r'\b([A-Z]{2,}/[A-Z]|[A-Z]{3,}(?:\s+[A-Z]+)*)\b')
 

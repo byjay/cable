@@ -1,0 +1,3 @@
+﻿?? [Agent 3: Geometry] Hard Constraint Cycle 2...
+Constraint: 300mm. Result: 300mm, Tiers: 3
+✅ Geometry: Correct Auto-Tiering on constraint violation.

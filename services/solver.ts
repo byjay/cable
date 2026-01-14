@@ -4,7 +4,7 @@ import { CableData, PlacedCable, Point, SingleTrayResult, SystemResult, MARGIN_X
 const LARGE_CABLE_THRESHOLD = 20;
 
 // Target fill rate for optimization
-const TARGET_FILL_RATE = 60;
+const TARGET_FILL_RATE = 50;
 
 // If fill rate is below this and 1 layer fits, don't force multi-layer
 const LOW_FILL_THRESHOLD = 35;

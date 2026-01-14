@@ -153,7 +153,9 @@ export const ExcelService = {
       };
       const getNum = (key: string) => {
         const val = getVal(key);
-        const parsed = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+        if (val === undefined || val === null || val === "") return 0;
+        const strVal = String(val).replace(/[^0-9.-]/g, '');
+        const parsed = parseFloat(strVal);
         return isNaN(parsed) ? 0 : parsed;
       };
 
@@ -163,14 +165,10 @@ export const ExcelService = {
       const rawId = getStr('id');
       const page = getStr('page');
 
-      // CRITICAL FIX: Ensure Unique ID
-      // If rawId (NO) is present, it might duplicate across pages (1, 2, 3).
-      // Combine with Page if possible, or fallback to Name (usually unique).
       let uniqueId = rawId;
       if (rawId && page) uniqueId = `${page}_${rawId}`;
-      else if (!rawId) uniqueId = name; // Fallback to Name if No ID
+      else if (!rawId) uniqueId = name;
 
-      // Final fallback to index if collision likely (though Name should be unique)
       if (!uniqueId) uniqueId = String(i);
 
       const cable: Cable = {
@@ -178,22 +176,22 @@ export const ExcelService = {
         name: name,
         type: getStr('type'),
         system: getStr('system') || 'POWER',
-        page: getStr('page'),
+        page: page,
 
         fromDeck: getStr('fromDeck'),
-        fromRoom: getStr('fromRoom') || getStr('fromDeck'),  // Use fromRoom or fallback to fromDeck
+        fromRoom: getStr('fromRoom'),
         fromNode: getStr('fromNode'),
         fromEquip: getStr('fromEquip'),
         fromRest: getStr('fromRest'),
 
         toDeck: getStr('toDeck'),
-        toRoom: getStr('toRoom') || getStr('toDeck'),  // Use toRoom or fallback to toDeck
+        toRoom: getStr('toRoom'),
         toNode: getStr('toNode'),
         toEquip: getStr('toEquip'),
         toRest: getStr('toRest'),
 
         length: getNum('length'),
-        path: getStr('path'), // Mapped to CABLE_PATH
+        path: getStr('path'),
         od: getNum('od'),
         weight: getNum('weight'),
 
@@ -202,7 +200,6 @@ export const ExcelService = {
         drum: getStr('drum'),
         remark: getStr('remark'),
 
-        // Store all raw data for backup
         ...Object.fromEntries(headers.map((h, idx) => [h, row[idx]]))
       };
       mapped.push(cable);

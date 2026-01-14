@@ -1,0 +1,4 @@
+﻿[Agent 3] Verifying Geometry & Limits (900mm)...
+Result: Width 900mm, Tiers 3
+✅ Smart Auto-Tiering Confirmed: Kept width <= 900 by adding tiers.
+Status: SUCCESS

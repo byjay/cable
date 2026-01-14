@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEASTAR Cable Management System V2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .container { max-width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+            padding: 20px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header .subtitle { font-size: 14px; opacity: 0.9; }
+        .main-content { flex: 1; display: flex; height: calc(100vh - 120px); }
+        .sidebar {
+            width: 320px;
+            background: rgba(15,23,42,0.95);
+            border-right: 2px solid #334155;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .content-area { flex: 1; display: flex; flex-direction: column; }
+        .tab-navigation {
+            display: flex;
+            background: rgba(30,41,59,0.9);
+            border-bottom: 2px solid #475569;
+            overflow-x: auto;
+        }
+        .tab-button {
+            padding: 12px 20px;
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-button:hover { background: rgba(59,130,246,0.2); color: #fff; }
+        .tab-button.active { background: rgba(59,130,246,0.3); color: #fff; border-bottom-color: #3b82f6; }
+        .tab-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: rgba(15,23,42,0.8);
+        }
+        .hidden { display: none !important; }
+        .section {
+            background: rgba(30,41,59,0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #475569;
+        }
+        .section h3 { color: #60a5fa; margin-bottom: 12px; font-size: 16px; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 3px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .btn-primary:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-success:hover { background: linear-gradient(135deg, #059669, #047857); }
+        .btn-secondary { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        input[type="file"], input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #475569;
+            border-radius: 6px;
+            background: rgba(15,23,42,0.8);
+            color: #fff;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #475569;
+        }
+        .stat-number { font-size: 24px; font-weight: 700; color: #60a5fa; margin-bottom: 3px; }
+        .stat-label { font-size: 12px; color: #cbd5e1; }
+        .table-container {
+            background: rgba(15,23,42,0.9);
+            border-radius: 10px;
+            overflow: auto;
+            border: 1px solid #475569;
+            max-height: 600px;
+        }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: white;
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .data-table td { padding: 8px 6px; border-bottom: 1px solid #334155; color: #e2e8f0; }
+        .data-table tbody tr:hover { background: rgba(59,130,246,0.1); }
+        .chart-container {
+            background: rgba(30,41,59,0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #475569;
+        }
+        .chart-container h3 { margin-bottom: 10px; font-size: 15px; }
+        .threejs-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            border: 2px solid #475569;
+            background: #000;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s;
+            max-width: 350px;
+        }
+        .notification.show { opacity: 1; transform: translateX(0); }
+        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .notification.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .checkbox-label { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+        input[type="checkbox"] { width: auto; margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚢 SEASTAR Cable Management System V2</h1>
+            <div class="subtitle">케이블 관리, 경로 최적화, 3D 시각화 통합 시스템</div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="section">
+                    <h3>📁 파일 업로드</h3>
+                    <label style="font-size:12px;color:#cbd5e1;">케이블 정보 (Excel)</label>
+                    <input type="file" id="cableFile" accept=".xlsx,.xls,.csv">
+                    <label style="font-size:12px;color:#cbd5e1;">노드 정보 (Excel)</label>
+                    <input type="file" id="nodeFile" accept=".xlsx,.xls,.csv">
+                    <button class="btn btn-primary" onclick="loadFiles()" style="width:100%;margin-top:8px;">파일 로드</button>
+                </div>
+
+                <div class="section">
+                    <h3>📊 시스템 통계</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalCables">0</div>
+                            <div class="stat-label">총 케이블</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalNodes">0</div>
+                            <div class="stat-label">총 노드</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalLength">0</div>
+                            <div class="stat-label">총 길이 (m)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="calculatedPaths">0</div>
+                            <div class="stat-label">산출된 경로</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎛️ 제어 패널</h3>
+                    <button class="btn btn-success" onclick="exportAllData()" style="width:100%;margin:3px 0;">전체 데이터 내보내기</button>
+                    <button class="btn btn-secondary" onclick="refreshAll()" style="width:100%;margin:3px 0;">전체 새로고침</button>
+                    <button class="btn btn-warning" onclick="runAllTests()" style="width:100%;margin:3px 0;">시스템 테스트</button>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <nav class="tab-navigation">
+                    <button class="tab-button active" onclick="showTab('dashboard')">📊 대시보드</button>
+                    <button class="tab-button" onclick="showTab('cables')">📌 케이블 목록</button>
+                    <button class="tab-button" onclick="showTab('nodes')">🗂️ 노드 정보</button>
+                    <button class="tab-button" onclick="showTab('3d')">🌐 3D 시각화</button>
+                    <button class="tab-button" onclick="showTab('routing')">🗺️ 경로 관리</button>
+                </nav>
+
+                <div id="dashboard" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="dashTotalCables">0</div>
+                            <div class="stat-label">총 케이블 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dashTotalNodes">0</div>
+                            <div class="stat-label">총 노드 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dashTotalLength">0</div>
+                            <div class="stat-label">총 길이 (m)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dashCalculatedPaths">0</div>
+                            <div class="stat-label">산출된 경로</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>시스템별 케이블 분포</h3>
+                        <canvas id="systemChart" height="80"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>케이블 타입별 분포</h3>
+                        <canvas id="typeChart" height="80"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>노드 연결 통계 (TOP 10)</h3>
+                        <canvas id="nodeChart" height="80"></canvas>
+                    </div>
+                </div>
+
+                <div id="cables" class="tab-content hidden">
+                    <div class="section">
+                        <h3>📌 케이블 목록 관리</h3>
+                        <div class="control-panel">
+                            <button class="btn btn-primary" onclick="calculateAllPaths()">길이/경로 산출</button>
+                            <button class="btn btn-success" onclick="exportCableList()">케이블 리스트 다운로드</button>
+                            <input type="text" id="cableSearch" placeholder="케이블 검색..." onkeyup="searchCables()">
+                            <select id="systemFilter" onchange="filterCables()">
+                                <option value="">모든 시스템</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="cableTable">
+                            <thead>
+                                <tr>
+                                    <th>케이블명</th>
+                                    <th>타입</th>
+                                    <th>시스템</th>
+                                    <th>FROM 노드</th>
+                                    <th>TO 노드</th>
+                                    <th>산출 길이 (m)</th>
+                                    <th>경로</th>
+                                    <th>CHECK NODE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cableTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="nodes" class="tab-content hidden">
+                    <div class="section">
+                        <h3>🗂️ 노드 정보</h3>
+                        <div class="control-panel">
+                            <input type="text" id="nodeSearch" placeholder="노드 검색..." onkeyup="searchNodes()">
+                            <button class="btn btn-success" onclick="exportNodeInfo()">노드 정보 다운로드</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="nodeTable">
+                            <thead>
+                                <tr>
+                                    <th>노드명</th>
+                                    <th>구조물</th>
+                                    <th>타입</th>
+                                    <th>연결 노드</th>
+                                    <th>링크 길이 (m)</th>
+                                    <th>단면적 (mm²)</th>
+                                    <th>연결 케이블 수</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nodeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="3d" class="tab-content hidden">
+                    <div class="section">
+                        <h3>🌐 3D 네트워크 시각화</h3>
+                        <div class="control-panel">
+                            <button class="btn btn-primary" onclick="initialize3D()">3D 초기화</button>
+                            <button class="btn btn-secondary" onclick="reset3DView()">뷰 리셋</button>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showNodes" checked onchange="toggle3DNodes()">
+                                노드 표시
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showCables" checked onchange="toggle3DCables()">
+                                케이블 표시
+                            </label>
+                        </div>
+                    </div>
+                    <div class="threejs-container" id="threejsContainer"></div>
+                </div>
+
+                <div id="routing" class="tab-content hidden">
+                    <div class="section">
+                        <h3>🗺️ 경로 관리</h3>
+                        <div class="control-panel">
+                            <select id="routeCableSelect" onchange="loadRouteForCable()">
+                                <option value="">케이블 선택</option>
+                            </select>
+                            <input type="text" id="checkNodeInput" placeholder="CHECK_NODE 입력 (쉼표 구분)">
+                            <button class="btn btn-primary" onclick="updateCheckNode()">CHECK NODE 저장</button>
+                            <button class="btn btn-success" onclick="recalculateSelectedPaths()">선택 항목 경로 재산출</button>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <h3>다중 선택</h3>
+                        <button class="btn btn-secondary" onclick="selectAllRoutes()">전체 선택</button>
+                        <button class="btn btn-secondary" onclick="deselectAllRoutes()">전체 해제</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="routeTable">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+                                    <th>케이블명</th>
+                                    <th>경로</th>
+                                    <th>길이 (m)</th>
+                                    <th>CHECK NODE</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="routeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Global variables
+        let cableData = [];
+        let nodeData = [];
+        let filteredCableData = [];
+        let charts = {};
+        let scene, camera, renderer, nodeObjects = [], cableObjects = [];
+        let selectedRoutes = new Set();
+
+        // Column mapping for flexibility
+        const CABLE_COLUMNS = {
+            name: ['CABLE_NAME', 'NAME', 'Cable Name'],
+            type: ['CABLE_TYPE', 'TYPE', 'Type'],
+            system: ['CABLE_SYSTEM', 'SYSTEM', 'System'],
+            fromNode: ['FROM_NODE', 'From Node', 'FROM'],
+            toNode: ['TO_NODE', 'To Node', 'TO'],
+            fromRoom: ['FROM_ROOM', 'From Room'],
+            toRoom: ['TO_ROOM', 'To Room'],
+            fromEquip: ['FROM_EQUIP', 'From Equipment'],
+            toEquip: ['TO_EQUIP', 'To Equipment'],
+            length: ['POR_LENGTH', 'LENGTH', 'Length'],
+            path: ['CABLE_PATH', 'PATH', 'Path'],
+            outDia: ['CABLE_OUTDIA', 'OUT_DIA', 'Diameter'],
+            checkNode: ['CHECK_NODE', 'Check Node', 'Check']
+        };
+
+        const NODE_COLUMNS = {
+            name: ['NODE_RNAME', 'NODE_NAME', 'NAME', 'Node'],
+            structure: ['STRUCTURE_NAME', 'STRUCTURE', 'Structure'],
+            component: ['COMPONENT', 'Component'],
+            type: ['NODE_TYPE', 'TYPE', 'Type'],
+            relation: ['RELATION', 'Relation'],
+            linkLength: ['LINK_LENGTH', 'Link Length'],
+            areaSize: ['AREA_SIZE', 'Area Size', 'Area']
+        };
+
+        // Utility functions
+        function getColumnIndex(headers, possibleNames) {
+            const lowerHeaders = headers.map(h => String(h || '').toLowerCase().trim());
+            for (const name of possibleNames) {
+                const idx = lowerHeaders.indexOf(name.toLowerCase());
+                if (idx !== -1) return idx;
+            }
+            return -1;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        function safeParseFloat(value) {
+            const parsed = parseFloat(String(value || '').replace(/[^0-9.-]/g, ''));
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        // File loading
+        async function loadFiles() {
+            const cableFile = document.getElementById('cableFile').files[0];
+            const nodeFile = document.getElementById('nodeFile').files[0];
+
+            if (!cableFile && !nodeFile) {
+                showNotification('파일을 선택해주세요.', 'warning');
+                return;
+            }
+
+            if (cableFile) await loadExcelFile(cableFile, 'cable');
+            if (nodeFile) await loadExcelFile(nodeFile, 'node');
+
+            updateAllData();
+            showNotification('파일이 성공적으로 로드되었습니다.', 'success');
+        }
+
+        function loadExcelFile(file, type) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(sheet, {header: 1, blankrows: false});
+
+                        if (type === 'cable') processCableData(jsonData);
+                        else if (type === 'node') processNodeData(jsonData);
+
+                        resolve();
+                    } catch (error) {
+                        showNotification(`파일 로드 오류: ${error.message}`, 'error');
+                        reject(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function processCableData(rawData) {
+            if (rawData.length < 2) {
+                showNotification('케이블 데이터가 비어있습니다.', 'warning');
+                return;
+            }
+
+            const headers = rawData[0];
+            const indices = {};
+            
+            for (const key in CABLE_COLUMNS) {
+                indices[key] = getColumnIndex(headers, CABLE_COLUMNS[key]);
+            }
+
+            cableData = rawData.slice(1).map(row => ({
+                name: indices.name >= 0 ? String(row[indices.name] || '') : '',
+                type: indices.type >= 0 ? String(row[indices.type] || '') : '',
+                system: indices.system >= 0 ? String(row[indices.system] || '') : '',
+                fromNode: indices.fromNode >= 0 ? String(row[indices.fromNode] || '') : '',
+                toNode: indices.toNode >= 0 ? String(row[indices.toNode] || '') : '',
+                fromRoom: indices.fromRoom >= 0 ? String(row[indices.fromRoom] || '') : '',
+                toRoom: indices.toRoom >= 0 ? String(row[indices.toRoom] || '') : '',
+                fromEquip: indices.fromEquip >= 0 ? String(row[indices.fromEquip] || '') : '',
+                toEquip: indices.toEquip >= 0 ? String(row[indices.toEquip] || '') : '',
+                length: indices.length >= 0 ? safeParseFloat(row[indices.length]) : 0,
+                path: indices.path >= 0 ? String(row[indices.path] || '') : '',
+                outDia: indices.outDia >= 0 ? safeParseFloat(row[indices.outDia]) : 0,
+                checkNode: indices.checkNode >= 0 ? String(row[indices.checkNode] || '') : '',
+                calculatedLength: 0,
+                calculatedPath: ''
+            })).filter(c => c.name);
+
+            filteredCableData = [...cableData];
+            console.log('Loaded cables:', cableData.length);
+        }
+
+        function processNodeData(rawData) {
+            if (rawData.length < 2) {
+                showNotification('노드 데이터가 비어있습니다.', 'warning');
+                return;
+            }
+
+            const headers = rawData[0];
+            const indices = {};
+            
+            for (const key in NODE_COLUMNS) {
+                indices[key] = getColumnIndex(headers, NODE_COLUMNS[key]);
+            }
+
+            nodeData = rawData.slice(1).map(row => ({
+                name: indices.name >= 0 ? String(row[indices.name] || '') : '',
+                structure: indices.structure >= 0 ? String(row[indices.structure] || '') : '',
+                component: indices.component >= 0 ? String(row[indices.component] || '') : '',
+                type: indices.type >= 0 ? String(row[indices.type] || '') : '',
+                relation: indices.relation >= 0 ? String(row[indices.relation] || '') : '',
+                linkLength: indices.linkLength >= 0 ? safeParseFloat(row[indices.linkLength]) : 0,
+                areaSize: indices.areaSize >= 0 ? safeParseFloat(row[indices.areaSize]) : 0,
+                connectedCables: 0
+            })).filter(n => n.name);
+
+            console.log('Loaded nodes:', nodeData.length);
+        }
+
+        // Path calculation algorithm
+        function calculateAllPaths() {
+            if (!nodeData.length) {
+                showNotification('먼저 노드 파일을 로드해주세요.', 'warning');
+                return;
+            }
+
+            let calculatedCount = 0;
+            cableData.forEach(cable => {
+                if (cable.fromNode && cable.toNode) {
+                    const result = calculatePath(cable.fromNode, cable.toNode, cable.checkNode);
+                    if (result) {
+                        cable.calculatedPath = result.path.join(' → ');
+                        cable.calculatedLength = result.length;
+                        calculatedCount++;
+                    }
+                }
+            });
+
+            filteredCableData = [...cableData];
+            updateAllData();
+            showNotification(`${calculatedCount}개 케이블의 경로가 산출되었습니다.`, 'success');
+        }
+
+        function calculatePath(fromNode, toNode, checkNodeStr = '') {
+            const checkNodes = checkNodeStr ? checkNodeStr.split(',').map(s => s.trim()).filter(s => s) : [];
+            
+            if (checkNodes.length > 0) {
+                return calculatePathWithCheckpoints(fromNode, toNode, checkNodes);
+            } else {
+                return calculateShortestPath(fromNode, toNode);
+            }
+        }
+
+        function calculatePathWithCheckpoints(fromNode, toNode, checkNodes) {
+            const fullPath = [fromNode];
+            let totalLength = 0;
+            let currentNode = fromNode;
+
+            for (const checkpoint of checkNodes) {
+                const segment = calculateShortestPath(currentNode, checkpoint);
+                if (!segment) return null;
+                
+                fullPath.push(...segment.path.slice(1));
+                totalLength += segment.length;
+                currentNode = checkpoint;
+            }
+
+            const finalSegment = calculateShortestPath(currentNode, toNode);
+            if (!finalSegment) return null;
+            
+            fullPath.push(...finalSegment.path.slice(1));
+            totalLength += finalSegment.length;
+
+            return { path: fullPath, length: totalLength };
+        }
+
+        function calculateShortestPath(fromNode, toNode) {
+            if (fromNode === toNode) return { path: [fromNode], length: 0 };
+
+            const nodeMap = {};
+            nodeData.forEach(node => {
+                nodeMap[node.name] = {
+                    relations: node.relation ? node.relation.split(',').map(s => s.trim()) : [],
+                    linkLength: node.linkLength || 1
+                };
+            });
+
+            if (!nodeMap[fromNode] || !nodeMap[toNode]) return null;
+
+            // Dijkstra's algorithm
+            const distances = {};
+            const previous = {};
+            const unvisited = new Set();
+
+            nodeData.forEach(node => {
+                distances[node.name] = Infinity;
+                previous[node.name] = null;
+                unvisited.add(node.name);
+            });
+            distances[fromNode] = 0;
+
+            while (unvisited.size > 0) {
+                let currentNode = null;
+                let minDist = Infinity;
+                
+                unvisited.forEach(node => {
+                    if (distances[node] < minDist) {
+                        minDist = distances[node];
+                        currentNode = node;
+                    }
+                });
+
+                if (currentNode === null || currentNode === toNode) break;
+                unvisited.delete(currentNode);
+
+                const neighbors = nodeMap[currentNode].relations;
+                neighbors.forEach(neighbor => {
+                    if (unvisited.has(neighbor)) {
+                        const alt = distances[currentNode] + nodeMap[currentNode].linkLength;
+                        if (alt < distances[neighbor]) {
+                            distances[neighbor] = alt;
+                            previous[neighbor] = currentNode;
+                        }
+                    }
+                });
+            }
+
+            if (distances[toNode] === Infinity) return null;
+
+            const path = [];
+            let current = toNode;
+            while (current !== null) {
+                path.unshift(current);
+                current = previous[current];
+            }
+
+            return { path, length: Math.round(distances[toNode] * 10) / 10 };
+        }
+
+        // Update functions
+        function updateAllData() {
+            updateStats();
+            updateFilters();
+            updateTables();
+            updateCharts();
+            populateSelects();
+        }
+
+        function updateStats() {
+            const totalCables = cableData.length;
+            const totalNodes = nodeData.length;
+            const totalLength = cableData.reduce((sum, c) => sum + (c.calculatedLength || c.length || 0), 0);
+            const calculatedPaths = cableData.filter(c => c.calculatedPath).length;
+
+            document.getElementById('totalCables').textContent = totalCables;
+            document.getElementById('totalNodes').textContent = totalNodes;
+            document.getElementById('totalLength').textContent = totalLength.toFixed(1);
+            document.getElementById('calculatedPaths').textContent = calculatedPaths;
+
+            document.getElementById('dashTotalCables').textContent = totalCables;
+            document.getElementById('dashTotalNodes').textContent = totalNodes;
+            document.getElementById('dashTotalLength').textContent = totalLength.toFixed(1);
+            document.getElementById('dashCalculatedPaths').textContent = calculatedPaths;
+        }
+
+        function updateFilters() {
+            const systemFilter = document.getElementById('systemFilter');
+            const systems = [...new Set(cableData.map(c => c.system).filter(s => s))].sort();
+            
+            systemFilter.innerHTML = '<option value="">모든 시스템</option>';
+            systems.forEach(system => {
+                const option = document.createElement('option');
+                option.value = system;
+                option.textContent = system;
+                systemFilter.appendChild(option);
+            });
+        }
+
+        function populateSelects() {
+            const routeCableSelect = document.getElementById('routeCableSelect');
+            routeCableSelect.innerHTML = '<option value="">케이블 선택</option>';
+            
+            cableData.forEach((cable, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${cable.name} (${cable.fromNode} → ${cable.toNode})`;
+                routeCableSelect.appendChild(option);
+            });
+        }
+
+        function updateTables() {
+            updateCableTable();
+            updateNodeTable();
+            updateRouteTable();
+        }
+
+        function updateCableTable() {
+            const tbody = document.getElementById('cableTableBody');
+            tbody.innerHTML = '';
+
+            filteredCableData.forEach((cable, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${cable.name}</td>
+                    <td>${cable.type}</td>
+                    <td>${cable.system}</td>
+                    <td>${cable.fromNode}</td>
+                    <td>${cable.toNode}</td>
+                    <td>${cable.calculatedLength > 0 ? cable.calculatedLength.toFixed(1) : (cable.length || 0).toFixed(1)}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${cable.calculatedPath || cable.path || '-'}</td>
+                    <td>${cable.checkNode || '-'}</td>
+                `;
+            });
+        }
+
+        function updateNodeTable() {
+            const tbody = document.getElementById('nodeTableBody');
+            tbody.innerHTML = '';
+
+            // Calculate connected cables for each node
+            const cableCounts = {};
+            cableData.forEach(cable => {
+                if (cable.fromNode) cableCounts[cable.fromNode] = (cableCounts[cable.fromNode] || 0) + 1;
+                if (cable.toNode && cable.toNode !== cable.fromNode) {
+                    cableCounts[cable.toNode] = (cableCounts[cable.toNode] || 0) + 1;
+                }
+            });
+
+            nodeData.forEach(node => {
+                node.connectedCables = cableCounts[node.name] || 0;
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${node.name}</td>
+                    <td>${node.structure}</td>
+                    <td>${node.type}</td>
+                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${node.relation || '-'}</td>
+                    <td>${node.linkLength.toFixed(1)}</td>
+                    <td>${node.areaSize.toFixed(0)}</td>
+                    <td>${node.connectedCables}</td>
+                `;
+            });
+        }
+
+        function updateRouteTable() {
+            const tbody = document.getElementById('routeTableBody');
+            tbody.innerHTML = '';
+
+            cableData.forEach((cable, index) => {
+                const row = tbody.insertRow();
+                const isSelected = selectedRoutes.has(index);
+                const status = cable.calculatedPath ? '✓ 산출됨' : '-';
+                const displayLength = cable.calculatedLength > 0 ? cable.calculatedLength.toFixed(1) : (cable.length || 0).toFixed(1);
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleRouteSelection(${index})"></td>
+                    <td>${cable.name}</td>
+                    <td>${cable.fromNode} → ${cable.toNode}</td>
+                    <td>${displayLength}</td>
+                    <td>${cable.checkNode || '-'}</td>
+                    <td>${status}</td>
+                `;
+            });
+        }
+
+        function updateCharts() {
+            updateSystemChart();
+            updateTypeChart();
+            updateNodeChart();
+        }
+
+        function updateSystemChart() {
+            const ctx = document.getElementById('systemChart');
+            if (!ctx) return;
+
+            if (charts.systemChart) charts.systemChart.destroy();
+
+            const systemCounts = {};
+            cableData.forEach(cable => {
+                const system = cable.system || 'Unknown';
+                systemCounts[system] = (systemCounts[system] || 0) + 1;
+            });
+
+            charts.systemChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(systemCounts),
+                    datasets: [{
+                        data: Object.values(systemCounts),
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                        borderWidth: 2,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#e2e8f0' } }
+                    }
+                }
+            });
+        }
+
+        function updateTypeChart() {
+            const ctx = document.getElementById('typeChart');
+            if (!ctx) return;
+
+            if (charts.typeChart) charts.typeChart.destroy();
+
+            const typeCounts = {};
+            cableData.forEach(cable => {
+                const type = cable.type || 'Unknown';
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+
+            const sortedTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            charts.typeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedTypes.map(t => t[0]),
+                    datasets: [{
+                        label: '케이블 수',
+                        data: sortedTypes.map(t => t[1]),
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#e2e8f0' } },
+                        x: { ticks: { color: '#e2e8f0' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+        }
+
+        function updateNodeChart() {
+            const ctx = document.getElementById('nodeChart');
+            if (!ctx) return;
+
+            if (charts.nodeChart) charts.nodeChart.destroy();
+
+            const topNodes = nodeData
+                .sort((a, b) => b.connectedCables - a.connectedCables)
+                .slice(0, 10);
+
+            charts.nodeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topNodes.map(n => n.name),
+                    datasets: [{
+                        label: '연결된 케이블',
+                        data: topNodes.map(n => n.connectedCables),
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, ticks: { color: '#e2e8f0' } },
+                        y: { ticks: { color: '#e2e8f0' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+        }
+
+        // 3D Visualization
+        function initialize3D() {
+            const container = document.getElementById('threejsContainer');
+            if (!container || typeof THREE === 'undefined') {
+                showNotification('Three.js 라이브러리를 로드할 수 없습니다.', 'error');
+                return;
+            }
+
+            try {
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x0f172a);
+
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 2000);
+                camera.position.set(100, 100, 100);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.innerHTML = '';
+                container.appendChild(renderer.domElement);
+
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(100, 100, 100);
+                scene.add(directionalLight);
+
+                const gridHelper = new THREE.GridHelper(200, 40, 0x444444, 0x222222);
+                scene.add(gridHelper);
+
+                create3DNetwork();
+                animate3D();
+
+                showNotification('3D 시각화가 초기화되었습니다.', 'success');
+            } catch (error) {
+                showNotification('3D 초기화 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        function create3DNetwork() {
+            nodeObjects.forEach(obj => scene.remove(obj));
+            cableObjects.forEach(obj => scene.remove(obj));
+            nodeObjects = [];
+            cableObjects = [];
+
+            // Create node map for positioning
+            const nodePositions = {};
+            nodeData.forEach((node, index) => {
+                const angle = (index / nodeData.length) * Math.PI * 2;
+                const radius = 50;
+                nodePositions[node.name] = {
+                    x: Math.cos(angle) * radius,
+                    y: 0,
+                    z: Math.sin(angle) * radius
+                };
+            });
+
+            // Draw nodes
+            nodeData.forEach(node => {
+                const pos = nodePositions[node.name];
+                if (!pos) return;
+
+                const size = Math.max(0.5, Math.min(2, node.connectedCables * 0.2));
+                const geometry = new THREE.SphereGeometry(size, 16, 16);
+                const material = new THREE.MeshLambertMaterial({ color: 0x3b82f6 });
+                const nodeMesh = new THREE.Mesh(geometry, material);
+                nodeMesh.position.set(pos.x, pos.y, pos.z);
+                scene.add(nodeMesh);
+                nodeObjects.push(nodeMesh);
+            });
+
+            // Draw cables with right angles
+            cableData.forEach(cable => {
+                if (!cable.calculatedPath || !nodePositions[cable.fromNode] || !nodePositions[cable.toNode]) return;
+
+                const pathNodes = cable.calculatedPath.split(' → ');
+                const points = [];
+
+                for (let i = 0; i < pathNodes.length; i++) {
+                    const pos = nodePositions[pathNodes[i]];
+                    if (pos) {
+                        if (i === 0) {
+                            points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+                        } else {
+                            const prevPos = nodePositions[pathNodes[i - 1]];
+                            // Create right angle connection
+                            const midX = prevPos.x;
+                            const midZ = pos.z;
+                            points.push(new THREE.Vector3(midX, pos.y, midZ));
+                            points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+                        }
+                    }
+                }
+
+                if (points.length >= 2) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 1 });
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                    cableObjects.push(line);
+                }
+            });
+        }
+
+        function animate3D() {
+            if (!renderer || !scene || !camera) return;
+            requestAnimationFrame(animate3D);
+            scene.rotation.y += 0.001;
+            renderer.render(scene, camera);
+        }
+
+        function reset3DView() {
+            if (camera) {
+                camera.position.set(100, 100, 100);
+                camera.lookAt(0, 0, 0);
+            }
+            if (scene) scene.rotation.set(0, 0, 0);
+        }
+
+        function toggle3DNodes() {
+            const show = document.getElementById('showNodes').checked;
+            nodeObjects.forEach(obj => { obj.visible = show; });
+        }
+
+        function toggle3DCables() {
+            const show = document.getElementById('showCables').checked;
+            cableObjects.forEach(obj => { obj.visible = show; });
+        }
+
+        // Search and filter
+        function searchCables() {
+            const searchTerm = document.getElementById('cableSearch').value.toLowerCase();
+            filteredCableData = cableData.filter(cable => 
+                cable.name.toLowerCase().includes(searchTerm) ||
+                cable.type.toLowerCase().includes(searchTerm) ||
+                cable.system.toLowerCase().includes(searchTerm)
+            );
+            updateCableTable();
+        }
+
+        function filterCables() {
+            const systemFilter = document.getElementById('systemFilter').value;
+            filteredCableData = cableData.filter(cable => 
+                !systemFilter || cable.system === systemFilter
+            );
+            updateCableTable();
+        }
+
+        function searchNodes() {
+            const searchTerm = document.getElementById('nodeSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#nodeTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Route management
+        function loadRouteForCable() {
+            const index = parseInt(document.getElementById('routeCableSelect').value);
+            if (isNaN(index)) return;
+
+            const cable = cableData[index];
+            document.getElementById('checkNodeInput').value = cable.checkNode || '';
+        }
+
+        function updateCheckNode() {
+            const index = parseInt(document.getElementById('routeCableSelect').value);
+            if (isNaN(index)) {
+                showNotification('케이블을 선택해주세요.', 'warning');
+                return;
+            }
+
+            const cable = cableData[index];
+            const checkNodeValue = document.getElementById('checkNodeInput').value;
+            cable.checkNode = checkNodeValue;
+
+            const result = calculatePath(cable.fromNode, cable.toNode, cable.checkNode);
+            if (result) {
+                cable.calculatedPath = result.path.join(' → ');
+                cable.calculatedLength = result.length;
+            }
+
+            updateAllData();
+            showNotification('CHECK NODE가 업데이트되었습니다.', 'success');
+        }
+
+        function toggleRouteSelection(index) {
+            if (selectedRoutes.has(index)) {
+                selectedRoutes.delete(index);
+            } else {
+                selectedRoutes.add(index);
+            }
+        }
+
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAllCheckbox').checked;
+            if (checked) {
+                cableData.forEach((_, index) => selectedRoutes.add(index));
+            } else {
+                selectedRoutes.clear();
+            }
+            updateRouteTable();
+        }
+
+        function selectAllRoutes() {
+            cableData.forEach((_, index) => selectedRoutes.add(index));
+            document.getElementById('selectAllCheckbox').checked = true;
+            updateRouteTable();
+        }
+
+        function deselectAllRoutes() {
+            selectedRoutes.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateRouteTable();
+        }
+
+        function recalculateSelectedPaths() {
+            if (selectedRoutes.size === 0) {
+                showNotification('경로를 재산출할 케이블을 선택해주세요.', 'warning');
+                return;
+            }
+
+            let count = 0;
+            selectedRoutes.forEach(index => {
+                const cable = cableData[index];
+                const result = calculatePath(cable.fromNode, cable.toNode, cable.checkNode);
+                if (result) {
+                    cable.calculatedPath = result.path.join(' → ');
+                    cable.calculatedLength = result.length;
+                    count++;
+                }
+            });
+
+            updateAllData();
+            showNotification(`${count}개 케이블의 경로가 재산출되었습니다.`, 'success');
+        }
+
+        // Export functions
+        function exportCableList() {
+            if (!cableData.length) {
+                showNotification('내보낼 데이터가 없습니다.', 'warning');
+                return;
+            }
+
+            const csvRows = [];
+            csvRows.push('CABLE_NAME,CABLE_TYPE,CABLE_SYSTEM,FROM_NODE,TO_NODE,POR_LENGTH,CABLE_PATH,CHECK_NODE');
+
+            cableData.forEach(cable => {
+                const length = cable.calculatedLength > 0 ? cable.calculatedLength : cable.length;
+                const path = cable.calculatedPath || cable.path;
+                csvRows.push(`${cable.name},${cable.type},${cable.system},${cable.fromNode},${cable.toNode},${length},${path},${cable.checkNode}`);
+            });
+
+            downloadCSV(csvRows.join('\n'), 'cable_list_with_paths.csv');
+            showNotification('케이블 리스트가 다운로드되었습니다.', 'success');
+        }
+
+        function exportNodeInfo() {
+            if (!nodeData.length) {
+                showNotification('내보낼 노드 데이터가 없습니다.', 'warning');
+                return;
+            }
+
+            const csvRows = [];
+            csvRows.push('NODE_NAME,STRUCTURE_NAME,NODE_TYPE,RELATION,LINK_LENGTH,AREA_SIZE,CONNECTED_CABLES');
+
+            nodeData.forEach(node => {
+                csvRows.push(`${node.name},${node.structure},${node.type},${node.relation},${node.linkLength},${node.areaSize},${node.connectedCables}`);
+            });
+
+            downloadCSV(csvRows.join('\n'), 'node_info.csv');
+            showNotification('노드 정보가 다운로드되었습니다.', 'success');
+        }
+
+        function exportAllData() {
+            const data = {
+                cables: cableData,
+                nodes: nodeData,
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            downloadBlob(blob, 'seastar_all_data.json');
+            showNotification('전체 데이터가 다운로드되었습니다.', 'success');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+            downloadBlob(blob, filename);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab) selectedTab.classList.remove('hidden');
+
+            const selectedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (selectedButton) selectedButton.classList.add('active');
+
+            if (tabName === '3d' && !renderer) {
+                setTimeout(() => initialize3D(), 100);
+            }
+        }
+
+        // Utility functions
+        function refreshAll() {
+            updateAllData();
+            if (renderer) initialize3D();
+            showNotification('전체 데이터가 새로고침되었습니다.', 'success');
+        }
+
+        function runAllTests() {
+            const tests = [
+                { name: '데이터 로드', pass: cableData.length > 0 && nodeData.length > 0 },
+                { name: '경로 산출', pass: cableData.some(c => c.calculatedPath) },
+                { name: '차트 생성', pass: Object.keys(charts).length > 0 },
+                { name: '3D 초기화', pass: renderer !== undefined },
+                { name: '테이블 업데이트', pass: document.querySelectorAll('#cableTableBody tr').length > 0 }
+            ];
+
+            const passed = tests.filter(t => t.pass).length;
+            const message = `테스트 완료: ${passed}/${tests.length} 통과`;
+            showNotification(message, passed === tests.length ? 'success' : 'warning');
+        }
+
+        // Window resize handler
+        window.addEventListener('resize', function() {
+            if (renderer && camera) {
+                const container = document.getElementById('threejsContainer');
+                if (container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            }
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚢 SEASTAR Cable Management System V2 로드 완료');
+            showNotification('시스템이 준비되었습니다.', 'info');
+        });
+    </script>
+</body>
+</html>

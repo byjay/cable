@@ -59,7 +59,14 @@ export const PILE_GAP = 0;
 const LARGE_CABLE_THRESHOLD = 20;
 
 // Target fill rate for optimization
-const TARGET_FILL_RATE = 60;
+const TARGET_FILL_RATE = 50;
+
+// Standard Industrial Tray Widths (mm) - Strictly 100mm increments per user request
+const STANDARD_WIDTHS = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200];
+
+const getNextStandardWidth = (w: number): number => {
+  return STANDARD_WIDTHS.find(sw => sw >= w) || Math.ceil(w / 100) * 100;
+};
 
 // If fill rate is below this and 1 layer fits, don't force multi-layer
 const LOW_FILL_THRESHOLD = 35;
@@ -128,94 +135,76 @@ const findDensePositionWithStacking = (
   placed: PlacedCable[],
   xMin: number,
   xMax: number,
-  maxHeightLimit: number,
-  maxLayersAllowed: number,
-  preferStacking: boolean // If true, prefer higher layers
+  maxHeightLimit: number
 ): { point: Point, layer: number } | null => {
+  // CLAUDE 4.5 COGNITIVE MODE: 60mm Strict Height Enforcement
+  const ACTUAL_MAX_HEIGHT = 60;
   const r = cable.od / 2;
-  const candidates: { p: Point, layer: number, score: number }[] = [];
+  const candidates: { p: Point, score: number }[] = [];
 
-  // Find the rightmost floor position
-  let lastFloorX = xMin - r;
-  const floorCables = placed.filter(c => c.y <= c.od / 2 + 0.5).sort((a, b) => b.x - a.x);
-  if (floorCables.length > 0) {
-    lastFloorX = floorCables[0].x + floorCables[0].od / 2;
-  } else {
-    lastFloorX = xMin;
+  // 1. Base Scanning (Floor Level)
+  let scanX = xMin + r;
+  while (scanX <= xMax - r) {
+    if (!checkCollision(placed, scanX, r, r)) {
+      candidates.push({ p: { x: scanX, y: r }, score: r });
+    }
+    scanX += 5;
   }
 
-  // Floor position (layer 1)
-  candidates.push({ p: { x: lastFloorX + r, y: r }, layer: 1, score: preferStacking ? 100 : 1 });
-
-  // If stacking is allowed and cable is small enough
-  if (maxLayersAllowed > 1 && cable.od < LARGE_CABLE_THRESHOLD) {
-    // Find stacking positions on top of existing cables
+  // 2. Tangent Valley Packing (Circle between Circles)
+  if (placed.length > 0) {
     for (let i = 0; i < placed.length; i++) {
-      // Position directly on top of a single cable
-      const topY = placed[i].y + placed[i].od / 2 + r;
-      if (topY + r <= maxHeightLimit) {
-        const layer = determineLayer(topY, r, placed, placed[i].x);
-        if (layer <= maxLayersAllowed) {
-          candidates.push({
-            p: { x: placed[i].x, y: topY },
-            layer,
-            score: preferStacking ? (layer * -10) : (layer * 10) // Prefer higher layers if preferStacking
-          });
+      const c1 = placed[i];
+      const r1 = c1.od / 2;
+
+      // Tangent with floor boundary (Valley between a circle and the floor)
+      const dy = Math.abs(c1.y - r);
+      if (dy <= r1 + r) {
+        const dx = Math.sqrt(Math.pow(r1 + r, 2) - Math.pow(dy, 2));
+        if (!isNaN(dx)) {
+          candidates.push({ p: { x: c1.x + dx, y: r }, score: r });
+          candidates.push({ p: { x: c1.x - dx, y: r }, score: r });
         }
       }
 
-      // Tangent positions between cables
-      const tPoints = getTangentPoints(placed[i], { ...placed[i], y: -placed[i].od / 2, od: placed[i].od, id: '', name: '', type: '', layer: 0, x: placed[i].x } as PlacedCable, r);
-      tPoints.forEach(tp => {
-        const layer = determineLayer(tp.y, r, placed, tp.x);
-        candidates.push({ p: tp, layer, score: preferStacking ? (layer * -10) : (layer * 10) });
-      });
-
       for (let j = i + 1; j < placed.length; j++) {
-        const pts = getTangentPoints(placed[i], placed[j], r);
+        const pts = getTangentPoints(c1, placed[j], r);
         pts.forEach(tp => {
-          const layer = determineLayer(tp.y, r, placed, tp.x);
-          candidates.push({ p: tp, layer, score: preferStacking ? (layer * -10) : (layer * 10) });
+          // Valley Constraint: Must be physically supported (resting in the gap)
+          // TangentPoints already provides the two possible centers
+          candidates.push({ p: tp, score: tp.y });
         });
       }
     }
   }
 
   // Filter valid positions
-  const valid = candidates.filter(c => {
-    if (isNaN(c.p.x) || isNaN(c.p.y)) return false;
-    if (c.p.x - r < xMin - 0.1 || c.p.x + r > xMax + 0.1) return false;
-    if (c.p.y < r - 0.1 || c.p.y + r > maxHeightLimit + 0.1) return false;
-    if (c.layer > maxLayersAllowed) return false;
-    if (cable.od >= LARGE_CABLE_THRESHOLD && c.layer > 1) return false;
-    if (checkCollision(placed, c.p.x, c.p.y, r)) return false;
-    if (c.layer > 1 && checkOverhang(placed, c.p.x, c.p.y, r)) return false;
+  const valid = candidates.filter(cand => {
+    const { x, y } = cand.p;
+    if (isNaN(x) || isNaN(y)) return false;
+    if (x - r < xMin - 0.1 || x + r > xMax + 0.1) return false;
+    if (y - r < -0.1 || y + r > ACTUAL_MAX_HEIGHT + 0.1) return false;
+    if (checkCollision(placed, x, y, r)) return false;
+    // Strict Physical Support check
+    if (!isPhysicallySupported(placed, x, y, r)) return false;
     return true;
   });
 
   if (valid.length === 0) return null;
 
-  // Sort by score (lower is better when preferStacking)
-  if (preferStacking) {
-    valid.sort((a, b) => {
-      // Prefer higher layers first
-      if (a.layer !== b.layer) return b.layer - a.layer;
-      // Then left to right
-      return a.p.x - b.p.x;
-    });
-  } else {
-    valid.sort((a, b) => {
-      if (Math.abs(a.p.x - b.p.x) > 5) return a.p.x - b.p.x;
-      return a.p.y - b.p.y;
-    });
-  }
+  // Prefer lowest Y (Gravity), then lowest X
+  valid.sort((a, b) => {
+    if (Math.abs(a.p.y - b.p.y) > 0.5) return a.p.y - b.p.y;
+    return a.p.x - b.p.x;
+  });
 
-  return { point: valid[0].p, layer: valid[0].layer };
+  const best = valid[0].p;
+  const layer = determineLayer(best.y, r, placed, best.x);
+  return { point: best, layer };
 };
 
 const getStandardTrayWidth = (w: number): number => {
-  if (w <= 0) return 100;
-  return Math.ceil(w / 100) * 100;
+  return getNextStandardWidth(w);
 };
 
 // Try to place cables at a specific width, prioritizing 3-layer stacking for small cables
@@ -237,7 +226,7 @@ const tryPlaceAtWidth = (
 
   // Place large cables first (they must be on layer 1)
   for (const cable of largeCables) {
-    const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit, 1, false);
+    const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit);
     if (res) {
       placed.push({ ...cable, x: res.point.x, y: res.point.y, layer: res.layer });
     } else {
@@ -249,8 +238,7 @@ const tryPlaceAtWidth = (
   // Place small cables - floor first, then stack on top
   if (allFit) {
     for (const cable of smallCables) {
-      // Try floor first (preferStacking = false), then allow stacking
-      const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit, stackingLimit, false);
+      const res = findDensePositionWithStacking(cable, placed, MARGIN_X, width - MARGIN_X, maxHeightLimit);
       if (res) {
         placed.push({ ...cable, x: res.point.x, y: res.point.y, layer: res.layer });
       } else {
@@ -262,7 +250,50 @@ const tryPlaceAtWidth = (
 
   const fillRatio = (totalArea / (width * maxHeightLimit)) * 100;
 
+  // 3. FINAL GRAVITY CHECK (User Requested Strictness)
+  // Ensure every cable is either on floor or supported by another
+  if (allFit && placed.length > 0) {
+    const gravityOk = validateSystemGravity(placed);
+    if (!gravityOk) {
+      // console.warn("Gravity Check Failed - Backtracking");
+      return { placed: [], success: false, fillRatio: 0, totalArea: 0 };
+    }
+  }
+
   return { placed, success: allFit, fillRatio, totalArea };
+};
+
+// Exported for verification scripts
+export const validateSystemGravity = (cables: PlacedCable[]): boolean => {
+  // Sort by Y ascending to check from bottom up (optimization)
+  // Actually random access is needed.
+
+  for (const c of cables) {
+    const r = c.od / 2;
+    // 1. Floor Support
+    if (c.y <= r + 0.5) continue;
+
+    // 2. Cable Support
+    let supported = false;
+    for (const other of cables) {
+      if (c.id === other.id) continue;
+
+      // Must be below
+      if (other.y >= c.y) continue;
+
+      const dist = Math.sqrt(Math.pow(c.x - other.x, 2) + Math.pow(c.y - other.y, 2));
+      const touchDist = r + (other.od / 2);
+
+      // Tangent tolerance
+      if (Math.abs(dist - touchDist) < 1.0) {
+        supported = true;
+        break;
+      }
+    }
+
+    if (!supported) return false;
+  }
+  return true;
 };
 
 export const solveSingleTier = (
@@ -286,7 +317,9 @@ export const solveSingleTier = (
   let bestResult: { width: number, placed: PlacedCable[], fillRatio: number } | null = null;
   let bestDiff = Infinity;
 
-  for (let widthTry = startWidth; widthTry <= 4000; widthTry += 100) {
+  const MAX_TRAY_WIDTH = 900;
+
+  for (let widthTry = startWidth; widthTry <= MAX_TRAY_WIDTH; widthTry += 100) {
     const result = tryPlaceAtWidth(cables, widthTry, maxHeightLimit, stackingLimit);
 
     if (result.success) {
@@ -298,16 +331,16 @@ export const solveSingleTier = (
         bestResult = { width: widthTry, placed: result.placed, fillRatio: result.fillRatio };
       }
 
-      // If fill rate drops below 30%, stop searching (too big)
-      if (result.fillRatio < 30) {
+      // If fill rate drops below 5%, stop searching (too big)
+      if (result.fillRatio < 5) {
         break;
       }
     }
   }
 
-  // If no result found, try again without restrictions
+  // If no result found, try again without restrictions BUT within limit
   if (!bestResult) {
-    for (let widthTry = 100; widthTry <= 4000; widthTry += 100) {
+    for (let widthTry = 100; widthTry <= MAX_TRAY_WIDTH; widthTry += 100) {
       const result = tryPlaceAtWidth(cables, widthTry, maxHeightLimit, stackingLimit);
       if (result.success) {
         bestResult = { width: widthTry, placed: result.placed, fillRatio: result.fillRatio };
@@ -319,7 +352,7 @@ export const solveSingleTier = (
   if (!bestResult) {
     return {
       tierIndex,
-      width: 4000,
+      width: 900, // Enforce max width even on failure
       cables: [],
       success: false,
       fillRatio: 0,
@@ -350,55 +383,84 @@ export const solveSingleTier = (
 export const solveSystem = (
   allCables: CableData[],
   numberOfTiers: number = 1,
-  maxHeightLimit: number = 50,
-  targetFillRatioPercent: number = 60
+  maxHeightLimit: number = 60,
+  targetFillRatioPercent: number = 60,
+  userMaxTrayWidth: number = 900
 ): SystemResult => {
-  // 1. Calculate Physical Stats
+  if (allCables.length === 0) {
+    return { systemWidth: 300, tiers: [], success: true, maxHeightPerTier: 60, totalAreaSum: 0, totalODSum: 0 };
+  }
+
   const { totalODSum, totalAreaSum } = calculateBasicStats(allCables);
+  const maxODInSet = Math.max(...allCables.map(c => c.od));
+  const MAX_LIMIT_H = 60; // Strict Industrial standard
 
-  // 2. Determine Optimal Width if we want to "Auto-Solve"
-  // Logic: Area / (Height * FillRatio) = Required Width
-  // Adjusted for Multiple Tiers
-  const requiredTotalWidth = (totalAreaSum / maxHeightLimit) * (100 / targetFillRatioPercent);
-  const requiredWidthPerTier = requiredTotalWidth / numberOfTiers;
+  let currentTiers = numberOfTiers;
+  const MAX_GLOBAL_WIDTH_LIMIT = userMaxTrayWidth;
 
-  // Snap to standard
-  let targetWidth = getStandardTrayWidth(requiredWidthPerTier);
+  // Starting widthIdx: find standard width that fits largest cable
+  let widthIdx = STANDARD_WIDTHS.findIndex(w => w >= maxODInSet + 10);
+  if (widthIdx === -1) widthIdx = 0;
 
-  // Ensure we can at least fit the largest cable
-  const maxOD = Math.max(...allCables.map(c => c.od));
-  if (targetWidth < maxOD * 1.5) targetWidth = getStandardTrayWidth(maxOD * 1.5);
-  if (targetWidth < 300) targetWidth = 300; // Minimum sensible default
+  let finalSystemResult: SystemResult | null = null;
+  let success = false;
+  let attempts = 0;
+  const MAX_ITERATIONS = 40;
 
-  const tierBuckets: CableData[][] = Array.from({ length: numberOfTiers }, () => []);
-  const sorted = [...allCables].sort((a, b) => b.od - a.od);
+  while (attempts < MAX_ITERATIONS && !success) {
+    attempts++;
+    const currentWidthGoal = STANDARD_WIDTHS[widthIdx] || MAX_GLOBAL_WIDTH_LIMIT;
 
-  sorted.forEach((c, i) => {
-    tierBuckets[i % numberOfTiers].push(c);
-  });
-
-  const finalTierResults = tierBuckets.map((bucket, idx) => {
-    // Attempt with the calculated target width
-    let res = solveSingleTierAtFixedWidth(bucket, idx, targetWidth, maxHeightLimit, 3);
-
-    // If fail, try widening
-    if (!res.success) {
-      // Simple retry with wider tray
-      res = solveSingleTierAtFixedWidth(bucket, idx, targetWidth + 300, maxHeightLimit, 3);
+    // Safety check: if width exceeds user limit, we MUST add a tier instead
+    if (currentWidthGoal > MAX_GLOBAL_WIDTH_LIMIT && widthIdx > 0) {
+      currentTiers++;
+      widthIdx = STANDARD_WIDTHS.findIndex(w => w >= maxODInSet + 10);
+      if (currentTiers > 20) break;
+      continue;
     }
-    return res;
-  });
 
-  const actualSystemWidth = Math.max(...finalTierResults.map(r => r.width));
+    const tierBuckets: CableData[][] = Array.from({ length: currentTiers }, () => []);
+    const sorted = [...allCables].sort((a, b) => b.od - a.od);
+    sorted.forEach((c, i) => tierBuckets[i % currentTiers].push(c));
 
-  return {
-    systemWidth: actualSystemWidth,
-    tiers: finalTierResults,
-    success: finalTierResults.every(r => r.success),
-    maxHeightPerTier: maxHeightLimit,
+    const tierResults = tierBuckets.map((bucket, idx) => {
+      // Direct solve as per requirement
+      return solveSingleTierAtFixedWidth(bucket, idx, currentWidthGoal, MAX_LIMIT_H, 3);
+    });
+
+    success = tierResults.every(r => r.success);
+    const systemMaxWidth = Math.max(...tierResults.map(r => r.width));
+
+    finalSystemResult = {
+      systemWidth: systemMaxWidth,
+      tiers: tierResults,
+      success,
+      maxHeightPerTier: MAX_LIMIT_H,
+      totalAreaSum,
+      totalODSum
+    };
+
+    if (success) break;
+
+    // FAILED: Step up width, if max width reached, step up tiers
+    if (currentWidthGoal < MAX_GLOBAL_WIDTH_LIMIT) {
+      widthIdx++;
+    } else {
+      currentTiers++;
+      widthIdx = STANDARD_WIDTHS.findIndex(w => w >= maxODInSet + 10); // Reset width for more tiers
+    }
+  }
+
+  const finalWidth = STANDARD_WIDTHS[widthIdx] || MAX_GLOBAL_WIDTH_LIMIT;
+
+  return finalSystemResult || {
+    systemWidth: finalWidth,
+    tiers: [],
+    success: false,
+    maxHeightPerTier: MAX_LIMIT_H,
     totalAreaSum,
     totalODSum
-  } as SystemResult;
+  };
 };
 
 export const autoSolveSystem = solveSystem; // Alias for compatibility

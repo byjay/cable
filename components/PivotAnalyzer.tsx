@@ -100,6 +100,7 @@ const PivotAnalyzer: React.FC<PivotAnalyzerProps> = ({ data, title = "Data Analy
                     <div className="flex flex-col">
                         <label className="text-[10px] uppercase font-bold text-gray-500 mb-1">Group By (Row)</label>
                         <select
+                            title="Select field to group rows by"
                             className="text-xs border border-gray-300 rounded p-1 w-32 outline-none focus:border-blue-500"
                             value={rowField}
                             onChange={(e) => setRowField(e.target.value)}
@@ -112,6 +113,7 @@ const PivotAnalyzer: React.FC<PivotAnalyzerProps> = ({ data, title = "Data Analy
                     <div className="flex flex-col">
                         <label className="text-[10px] uppercase font-bold text-gray-500 mb-1">Value Field</label>
                         <select
+                            title="Select field for aggregation"
                             className="text-xs border border-gray-300 rounded p-1 w-32 outline-none focus:border-blue-500"
                             value={valueField}
                             onChange={(e) => setValueField(e.target.value)}
@@ -124,6 +126,7 @@ const PivotAnalyzer: React.FC<PivotAnalyzerProps> = ({ data, title = "Data Analy
                     <div className="flex flex-col">
                         <label className="text-[10px] uppercase font-bold text-gray-500 mb-1">Function</label>
                         <select
+                            title="Select aggregation function"
                             className="text-xs border border-gray-300 rounded p-1 w-24 outline-none focus:border-blue-500 font-bold text-blue-600"
                             value={aggregator}
                             onChange={(e) => setAggregator(e.target.value as Aggregator)}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Cable, Node, RouteResult } from '../types';
 import { RoutingService } from '../services/routingService';
+import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface AutoRoutingProps {
     nodes: Node[];
@@ -10,7 +11,7 @@ interface AutoRoutingProps {
 }
 
 export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRoutingProps) => {
-    const [routingService, setRoutingService] = useState<RoutingService | null>(null);
+    const [routingService, setRoutingService] = useState<RoutingService | EnhancedRoutingService | null>(null);
     const [routePath, setRoutePath] = useState<string[]>([]);
     const [autoRouted, setAutoRouted] = useState(false);
     const [isRouting, setIsRouting] = useState(false);
@@ -18,7 +19,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
     // Initialize Routing Service when nodes change
     useEffect(() => {
         if (nodes.length > 0) {
-            const svc = new RoutingService(nodes);
+            const svc = new EnhancedRoutingService(nodes);
             setRoutingService(svc);
         }
     }, [nodes]);

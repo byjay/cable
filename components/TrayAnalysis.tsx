@@ -2,7 +2,6 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, Route, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
-import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
 import { autoSolveSystem, solveSystem, solveSystemAtWidth, calculateBasicStats } from '../services/traySolverEnhanced';
 import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
@@ -129,12 +128,12 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
             .filter(c => {
                 const hasId = selectedNode.cables.includes(c.id);
                 // Support both 'od' and 'CABLE_OUTDIA' properties
-                const odValue = c.od || (c as any).CABLE_OUTDIA || 0;
+                const odValue = c.od || (c as any).CABLE_OUTDIA || (c as any).OUT_DIA || 0;
                 return hasId && odValue > 0;
             })
             .sort((a, b) => {
-                const odA = a.od || (a as any).CABLE_OUTDIA || 0;
-                const odB = b.od || (b as any).CABLE_OUTDIA || 0;
+                const odA = a.od || (a as any).CABLE_OUTDIA || (a as any).OUT_DIA || 0;
+                const odB = b.od || (b as any).CABLE_OUTDIA || (b as any).OUT_DIA || 0;
                 return odB - odA;
             });
     }, [selectedNode, cables]);
@@ -216,10 +215,19 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         }
     }, [selectedNode, numberOfTiers, maxHeightLimit, fillRatioLimit, solverData.length]);
 
-    // Width adjustment (max 900mm)
+    // Width adjustment (Standard Industrial Steps)
+    const STANDARD_WIDTHS_UI = [150, 300, 450, 600, 750, 900, 1050, 1200];
+
     const adjustWidth = (delta: number) => {
-        const currentW = solverResult?.systemWidth || 100;
-        const nextW = Math.min(900, Math.max(100, currentW + delta));
+        const currentW = solverResult?.systemWidth || 300;
+        let nextW: number;
+
+        if (delta > 0) {
+            nextW = STANDARD_WIDTHS_UI.find(w => w > currentW) || 1200;
+        } else {
+            nextW = [...STANDARD_WIDTHS_UI].reverse().find(w => w < currentW) || 150;
+        }
+
         setManualWidth(nextW);
         calculate(nextW);
     };
@@ -229,33 +237,39 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         calculate(null);
     };
 
-    // Recommended Tray Type Logic
-    const STANDARD_WIDTHS = [200, 300, 400, 500, 600, 700, 800, 900];
     const recommendedWidth = useMemo(() => {
         if (!solverResult) return 0;
         const w = solverResult.systemWidth;
-        const match = STANDARD_WIDTHS.find(sw => sw >= w);
-        return match || 900;
+        const match = STANDARD_WIDTHS_UI.find(sw => sw >= w);
+        return match || 1200;
     }, [solverResult]);
 
     return (
         <div className="flex flex-col h-full bg-[#f1f5f9]">
-            {/* Top Toolbar */}
-            <div className="bg-white p-2 border-b border-gray-300 flex items-center gap-4 shadow-sm h-14 shrink-0">
-                <span className="font-bold text-lg text-gray-800">전로폭 산출 (Tray Fill Analysis)</span>
+            {/* Top Toolbar (Glassmorphism) */}
+            <div className="bg-white/90 backdrop-blur-md border-b border-white/20 flex items-center gap-4 shadow-md h-16 shrink-0 z-20 px-4 relative">
+                <div className="flex flex-col">
+                    <span className="font-extrabold text-lg text-slate-800 tracking-tight">전로폭 산출</span>
+                    <span className="text-[10px] text-slate-500 font-medium -mt-1">Tray Fill Analysis</span>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="h-8 w-px bg-slate-200 mx-2"></div>
 
                 {/* Deck Filter & Search */}
-                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded border border-gray-200">
-                    <span className="text-xs font-bold text-gray-600 px-2">Deck</span>
+                <div className="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-lg border border-slate-200/60 shadow-inner">
+                    <span className="text-[10px] font-bold text-slate-500 px-1">DECK</span>
                     <select
-                        className="bg-white border border-gray-300 text-xs p-1 rounded w-32 outline-none"
+                        className="bg-transparent text-xs font-bold text-slate-700 w-20 outline-none cursor-pointer"
                         value={filterDeck}
                         onChange={(e) => setFilterDeck(e.target.value)}
                     >
                         {uniqueDecks.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
+                    <div className="w-px h-4 bg-slate-300 mx-1"></div>
+                    <Search size={14} className="text-slate-400" />
                     <input
-                        className="border border-gray-300 rounded text-xs p-1 w-32 outline-none"
+                        className="bg-transparent text-xs p-1 w-28 outline-none placeholder:text-slate-400 font-medium"
                         placeholder="Search Node..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
@@ -264,44 +278,58 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
 
                 {/* Routing Toggle */}
                 <button
-                    className={`px-3 py-1 rounded text-xs font-bold border ${showRouting
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-gray-200 text-gray-700 border-gray-300'
+                    className={`ml-2 px-4 py-1.5 rounded-full text-xs font-bold border transition-all shadow-sm flex items-center gap-2 ${showRouting
+                        ? 'bg-blue-500/10 text-blue-600 border-blue-500/30 ring-2 ring-blue-500/20'
+                        : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-300'
                         }`}
                     onClick={() => setShowRouting(!showRouting)}
                 >
-                    <Route size={12} className="inline mr-1" />
+                    <Route size={14} />
                     {showRouting ? 'Hide Routing' : 'Show Routing'}
                 </button>
 
-                {/* Re-route All */}
+                {/* Re-route All Panel */}
                 {showRouting && (
-                    <button
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs font-bold border border-orange-500"
-                        onClick={() => {
-                            if (routingService) {
-                                const routes = cables.map(cable => {
-                                    if (cable.fromNode && cable.toNode) {
-                                        const route = routingService.findRoute(cable.fromNode, cable.toNode, routeWaypoints);
-                                        return {
-                                            cableId: cable.id,
-                                            cableName: cable.name,
-                                            fromNode: cable.fromNode,
-                                            toNode: cable.toNode,
-                                            path: route.path,
-                                            distance: route.distance,
-                                            error: route.error
-                                        };
-                                    }
-                                    return null;
-                                }).filter(Boolean);
-                                setAllRoutes(routes);
-                            }
-                        }}
-                    >
-                        <RefreshCw size={12} className="inline mr-1" />
-                        Re-route All
-                    </button>
+                    <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg p-1.5 ml-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                        <div className="flex flex-col gap-0.5 px-1">
+                            <span className="text-[9px] text-blue-600 font-extrabold uppercase tracking-wide">Waypoints</span>
+                            <input
+                                type="text"
+                                placeholder="e.g. T1-01, T2-05"
+                                className="bg-white border border-blue-200 text-xs px-2 py-0.5 rounded shadow-sm w-40 outline-none focus:ring-2 focus:ring-blue-400/30 text-slate-700 font-mono"
+                                value={routeWaypoints}
+                                onChange={(e) => setRouteWaypoints(e.target.value)}
+                                title="Comma separated node names to pass through"
+                            />
+                        </div>
+                        <div className="h-6 w-px bg-blue-200"></div>
+                        <button
+                            className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+                            onClick={() => {
+                                if (routingService) {
+                                    const routes = cables.map(cable => {
+                                        if (cable.fromNode && cable.toNode) {
+                                            const route = routingService.findRoute(cable.fromNode, cable.toNode, routeWaypoints);
+                                            return {
+                                                cableId: cable.id,
+                                                cableName: cable.name,
+                                                fromNode: cable.fromNode,
+                                                toNode: cable.toNode,
+                                                path: route.path,
+                                                distance: route.distance,
+                                                error: route.error
+                                            };
+                                        }
+                                        return null;
+                                    }).filter(Boolean);
+                                    setAllRoutes(routes);
+                                }
+                            }}
+                        >
+                            <RefreshCw size={12} className="inline" />
+                            Re-route All
+                        </button>
+                    </div>
                 )}
 
                 {/* FILL Controls */}
