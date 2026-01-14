@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 console.log("?? [Agent 5: Consensus] Aggregating Results...");
-const dir = path.join(process.cwd(), 'test_reports/swarm_cycle_5');
+const dir = path.join(process.cwd(), 'test_reports/swarm_cycle_6');
 const agents = ['Physics', 'Compliance', 'Geometry', 'Stress'];
 
 const check = () => {

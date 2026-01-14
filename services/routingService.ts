@@ -8,10 +8,19 @@ interface Graph {
 export class RoutingService {
   private graph: Graph = {};
   private levelMapService: LevelMapService;
+  private nodePenalties: { [key: string]: number } = {};
 
   constructor(nodes: Node[]) {
     this.buildGraph(nodes);
     this.levelMapService = new LevelMapService(nodes);
+  }
+
+  /**
+   * Inject fill-ratio based penalties to guide routing.
+   * @param penalties Map of node name to cost multiplier (e.g. 1.0 = normal, 5.0 = avoid)
+   */
+  public setPenalties(penalties: { [key: string]: number }) {
+    this.nodePenalties = penalties;
   }
 
   private buildGraph(nodes: Node[]) {
@@ -158,7 +167,10 @@ export class RoutingService {
       const neighbors = this.graph[u];
       for (const v in neighbors) {
         if (unvisited.has(v)) {
-          const alt = distances[u] + neighbors[v];
+          // CAPACITY-AWARE LOGIC: Apply penalty if node v is crowded
+          const penalty = (this.nodePenalties && this.nodePenalties[v]) || 1.0;
+          const alt = distances[u] + (neighbors[v] * penalty);
+
           if (alt < distances[v]) {
             distances[v] = alt;
             previous[v] = u;

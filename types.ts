@@ -148,11 +148,21 @@ export interface SingleTrayResult {
   totalCableArea: number;
 }
 
+export interface MatrixCell {
+  tiers: number;
+  width: number;
+  area: number;
+  fillRatio: number;
+  success: boolean; // Physically fits
+  isOptimal: boolean; // Meets fill ratio limit
+}
+
 export interface SystemResult {
   systemWidth: number; // The max width among all tiers
   tiers: SingleTrayResult[];
   success: boolean;
   maxHeightPerTier: number;
+  optimizationMatrix?: MatrixCell[][]; // Optional matrix for visualization
 }
 
 // ... existing exports

@@ -799,7 +799,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         <div className="flex flex-col h-screen text-gray-100 font-sans overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
             {/* <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} /> */}
 
-            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
+            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} title="Upload Excel Data" />
 
             {/* Simple Modals */}
             {activeModal && (
@@ -895,7 +895,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Ship size={18} className="text-seastar-neon" /> Select Vessel
                             </h3>
-                            <button onClick={() => setShowShipModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                            <button onClick={() => setShowShipModal(false)} className="text-gray-400 hover:text-white" title="Close Vessel Selection"><X size={18} /></button>
                         </div>
                         <div className="grid gap-2 mb-6">
                             {accessibleShips.map(ship => (
@@ -931,7 +931,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                     <div className="bg-seastar-800 border border-seastar-600 rounded-lg shadow-2xl w-[400px] p-6 animate-in zoom-in-95">
                         <div className="flex justify-between items-center mb-4 border-b border-seastar-700 pb-2">
                             <h3 className="text-lg font-bold text-white">Deck Configuration (Elevation)</h3>
-                            <button onClick={() => setShowDeckModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                            <button onClick={() => setShowDeckModal(false)} className="text-gray-400 hover:text-white" title="Close Deck Configuration"><X size={18} /></button>
                         </div>
                         <div className="space-y-2">
                             {Object.entries(deckHeights).map(([deck, height]) => (
@@ -942,6 +942,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                                         className="w-24 bg-black border border-gray-600 rounded px-2 py-1 text-right text-white"
                                         value={height}
                                         onChange={(e) => updateDeckHeight(deck, e.target.value)}
+                                        title={`Height for ${deck} deck`}
                                     />
                                 </div>
                             ))}

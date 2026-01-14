@@ -24,6 +24,57 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
         }
     }, [nodes]);
 
+    // Helper for Length Calculation: (Path + FromRest + ToRest), then Ceil
+    const calculateFinalLength = (distance: number, fromRest: any, toRest: any) => {
+        const fRest = parseFloat(String(fromRest || 0)) || 0;
+        const tRest = parseFloat(String(toRest || 0)) || 0;
+        return Math.ceil(distance + fRest + tRest);
+    };
+
+    // CAPACITY-AWARE ROUTING: Calculate penalties based on current occupancy
+    const refreshRoutingPenalties = useCallback(() => {
+        if (!routingService) return;
+
+        const penalties: { [key: string]: number } = {};
+        const nodeOccupancy: { [key: string]: number } = {}; // Sum of cable ODs
+
+        // 1. Calculate current OD sum per node
+        cables.forEach(cable => {
+            if (cable.calculatedPath) {
+                cable.calculatedPath.forEach(nodeName => {
+                    nodeOccupancy[nodeName] = (nodeOccupancy[nodeName] || 0) + (cable.od || 10);
+                });
+            }
+        });
+
+        // 2. Map occupancy to penalty multiplier
+        // Standard tray: 300mm width. OD sum > 300 means multiple layers or crowding.
+        nodes.forEach(node => {
+            const currentOD = nodeOccupancy[node.name] || 0;
+            const capacity = node.maxCable || 300; // Default 300mm capacity
+            const ratio = currentOD / capacity;
+
+            let p = 1.0;
+            if (ratio > 0.8) p = 10.0; // Critical: Avoid
+            else if (ratio > 0.6) p = 3.0; // Heavy: Avoid if easy
+            else if (ratio > 0.4) p = 1.5; // Moderate: Slight bias
+
+            penalties[node.name] = p;
+        });
+
+        if ('setPenalties' in routingService) {
+            (routingService as any).setPenalties(penalties);
+            console.log('✅ Routing Penalties Updated:', Object.keys(penalties).filter(k => penalties[k] > 1.0).length, 'nodes penalized.');
+        }
+    }, [routingService, cables, nodes]);
+
+    // Initial Penalty Update
+    useEffect(() => {
+        if (routingService && cables.length > 0) {
+            refreshRoutingPenalties();
+        }
+    }, [routingService, cables.length, refreshRoutingPenalties]);
+
     // Single Cable Routing
     const calculateRoute = useCallback((cable: Cable) => {
         if (!routingService) {
@@ -35,12 +86,15 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
 
         if (result.path.length > 0) {
             setRoutePath(result.path);
+            const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
+
             const updatedCables = cables.map(c =>
                 c.id === cable.id
                     ? {
                         ...c,
                         calculatedPath: result.path,
-                        calculatedLength: result.distance,
+                        calculatedLength: totalLength, // Store result
+                        length: totalLength, // Update main length
                         path: result.path.join(','),
                         routeError: undefined
                     }
@@ -82,9 +136,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                             const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
                             if (result.path.length > 0) {
                                 calculatedCount++;
-                                const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                                const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                                const totalLength = result.distance + fromRest + toRest;
+                                const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
 
                                 currentCables[i] = {
                                     ...cable,
@@ -136,9 +188,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                         const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
                         if (result.path.length > 0) {
                             calculatedCount++;
-                            const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                            const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                            const totalLength = result.distance + fromRest + toRest;
+                            const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
 
                             return {
                                 ...cable,
@@ -184,6 +234,7 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
         calculateRoute,
         calculateAllRoutes,
         calculateSelectedRoutes,
+        refreshRoutingPenalties,
         isReady: !!routingService
     };
 };

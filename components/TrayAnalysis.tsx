@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { Search, Route, Play, ChevronLeft, ChevronRight, RefreshCw, Layers } from 'lucide-react';
 import TrayVisualizer from './TrayVisualizer';
-import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
+import { solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
 import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface TrayAnalysisProps {
@@ -174,7 +174,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         }));
 
         if (cableData.length > 0) {
-            const solution = autoSolveSystem(cableData, maxHeightLimit, fillRatioLimit);
+            const solution = solveSystem(cableData, 1, maxHeightLimit, fillRatioLimit);
             setSolverResult(solution);
             setSelectedNode(nodeData);
         }
@@ -247,6 +247,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                         className="bg-transparent text-xs font-bold text-slate-700 w-20 outline-none cursor-pointer"
                         value={filterDeck}
                         onChange={(e) => setFilterDeck(e.target.value)}
+                        title="Filter by Deck Level"
                     >
                         {uniqueDecks.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
@@ -257,6 +258,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                         placeholder="Search Node..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
+                        title="Search for specific Node"
                     />
                 </div>
 
@@ -281,8 +283,9 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                             className="text-xs border p-1 rounded"
                             value={routeWaypoints}
                             onChange={(e) => setRouteWaypoints(e.target.value)}
+                            title="Navigation Waypoints (Comma separated)"
                         />
-                        <button className="bg-blue-500 text-white text-xs px-2 py-1 rounded">Re-calc</button>
+                        <button className="bg-blue-500 text-white text-xs px-2 py-1 rounded" title="Recalculate path">Re-calc</button>
                     </div>
                 )}
 
@@ -296,6 +299,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                             value={numberOfTiers}
                             onChange={(e) => setNumberOfTiers(parseInt(e.target.value))}
                             className="bg-white border border-slate-300 text-xs p-0.5 rounded w-12 outline-none font-bold text-blue-600"
+                            title="Number of Tray Tiers"
                         >
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
                                 <option key={n} value={n}>{n}단</option>
@@ -310,6 +314,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                             type="range" min="40" max="100" step="5" value={maxHeightLimit}
                             onChange={(e) => setMaxHeightLimit(parseInt(e.target.value))}
                             className="w-16 h-1 bg-slate-300 rounded appearance-none cursor-pointer accent-blue-500"
+                            title={`Max Height: ${maxHeightLimit}mm`}
                         />
                         <span className="text-[10px] font-bold text-blue-600 w-6">{maxHeightLimit}</span>
                     </div>

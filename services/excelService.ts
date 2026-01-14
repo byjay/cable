@@ -172,10 +172,15 @@ export const ExcelService = {
 
       // 2. Dynamic Property Mapping (Import ALL columns)
       const dynamicProps: any = {};
+
+      // Initialize all headers to ensure keys exist even if value is empty
+      headers.forEach(h => {
+        if (h) dynamicProps[h] = "";
+      });
+
       headers.forEach((header, idx) => {
         const val = row[idx];
-        if (val !== undefined && val !== null && val !== "") {
-          // Normalize header key (optional, keeps original header usually)
+        if (val !== undefined && val !== null) {
           dynamicProps[header] = val;
         }
       });
