@@ -257,7 +257,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     };
 
     return (
-        <div className="flex flex-col h-full font-sans text-gray-200">
+        <div className="flex flex-col h-full font-sans text-gray-200 overflow-hidden">
 
             {/* --- TOP TOOLBAR --- */}
             <div className="h-10 border-b border-slate-700 flex items-center px-2 shadow-md bg-slate-900/80 backdrop-blur select-none z-20">
@@ -354,7 +354,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
             {/* MAIN CONTENT */}
             <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden relative">
                 {/* DETAIL PANEL - COMPREHENSIVE 25-FIELD LAYOUT */}
-                <div className="bg-slate-800 border-b border-slate-600 p-3 md:p-4 shadow-lg z-10 shrink-0 overflow-y-auto max-h-[50vh]">
+                <div className="bg-slate-800 border-b border-slate-600 p-2 shadow-lg z-10 shrink-0 overflow-y-auto max-h-[50vh]">
                     {selectedCable ? (
                         <div className="space-y-3">
                             {/* ROW 1: Basic Identification */}
