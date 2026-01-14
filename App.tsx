@@ -34,6 +34,7 @@ import { useProjectData } from './hooks/useProjectData';
 import { useAutoRouting } from './hooks/useAutoRouting';
 import LoginPanel from './components/LoginPanel';
 import { AuthService } from './services/authService';
+import InstallationStatusView from './components/InstallationStatusView';
 
 // Default Deck Heights
 const DEFAULT_DECK_CONFIG: DeckConfig = {
@@ -46,6 +47,7 @@ const DEFAULT_DECK_CONFIG: DeckConfig = {
 
 // Hardcoded Ship List
 const AVAILABLE_SHIPS = [
+    { id: "HK2401", name: "HK2401 - 35K Product Carrier" },
     { id: "S1001_35K_FD", name: "S1001 - 35K Product Carrier" },
     { id: "S1002_LNG", name: "S1002 - 174K LNG Carrier" },
     { id: "H5500_CONT", name: "H5500 - 16K TEU Container" },
@@ -805,6 +807,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'IMPORT': return <ImportPanel onImport={handleImportExcel} />;
             case MainView.REPORT_NODE: return <NodeListReport nodes={nodes} cables={cables} />;
+            case MainView.INSTALL_STATUS: return <InstallationStatusView cables={cables} />;
             case MainView.ANALYTICS: return <PivotAnalyzer data={cables} />;
 
             default:

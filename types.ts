@@ -100,7 +100,8 @@ export enum MainView {
   GENERIC_GRID = 'Generic Grid',
   SETTINGS = 'Settings',
   WD_EXTRACTION = 'WD Extraction',
-  ANALYTICS = 'Analytics', // New: Advanced Pivot & Graph
+  ANALYTICS = 'Analytics',
+  INSTALL_STATUS = 'Installation Status',
   UNIVERSAL = 'UNIVERSAL'
 }
 
