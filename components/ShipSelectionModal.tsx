@@ -3,11 +3,12 @@ import { Ship, Upload, X, Database, AlertTriangle, FileUp } from 'lucide-react';
 
 interface ShipSelectionModalProps {
     onCancel: () => void;
-    onLoadParsed?: () => void;
+    onLoadParsed?: (shipId: string) => void; // Updated signature
     onFileUpload?: (files: FileList) => void;
+    availableShips: { id: string, name: string }[];
 }
 
-const ShipSelectionModal: React.FC<ShipSelectionModalProps> = ({ onCancel, onLoadParsed, onFileUpload }) => {
+const ShipSelectionModal: React.FC<ShipSelectionModalProps> = ({ onCancel, onLoadParsed, onFileUpload, availableShips }) => {
     const [mode, setMode] = useState<'SELECT' | 'UPLOAD'>('SELECT');
 
     // File References
@@ -60,8 +61,8 @@ const ShipSelectionModal: React.FC<ShipSelectionModalProps> = ({ onCancel, onLoa
                         <button
                             onClick={() => setMode('SELECT')}
                             className={`flex-1 py-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all duration-300 ${mode === 'SELECT'
-                                    ? 'border-blue-500 bg-white shadow-xl shadow-blue-200/50 scale-[1.02]'
-                                    : 'border-slate-200 bg-white/50 hover:border-blue-200 text-slate-400 hover:bg-white'
+                                ? 'border-blue-500 bg-white shadow-xl shadow-blue-200/50 scale-[1.02]'
+                                : 'border-slate-200 bg-white/50 hover:border-blue-200 text-slate-400 hover:bg-white'
                                 }`}
                         >
                             <div className={`p-4 rounded-full ${mode === 'SELECT' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
@@ -76,8 +77,8 @@ const ShipSelectionModal: React.FC<ShipSelectionModalProps> = ({ onCancel, onLoa
                         <button
                             onClick={() => setMode('UPLOAD')}
                             className={`flex-1 py-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all duration-300 ${mode === 'UPLOAD'
-                                    ? 'border-green-500 bg-white shadow-xl shadow-green-200/50 scale-[1.02]'
-                                    : 'border-slate-200 bg-white/50 hover:border-green-200 text-slate-400 hover:bg-white'
+                                ? 'border-green-500 bg-white shadow-xl shadow-green-200/50 scale-[1.02]'
+                                : 'border-slate-200 bg-white/50 hover:border-green-200 text-slate-400 hover:bg-white'
                                 }`}
                         >
                             <div className={`p-4 rounded-full ${mode === 'UPLOAD' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
@@ -99,23 +100,26 @@ const ShipSelectionModal: React.FC<ShipSelectionModalProps> = ({ onCancel, onLoa
                                     Ready to Load
                                 </h4>
                                 <div className="space-y-3">
-                                    <button
-                                        onClick={handleDirectLoad}
-                                        className="w-full flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-xl hover:border-blue-500 hover:bg-white hover:shadow-lg transition-all group duration-300"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
-                                                <Ship size={24} />
+                                    {availableShips.map(ship => (
+                                        <button
+                                            key={ship.id}
+                                            onClick={() => onLoadParsed?.(ship.id)}
+                                            className="w-full flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-xl hover:border-blue-500 hover:bg-white hover:shadow-lg transition-all group duration-300"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                                                    <Ship size={24} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <div className="font-black text-lg text-slate-800 group-hover:text-blue-600 transition-colors">{ship.id}</div>
+                                                    <div className="text-xs text-slate-500 font-medium">{ship.name}</div>
+                                                </div>
                                             </div>
-                                            <div className="text-left">
-                                                <div className="font-black text-lg text-slate-800 group-hover:text-blue-600 transition-colors">HK2401</div>
-                                                <div className="text-xs text-slate-500 font-medium">35K Product Carrier (Parsed Data)</div>
+                                            <div className="px-5 py-2 bg-blue-100 text-blue-700 text-sm font-bold rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:translate-x-[-5px]">
+                                                LOAD DATA
                                             </div>
-                                        </div>
-                                        <div className="px-5 py-2 bg-blue-100 text-blue-700 text-sm font-bold rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:translate-x-[-5px]">
-                                            LOAD DATA
-                                        </div>
-                                    </button>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                             <p className="text-xs text-center text-slate-400 font-medium">

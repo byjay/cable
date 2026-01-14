@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database, Eye, CheckCircle,
-    FolderOpen, FileDown, List, Network, Layers, Circle, MapPin, FileText, BarChart3, PieChart, ShieldCheck, Clock, Calculator
+    FolderOpen, FileDown, List, Network, Layers, Circle, MapPin, FileText, Anchor, BarChart3, PieChart, ShieldCheck, Clock, Calculator, Mail
 } from 'lucide-react';
 
 import ThreeScene from './components/ThreeSceneUltra';
@@ -75,7 +75,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'file', title: '파일 (File)', items: [
             { label: "📂 데이터 불러오기 (엑셀)", action: "Load Data", icon: FolderOpen },
-            { label: "프로젝트 열기", action: "Open Project", icon: Database },
+            { label: "⚓ 프로젝트 선택 (Select Project)", action: "Open Project", icon: Anchor },
             { label: "프로젝트 저장", action: "Save Project", restricted: true, icon: Save },
             { label: "내보내기 (Export)", action: "Export", icon: FileDown },
             { label: "종료 (Exit)", action: "Exit" }
@@ -184,6 +184,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [showShipModal, setShowShipModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Mobile Menu State
     const [cableListFilter, setCableListFilter] = useState<'all' | 'unrouted' | 'missingLength'>('all');
     const [genericData, setGenericData] = useState<GenericRow[]>([]);
     const [genericTitle, setGenericTitle] = useState<string>('');
@@ -198,14 +199,22 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
 
     // Initial Load Logic
     useEffect(() => {
-        if (initialShipId && shipId !== initialShipId) setShipId(initialShipId);
+        if (initialShipId && shipId !== initialShipId) {
+            setShipId(initialShipId);
+        } else {
+            // If we have a shipId but no cables, trigger load
+            if (shipId && cables.length === 0 && !isDataLoading) {
+                loadProjectData(shipId);
+            }
+        }
+
         // Force version clear
         const currentVersion = localStorage.getItem('app_data_version');
         if (currentVersion !== DATA_VERSION) {
             Object.keys(localStorage).forEach(key => key.startsWith('SEASTAR_') && localStorage.removeItem(key));
             localStorage.setItem('app_data_version', DATA_VERSION);
         }
-    }, []);
+    }, [shipId, initialShipId]); // Watch shipId for changes
 
     // Helper: Save
     const saveShipData = (overrideCables?: Cable[]) => {
@@ -230,10 +239,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
     const handleMenuAction = (item: MenuItem) => {
         setActiveMenu(null);
         if (item.action === "Open Project") {
-            if (window.confirm("Load processed data (HK2401)?")) {
-                loadProjectData('HK2401');
-                alert("Project HK2401 Loaded.");
-            }
+            setShowShipModal(true);
             return;
         }
         if (item.action === "Save Project") { saveShipData(); return; }
@@ -380,25 +386,31 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             {/* Header */}
             <div className="bg-seastar-900 text-white shadow-md z-30 flex-none h-12 flex items-center justify-between px-4 border-b border-seastar-700">
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="lg:hidden p-2 hover:bg-seastar-800 rounded-lg text-seastar-cyan"
+                    >
+                        <List size={24} />
+                    </button>
+
                     <div className="flex items-center gap-2">
-                        <img src="/scms_logo.png" alt="SCMS Logo" className="h-8 object-contain" />
-                        <span className="text-gray-400 font-light text-sm ml-2">v2.0</span>
+                        <img src="/scms_logo.png" alt="SCMS Logo" className="h-6 md:h-8 object-contain" />
+                        <span className="text-gray-400 font-light text-[10px] md:text-sm ml-1 md:ml-2">v2.0</span>
                     </div>
-                    {/* Ship Selector */}
-                    <div className="flex items-center bg-seastar-800 rounded px-2 py-0.5 border border-seastar-600">
-                        <Ship size={14} className="text-seastar-cyan mr-2" />
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-lg border border-slate-700">
-                                <span className="text-xs text-slate-400">프로젝트:</span>
-                                <span className="text-xs font-bold text-white">{availableShips.find(s => s.id === shipId)?.name || shipId}</span>
-                            </div>
-                            <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${user?.role === 'SUPER_ADMIN' ? 'bg-purple-600 text-purple-100' : 'bg-blue-600 text-blue-100'}`}>
-                                {user?.role}
+
+                    {/* Desktop Menu Bar */}
+                    <div className="hidden lg:flex items-center gap-4">
+                        <div className="flex items-center bg-seastar-800 rounded px-2 py-0.5 border border-seastar-600">
+                            <Ship size={14} className="text-seastar-cyan mr-2" />
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-lg border border-slate-700">
+                                    <span className="text-xs text-slate-400">프로젝트:</span>
+                                    <span className="text-xs font-bold text-white">{availableShips.find(s => s.id === shipId)?.name || shipId}</span>
+                                </div>
                             </div>
                         </div>
+                        <MenuBar activeMenu={activeMenu} setActiveMenu={setActiveMenu} onAction={handleMenuAction} isSuperAdmin={isSuperAdmin} />
                     </div>
-                    {/* Menu Bar Component */}
-                    <MenuBar activeMenu={activeMenu} setActiveMenu={setActiveMenu} onAction={handleMenuAction} isSuperAdmin={isSuperAdmin} />
                 </div>
 
                 {/* Right Side Status */}
@@ -414,7 +426,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
                         <div className="text-right hidden lg:block">
                             <div className="text-xs font-bold text-white">{user?.name}</div>
                         </div>
-                        <button onClick={handleLogout} className="p-1.5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded transition-colors"><X size={16} /></button>
+                        <button onClick={handleLogout} className="p-1.5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded transition-colors" title="Log Out" aria-label="Log Out"><X size={16} /></button>
                     </div>
                 </div>
             </div>
@@ -422,11 +434,54 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             {/* Content & Modals */}
             <div className="flex-1 overflow-hidden relative">
                 {renderContent()}
+
+                {/* Mobile Navigation Drawer */}
+                {mobileMenuOpen && (
+                    <div className="fixed inset-0 z-[60] lg:hidden">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+                        <div className="absolute top-0 left-0 bottom-0 w-[280px] bg-seastar-900 border-r border-seastar-700 shadow-2xl animate-in slide-in-from-left duration-300">
+                            <div className="p-4 border-b border-seastar-700 flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <img src="/scms_logo.png" alt="SCMS Logo" className="h-6" />
+                                    <span className="text-xs font-bold text-white">MENU</span>
+                                </div>
+                                <button onClick={() => setMobileMenuOpen(false)} className="text-gray-400" title="Close Menu"><X size={20} /></button>
+                            </div>
+                            <div className="p-4 bg-seastar-800/50 m-2 rounded-xl border border-seastar-700">
+                                <div className="text-[10px] text-gray-500 uppercase font-bold mb-2">Current Project</div>
+                                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                                    <Ship size={16} className="text-cyan-400" />
+                                    {availableShips.find(s => s.id === shipId)?.name || shipId}
+                                </div>
+                            </div>
+                            <div className="mt-4 px-2 space-y-4">
+                                {MENU_STRUCTURE.map(group => (
+                                    <div key={group.id}>
+                                        <div className="px-4 py-1 text-[10px] text-gray-500 font-black uppercase tracking-widest">{group.title}</div>
+                                        <div className="mt-1 space-y-0.5">
+                                            {group.items.filter(i => !i.restricted || isSuperAdmin).map(item => (
+                                                <button
+                                                    key={item.label}
+                                                    onClick={() => { handleMenuAction(item); setMobileMenuOpen(false); }}
+                                                    className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-seastar-800 hover:text-white rounded-lg transition-all flex items-center gap-3"
+                                                >
+                                                    {item.icon && <item.icon size={16} className="text-gray-500" />}
+                                                    {item.label.replace(/[📂💭🧠📈]/g, '')}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {showColumnMapper && <ColumnMapperModal excelHeaders={pendingExcelHeaders} excelData={pendingExcelData} onConfirm={handleMapperConfirm} onCancel={() => { setShowColumnMapper(false); setPendingFile(null); }} />}
                 {showShipModal && (
                     <ShipSelectionModal
-                        onClose={() => setShowShipModal(false)}
-                        onLoadParsed={() => { loadProjectData('HK2401'); setShowShipModal(false); }}
+                        availableShips={availableShips}
+                        onCancel={() => setShowShipModal(false)}
+                        onLoadParsed={(selectedId) => { loadProjectData(selectedId); setShowShipModal(false); }}
                         onFileUpload={(files) => { handleFileChange({ target: { files } } as any); setShowShipModal(false); }}
                     />
                 )}

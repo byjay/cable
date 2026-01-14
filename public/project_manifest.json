@@ -1,0 +1,23 @@
+{
+    "projects": [
+        {
+            "id": "HK2401",
+            "name": "35K D/F PRODUCT/OM CARRIER",
+            "dataPath": "/data/HK2401.json",
+            "type": "standard",
+            "permissionRequired": "USER"
+        },
+        {
+            "id": "S1001_35K_FD",
+            "name": "S1001 35K FEEDER",
+            "dataPath": "/data/S1001_35K_FD.json",
+            "type": "standard",
+            "permissionRequired": "MANAGER"
+        }
+    ],
+    "globalSettings": {
+        "dataUnificationVersion": "2026.1.14",
+        "loadStrategy": "DIRECT_JSON",
+        "cacheEnabled": true
+    }
+}

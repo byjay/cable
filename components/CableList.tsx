@@ -3,7 +3,7 @@ import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, FileSpreadsheet, Filter, FileText,
     FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder,
-    AlertTriangle, ChevronUp, ChevronDown, CheckSquare
+    AlertTriangle, ChevronUp, ChevronDown, CheckSquare, X
 } from 'lucide-react';
 
 interface CableListProps {
@@ -46,6 +46,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const [isProcessing, setIsProcessing] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); // Mobile Sidebar State
 
     // Stats
     const totalLength = useMemo(() => cables.reduce((sum, c) => sum + (c.calculatedLength || c.length || 0), 0), [cables]);
@@ -259,10 +260,24 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
             {/* --- TOP TOOLBAR --- */}
             <div className="h-10 border-b border-slate-700 flex items-center px-2 shadow-md bg-slate-900/80 backdrop-blur select-none z-20">
-                <IconBtn icon={FilePlus} label="New" color="text-yellow-500" disabled={false} />
-                <IconBtn icon={FolderOpen} label="Open Excel" onClick={triggerImport} color="text-yellow-500" />
-                <IconBtn icon={Save} label="Save" color="text-blue-500" onClick={onExport} />
-                <Divider />
+                <button
+                    onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+                    className="lg:hidden p-1.5 hover:bg-slate-700 rounded mr-1 text-slate-400"
+                >
+                    <List size={18} />
+                </button>
+                <div className="hidden md:flex items-center">
+                    <IconBtn icon={FilePlus} label="New" color="text-yellow-500" disabled={false} />
+                    <IconBtn icon={FolderOpen} label="Open Excel" onClick={triggerImport} color="text-yellow-500" />
+                    <IconBtn icon={FolderOpen} label="LOAD DATA" color="text-yellow-400" onClick={() => {
+                        const sid = localStorage.getItem('SEASTAR_CURRENT_SHIP');
+                        if (sid) onCalculateSelected([]); // Dummy call to trigger re-render or status
+                        window.location.reload(); // Temporary force reload to trigger useProjectData effect
+                    }} />
+                    <Divider />
+                    <IconBtn icon={Upload} label="Open Excel" color="text-cyan-400" onClick={triggerImport} />
+                    <Divider />
+                </div>
                 <IconBtn icon={Search} label="Search" />
                 <Divider />
 
@@ -289,284 +304,294 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     ROUTE SELECTED ({selectedIds.size})
                 </button>
 
+                {/* LOAD DATA BUTTON (NEW) */}
+                <button
+                    onClick={safeHandler(() => triggerImport())}
+                    className="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white rounded mx-1 shadow-lg bg-cyan-600 hover:bg-cyan-500 border border-cyan-400 transition-all"
+                >
+                    <FolderOpen size={14} />
+                    LOAD DATA
+                </button>
+
                 <div className="flex-1"></div>
 
-                <div className="flex items-center gap-2 mr-2">
+                <div className="hidden sm:flex items-center gap-2 mr-2">
                     <div className="bg-slate-800 border border-slate-600 px-3 py-0.5 rounded text-[10px] text-cyan-400 font-mono">
                         TOTAL: <span className="text-white font-bold">{cables.length}</span>
-                    </div>
-                    <div className="bg-slate-800 border border-slate-600 px-3 py-0.5 rounded text-[10px] text-yellow-400 font-mono">
-                        LENGTH: <span className="text-white font-bold">{totalLength.toFixed(0)}m</span>
                     </div>
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden relative">
                 {/* LEFT SIDEBAR (Cable Group Tree) */}
-                <div className="w-56 bg-[#0f172a]/95 border-r border-slate-700 flex flex-col shadow-inner">
-                    <div className="p-3 border-b border-slate-700 bg-slate-800/50">
-                        <div className="text-[11px] font-bold text-slate-400 mb-1">SEARCH CABLES</div>
-                        <input
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 outline-none transition-colors"
-                            value={filterName}
-                            onChange={e => setFilterName(e.target.value)}
-                            placeholder="Type to filter..."
-                        />
+                <div className={`
+                    absolute lg:relative z-40 h-full w-64 lg:w-56 bg-[#0f172a]/95 border-r border-slate-700 flex flex-col shadow-inner transition-transform duration-300
+                    ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                `}>
+                    <div className="p-3 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                        <div className="text-[11px] font-bold text-slate-400 uppercase">Search Cables</div>
+                        <button onClick={() => setMobileSidebarOpen(false)} className="lg:hidden text-slate-500"><X size={16} /></button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                        <button
-                            onClick={selectedCable ? safeHandler(() => onView3D(selectedCable)) : undefined}
-                            className={`w-full mb-3 text-xs font-bold py-2 rounded shadow-lg flex items-center justify-center gap-2 transition-all ${selectedCable && !isProcessing ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
-                            disabled={!selectedCable || isProcessing}
-                        >
-                            <Eye size={14} /> 3D ROUTE VIEW
-                        </button>
-                        <div className="text-[10px] uppercase font-bold text-slate-500 mt-4 mb-2 px-2">Filters</div>
-                        <button
-                            onClick={() => setShowMissingLength(!showMissingLength)}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded transition-colors ${showMissingLength ? 'bg-red-900/50 text-red-200 border border-red-500' : 'text-slate-400 hover:bg-slate-800'}`}
-                        >
-                            <span className="flex items-center gap-2"><AlertTriangle size={12} /> Missing Length</span>
-                            {missingLengthCount > 0 && <span className="text-[10px] bg-red-600 text-white px-1.5 rounded-full">{missingLengthCount}</span>}
-                        </button>
-                        <button
-                            onClick={() => setShowUnrouted(!showUnrouted)}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded transition-colors ${showUnrouted ? 'bg-purple-900/50 text-purple-200 border border-purple-500' : 'text-slate-400 hover:bg-slate-800'}`}
-                        >
-                            <span className="flex items-center gap-2"><Zap size={12} /> Unrouted</span>
-                            {unroutedCount > 0 && <span className="text-[10px] bg-purple-600 text-white px-1.5 rounded-full">{unroutedCount}</span>}
-                        </button>
-                    </div>
+                    <input
+                        className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 outline-none transition-colors"
+                        value={filterName}
+                        onChange={e => setFilterName(e.target.value)}
+                        placeholder="Type to filter..."
+                    />
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    <button
+                        onClick={selectedCable ? safeHandler(() => onView3D(selectedCable)) : undefined}
+                        className={`w-full mb-3 text-xs font-bold py-2 rounded shadow-lg flex items-center justify-center gap-2 transition-all ${selectedCable && !isProcessing ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
+                        disabled={!selectedCable || isProcessing}
+                    >
+                        <Eye size={14} /> 3D ROUTE VIEW
+                    </button>
+                    <div className="text-[10px] uppercase font-bold text-slate-500 mt-4 mb-2 px-2">Filters</div>
+                    <button
+                        onClick={() => setShowMissingLength(!showMissingLength)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded transition-colors ${showMissingLength ? 'bg-red-900/50 text-red-200 border border-red-500' : 'text-slate-400 hover:bg-slate-800'}`}
+                    >
+                        <span className="flex items-center gap-2"><AlertTriangle size={12} /> Missing Length</span>
+                        {missingLengthCount > 0 && <span className="text-[10px] bg-red-600 text-white px-1.5 rounded-full">{missingLengthCount}</span>}
+                    </button>
+                    <button
+                        onClick={() => setShowUnrouted(!showUnrouted)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded transition-colors ${showUnrouted ? 'bg-purple-900/50 text-purple-200 border border-purple-500' : 'text-slate-400 hover:bg-slate-800'}`}
+                    >
+                        <span className="flex items-center gap-2"><Zap size={12} /> Unrouted</span>
+                        {unroutedCount > 0 && <span className="text-[10px] bg-purple-600 text-white px-1.5 rounded-full">{unroutedCount}</span>}
+                    </button>
+                </div>
+            </div>
+
+            {/* MAIN CONTENT */}
+            <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden relative">
+                {/* DETAIL PANEL - FORM LAYOUT */}
+                <div className="bg-slate-800 border-b border-slate-600 p-3 md:p-4 shadow-lg z-10 shrink-0 overflow-y-auto max-h-[40vh] md:max-h-none">
+                    {selectedCable ? (
+                        <div className="flex flex-col lg:flex-row gap-4">
+                            {/* COL 1: Basic Info */}
+                            <div className="w-full lg:w-1/5 space-y-2">
+                                <div className="bg-slate-900/50 p-2 rounded border border-slate-700">
+                                    <div className="text-[10px] text-slate-400 font-bold mb-1">CABLE NAME</div>
+                                    <input
+                                        className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-bold text-white focus:border-cyan-500 outline-none"
+                                        value={selectedCable.name}
+                                        readOnly title="Cable Name"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <div className="text-[10px] text-slate-400 font-bold mb-1">TYPE</div>
+                                        <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-cyan-300" value={selectedCable.type} readOnly title="Type" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-slate-400 font-bold mb-1">SYSTEM</div>
+                                        <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-yellow-500" value={selectedCable.system} readOnly title="System" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-slate-400 font-bold mb-1">SUPPLY DK</div>
+                                    <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs" value={selectedCable.supplyDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'supplyDeck', e.target.value)} title="Supply Deck" />
+                                </div>
+                                <div className="flex gap-2">
+                                    <div>
+                                        <div className="text-[10px] text-slate-400 font-bold mb-1">LENGTH</div>
+                                        <div className="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-mono font-bold text-yellow-400 text-right">
+                                            {selectedCable.length || 0}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-slate-400 font-bold mb-1">WEIGHT</div>
+                                        <div className="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-mono text-slate-300 text-right">
+                                            {selectedCable.weight || 0}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* COL 2: From / To */}
+                            <div className="flex-1 grid grid-cols-2 gap-4 bg-slate-900/30 p-2 rounded border border-slate-700/50">
+                                {/* FROM SECTION */}
+                                <div className="space-y-1">
+                                    <div className="text-[11px] font-bold text-blue-400 border-b border-blue-900/50 mb-2">FROM</div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">DECK</span>
+                                        <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.fromDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'fromDeck', e.target.value)} title="From Deck" />
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">NODE</span>
+                                        <input className="w-16 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded font-bold text-white" value={selectedCable.fromNode} readOnly title="From Node" />
+                                        <span className="text-[10px] text-slate-500 font-bold ml-1">REST</span>
+                                        <input className="w-12 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-right" value={selectedCable.fromRest || ''} onChange={e => handleCellChange(selectedCable.id, 'fromRest', e.target.value)} title="From Rest" />
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">EQUIP</span>
+                                        <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.fromEquip || ''} onChange={e => handleCellChange(selectedCable.id, 'fromEquip', e.target.value)} title="From Equipment" />
+                                    </div>
+                                </div>
+
+                                {/* TO SECTION */}
+                                <div className="space-y-1">
+                                    <div className="text-[11px] font-bold text-green-400 border-b border-green-900/50 mb-2">TO</div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">DECK</span>
+                                        <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.toDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'toDeck', e.target.value)} title="To Deck" />
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">NODE</span>
+                                        <input className="w-16 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded font-bold text-white" value={selectedCable.toNode} readOnly title="To Node" />
+                                        <span className="text-[10px] text-slate-500 font-bold ml-1">REST</span>
+                                        <input className="w-12 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-right" value={selectedCable.toRest || ''} onChange={e => handleCellChange(selectedCable.id, 'toRest', e.target.value)} title="To Rest" />
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="w-10 text-[10px] text-slate-500 font-bold">EQUIP</span>
+                                        <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.toEquip || ''} onChange={e => handleCellChange(selectedCable.id, 'toEquip', e.target.value)} title="To Equipment" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* COL 3: Routing & Check */}
+                            <div className="w-1/4 flex flex-col gap-2">
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <div className="text-[10px] text-slate-400 font-bold mb-1">CHECK NODE</div>
+                                        <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-yellow-300" value={selectedCable.checkNode || ''} onChange={e => handleCellChange(selectedCable.id, 'checkNode', e.target.value)} title="Check Node" />
+                                    </div>
+                                    <div className="w-20 flex items-end">
+                                        <button
+                                            onClick={safeHandler(() => onCalculateRoute(selectedCable))}
+                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 rounded text-xs shadow-lg transition-colors border border-blue-400"
+                                        >
+                                            ROUTE
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 overflow-hidden flex flex-col">
+                                    <div className="text-[9px] text-slate-500 font-bold mb-1">PATH RESULT</div>
+                                    <div className="flex-1 text-[11px] font-mono text-green-400 leading-snug break-all overflow-y-auto custom-scrollbar p-1 bg-slate-950 rounded">
+                                        {selectedCable.path || selectedCable.calculatedPath?.join(' → ') || 'No Path'}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="text-[10px] text-slate-400 font-bold mb-1">REV. COMMENT</div>
+                                    <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs" value={selectedCable.revComment || ''} onChange={e => handleCellChange(selectedCable.id, 'revComment', e.target.value)} title="Revision Comment" />
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-48 text-slate-500 text-sm italic border-2 border-dashed border-slate-700 rounded-lg">
+                            Select a cable from the list to view details
+                        </div>
+                    )}
                 </div>
 
-                {/* MAIN CONTENT */}
-                <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden relative">
-                    {/* DETAIL PANEL - FORM LAYOUT */}
-                    <div className="bg-slate-800 border-b border-slate-600 p-4 shadow-lg z-10 shrink-0">
-                        {selectedCable ? (
-                            <div className="flex gap-4">
-                                {/* COL 1: Basic Info */}
-                                <div className="w-1/5 space-y-2">
-                                    <div className="bg-slate-900/50 p-2 rounded border border-slate-700">
-                                        <div className="text-[10px] text-slate-400 font-bold mb-1">CABLE NAME</div>
-                                        <input
-                                            className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-bold text-white focus:border-cyan-500 outline-none"
-                                            value={selectedCable.name}
-                                            readOnly title="Cable Name"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 font-bold mb-1">TYPE</div>
-                                            <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-cyan-300" value={selectedCable.type} readOnly title="Type" />
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 font-bold mb-1">SYSTEM</div>
-                                            <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-yellow-500" value={selectedCable.system} readOnly title="System" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-slate-400 font-bold mb-1">SUPPLY DK</div>
-                                        <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs" value={selectedCable.supplyDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'supplyDeck', e.target.value)} title="Supply Deck" />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 font-bold mb-1">LENGTH</div>
-                                            <div className="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-mono font-bold text-yellow-400 text-right">
-                                                {selectedCable.length || 0}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 font-bold mb-1">WEIGHT</div>
-                                            <div className="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm font-mono text-slate-300 text-right">
-                                                {selectedCable.weight || 0}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COL 2: From / To */}
-                                <div className="flex-1 grid grid-cols-2 gap-4 bg-slate-900/30 p-2 rounded border border-slate-700/50">
-                                    {/* FROM SECTION */}
-                                    <div className="space-y-1">
-                                        <div className="text-[11px] font-bold text-blue-400 border-b border-blue-900/50 mb-2">FROM</div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">DECK</span>
-                                            <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.fromDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'fromDeck', e.target.value)} title="From Deck" />
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">NODE</span>
-                                            <input className="w-16 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded font-bold text-white" value={selectedCable.fromNode} readOnly title="From Node" />
-                                            <span className="text-[10px] text-slate-500 font-bold ml-1">REST</span>
-                                            <input className="w-12 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-right" value={selectedCable.fromRest || ''} onChange={e => handleCellChange(selectedCable.id, 'fromRest', e.target.value)} title="From Rest" />
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">EQUIP</span>
-                                            <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.fromEquip || ''} onChange={e => handleCellChange(selectedCable.id, 'fromEquip', e.target.value)} title="From Equipment" />
-                                        </div>
-                                    </div>
-
-                                    {/* TO SECTION */}
-                                    <div className="space-y-1">
-                                        <div className="text-[11px] font-bold text-green-400 border-b border-green-900/50 mb-2">TO</div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">DECK</span>
-                                            <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.toDeck || ''} onChange={e => handleCellChange(selectedCable.id, 'toDeck', e.target.value)} title="To Deck" />
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">NODE</span>
-                                            <input className="w-16 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded font-bold text-white" value={selectedCable.toNode} readOnly title="To Node" />
-                                            <span className="text-[10px] text-slate-500 font-bold ml-1">REST</span>
-                                            <input className="w-12 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-right" value={selectedCable.toRest || ''} onChange={e => handleCellChange(selectedCable.id, 'toRest', e.target.value)} title="To Rest" />
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <span className="w-10 text-[10px] text-slate-500 font-bold">EQUIP</span>
-                                            <input className="flex-1 bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded" value={selectedCable.toEquip || ''} onChange={e => handleCellChange(selectedCable.id, 'toEquip', e.target.value)} title="To Equipment" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COL 3: Routing & Check */}
-                                <div className="w-1/4 flex flex-col gap-2">
-                                    <div className="flex gap-2">
-                                        <div className="flex-1">
-                                            <div className="text-[10px] text-slate-400 font-bold mb-1">CHECK NODE</div>
-                                            <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-yellow-300" value={selectedCable.checkNode || ''} onChange={e => handleCellChange(selectedCable.id, 'checkNode', e.target.value)} title="Check Node" />
-                                        </div>
-                                        <div className="w-20 flex items-end">
-                                            <button
-                                                onClick={safeHandler(() => onCalculateRoute(selectedCable))}
-                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 rounded text-xs shadow-lg transition-colors border border-blue-400"
-                                            >
-                                                ROUTE
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 overflow-hidden flex flex-col">
-                                        <div className="text-[9px] text-slate-500 font-bold mb-1">PATH RESULT</div>
-                                        <div className="flex-1 text-[11px] font-mono text-green-400 leading-snug break-all overflow-y-auto custom-scrollbar p-1 bg-slate-950 rounded">
-                                            {selectedCable.path || selectedCable.calculatedPath?.join(' → ') || 'No Path'}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="text-[10px] text-slate-400 font-bold mb-1">REV. COMMENT</div>
-                                        <input className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs" value={selectedCable.revComment || ''} onChange={e => handleCellChange(selectedCable.id, 'revComment', e.target.value)} title="Revision Comment" />
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-48 text-slate-500 text-sm italic border-2 border-dashed border-slate-700 rounded-lg">
-                                Select a cable from the list to view details
-                            </div>
-                        )}
-                    </div>
-
-                    {/* TABLE */}
+                {/* TABLE */}
+                <div
+                    ref={scrollContainerRef}
+                    className="flex-1 overflow-auto custom-scrollbar bg-transparent"
+                    onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+                >
                     <div
-                        ref={scrollContainerRef}
-                        className="flex-1 overflow-auto custom-scrollbar bg-transparent"
-                        onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+                        className="relative"
+                        style={{ height: `${filteredCables.length * ROW_HEIGHT + 32}px` }}
                     >
-                        <div
-                            className="relative"
-                            style={{ height: `${filteredCables.length * ROW_HEIGHT + 32}px` }}
-                        >
-                            <table className="w-full text-left border-collapse min-w-max">
-                                <thead className="sticky top-0 z-10 text-[11px]">
-                                    <tr className="bg-gradient-to-br from-blue-800 to-blue-500">
-                                        <th className="px-2 py-2 w-8 font-bold text-center border-r border-blue-500 text-white shadow-lg">
-                                            <input
-                                                type="checkbox"
-                                                title="Select All"
-                                                checked={filteredCables.length > 0 && filteredCables.every(c => selectedIds.has(c.id))}
-                                                onChange={(e) => handleToggleAll(e.target.checked)}
-                                                className="cursor-pointer"
-                                            />
+                        <table className="w-full text-left border-collapse min-w-max">
+                            <thead className="sticky top-0 z-10 text-[11px]">
+                                <tr className="bg-gradient-to-br from-blue-800 to-blue-500">
+                                    <th className="px-2 py-2 w-8 font-bold text-center border-r border-blue-500 text-white shadow-lg">
+                                        <input
+                                            type="checkbox"
+                                            title="Select All"
+                                            checked={filteredCables.length > 0 && filteredCables.every(c => selectedIds.has(c.id))}
+                                            onChange={(e) => handleToggleAll(e.target.checked)}
+                                            className="cursor-pointer"
+                                        />
+                                    </th>
+                                    {dynamicColumns.map(col => (
+                                        <th
+                                            key={col.key}
+                                            className={`px-2 py-2 font-bold text-white border-r border-blue-500 whitespace-nowrap ${col.width || 'w-24'} text-center cursor-pointer select-none hover:bg-blue-600 transition-colors shadow-sm`}
+                                            onClick={() => handleSort(col.key)}
+                                        >
+                                            <div className="flex items-center justify-center gap-1">
+                                                {col.label}
+                                                {sortColumn === col.key && (
+                                                    sortDirection === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />
+                                                )}
+                                            </div>
                                         </th>
-                                        {dynamicColumns.map(col => (
-                                            <th
-                                                key={col.key}
-                                                className={`px-2 py-2 font-bold text-white border-r border-blue-500 whitespace-nowrap ${col.width || 'w-24'} text-center cursor-pointer select-none hover:bg-blue-600 transition-colors shadow-sm`}
-                                                onClick={() => handleSort(col.key)}
-                                            >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {col.label}
-                                                    {sortColumn === col.key && (
-                                                        sortDirection === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />
-                                                    )}
-                                                </div>
-                                            </th>
-                                        ))}
-                                        <th className="px-2 w-10 text-center font-bold text-white">VIEW</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(() => {
-                                        const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
-                                        const endIdx = Math.min(filteredCables.length, startIdx + VISIBLE_ROWS + BUFFER_ROWS * 2);
-                                        const visibleCables = filteredCables.slice(startIdx, endIdx);
+                                    ))}
+                                    <th className="px-2 w-10 text-center font-bold text-white">VIEW</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(() => {
+                                    const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
+                                    const endIdx = Math.min(filteredCables.length, startIdx + VISIBLE_ROWS + BUFFER_ROWS * 2);
+                                    const visibleCables = filteredCables.slice(startIdx, endIdx);
 
-                                        return (
-                                            <>
-                                                {startIdx > 0 && <tr style={{ height: startIdx * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
-                                                {visibleCables.map((cable, localIdx) => {
-                                                    const idx = startIdx + localIdx;
-                                                    const isSelected = selectedIds.has(cable.id);
-                                                    return (
-                                                        <tr
-                                                            key={cable.id}
-                                                            onClick={(e) => handleRowClick(e, cable, idx)}
-                                                            style={{ height: ROW_HEIGHT }}
-                                                            className={`cursor-pointer text-[12px] transition-colors border-b border-slate-800 ${isSelected
-                                                                ? 'bg-blue-600/40 text-white hover:bg-blue-600/50'
-                                                                : 'text-slate-300 hover:bg-slate-800 odd:bg-slate-900/40 even:bg-slate-900/80'
-                                                                }`}
-                                                        >
-                                                            <td className="px-2 text-center border-r border-slate-700/50">
+                                    return (
+                                        <>
+                                            {startIdx > 0 && <tr style={{ height: startIdx * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
+                                            {visibleCables.map((cable, localIdx) => {
+                                                const idx = startIdx + localIdx;
+                                                const isSelected = selectedIds.has(cable.id);
+                                                return (
+                                                    <tr
+                                                        key={cable.id}
+                                                        onClick={(e) => handleRowClick(e, cable, idx)}
+                                                        style={{ height: ROW_HEIGHT }}
+                                                        className={`cursor-pointer text-[12px] transition-colors border-b border-slate-800 ${isSelected
+                                                            ? 'bg-blue-600/40 text-white hover:bg-blue-600/50'
+                                                            : 'text-slate-300 hover:bg-slate-800 odd:bg-slate-900/40 even:bg-slate-900/80'
+                                                            }`}
+                                                    >
+                                                        <td className="px-2 text-center border-r border-slate-700/50">
+                                                            <input
+                                                                type="checkbox"
+                                                                title="Select Row"
+                                                                checked={isSelected}
+                                                                onChange={() => { /* Handled by Row Click */ }}
+                                                                className="cursor-pointer bg-slate-700 border-none"
+                                                            />
+                                                        </td>
+                                                        {dynamicColumns.map(col => (
+                                                            <td key={`${cable.id}-${col.key}`} className={`px-2 border-r border-slate-700/50 whitespace-nowrap overflow-hidden text-ellipsis ${!isSelected && col.bg ? col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
                                                                 <input
-                                                                    type="checkbox"
-                                                                    title="Select Row"
-                                                                    checked={isSelected}
-                                                                    onChange={() => { /* Handled by Row Click */ }}
-                                                                    className="cursor-pointer bg-slate-700 border-none"
+                                                                    type="text"
+                                                                    className={`w-full bg-transparent border-none p-0 text-inherit focus:ring-0 cursor-pointer ${col.color || ''}`}
+                                                                    value={getDisplayValue(cable, col) || ''}
+                                                                    onChange={(e) => handleCellChange(cable.id, col.key, e.target.value)}
+                                                                    readOnly={col.key === 'id' || col.key === 'length' || col.key === 'path' || col.isDynamic}
+                                                                    title={getDisplayValue(cable, col) || ''}
                                                                 />
                                                             </td>
-                                                            {dynamicColumns.map(col => (
-                                                                <td key={`${cable.id}-${col.key}`} className={`px-2 border-r border-slate-700/50 whitespace-nowrap overflow-hidden text-ellipsis ${!isSelected && col.bg ? col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
-                                                                    <input
-                                                                        type="text"
-                                                                        className={`w-full bg-transparent border-none p-0 text-inherit focus:ring-0 cursor-pointer ${col.color || ''}`}
-                                                                        value={getDisplayValue(cable, col) || ''}
-                                                                        onChange={(e) => handleCellChange(cable.id, col.key, e.target.value)}
-                                                                        readOnly={col.key === 'id' || col.key === 'length' || col.key === 'path' || col.isDynamic}
-                                                                        title={getDisplayValue(cable, col) || ''}
-                                                                    />
-                                                                </td>
-                                                            ))}
-                                                            <td className="px-2 text-center">
-                                                                <button onClick={(e) => { e.stopPropagation(); onView3D(cable); }} className={`hover:text-cyan-400 ${isSelected ? 'text-white' : 'text-slate-600'}`} title="View 3D Route" aria-label="View 3D Route">
-                                                                    <Eye size={14} />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {endIdx < filteredCables.length && <tr style={{ height: (filteredCables.length - endIdx) * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
-                                            </>
-                                        );
-                                    })()}
-                                </tbody>
-                            </table>
-                        </div>
+                                                        ))}
+                                                        <td className="px-2 text-center">
+                                                            <button onClick={(e) => { e.stopPropagation(); onView3D(cable); }} className={`hover:text-cyan-400 ${isSelected ? 'text-white' : 'text-slate-600'}`} title="View 3D Route" aria-label="View 3D Route">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {endIdx < filteredCables.length && <tr style={{ height: (filteredCables.length - endIdx) * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
+                                        </>
+                                    );
+                                })()}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             {/* BOTTOM STATUS BAR */}
             <div className="h-6 bg-slate-900/80 backdrop-blur border-t border-slate-700 flex justify-between items-center px-4 text-[10px] text-slate-500">
-                <div>SEASTAR CABLE MANAGER V6.2 (Verified: 2026-01-14 07:50)</div>
+                <div>SEASTAR CABLE MANAGER V2.0 (Verified: 2026-01-14)</div>
                 <div>Status: <span className="text-green-500">Connected</span> • System Ready</div>
             </div>
         </div>

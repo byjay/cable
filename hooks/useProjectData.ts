@@ -17,14 +17,13 @@ const DEFAULT_DECK_CONFIG: DeckConfig = {
 
 // Known Ships
 export const AVAILABLE_SHIPS = [
-    { id: "S1001_35K_FD", name: "35K D/F PRODUCT/OM CARRIER" },
-    { id: "H2505_VLCC", name: "VLCC CRUDE OIL CARRIER" },
-    { id: "K3030_LNG", name: "174K LNG CARRIER" }
+    { id: "HK2401", name: "35K D/F PRODUCT/OM CARRIER" },
+    { id: "S1001_35K_FD", name: "S1001 35K FEEDER" }
 ];
 
 export const useProjectData = () => {
     // Core Data State
-    const [shipId, setShipId] = useState<string>("S1001_35K_FD");
+    const [shipId, setShipId] = useState<string>("HK2401");
     const [cables, setCables] = useState<Cable[]>([]);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [cableTypes, setCableTypes] = useState<GenericRow[]>(initialCableTypes);
@@ -35,101 +34,64 @@ export const useProjectData = () => {
     // Manual Load Trigger
     const loadProjectData = async (targetShipId: string) => {
         setIsLoading(true);
-        setShipId(targetShipId); // Update state to target ship
-        console.log(`🔄 Manual Data Load Triggered for ${targetShipId}...`);
+        setShipId(targetShipId);
 
         try {
-            // LOAD GLOBAL SETTINGS FIRST
-            const globalData = localStorage.getItem('SEASTAR_GLOBAL_SETTINGS');
-            if (globalData) {
-                const parsedGlobal = JSON.parse(globalData);
-                setCableTypes(parsedGlobal.cableTypes || initialCableTypes);
-                setDeckHeights(parsedGlobal.deckHeights || DEFAULT_DECK_CONFIG);
+            console.log(`📊 Standardized Data Load Triggered for ${targetShipId}...`);
+
+            // 1. Fetch unified JSON from public/data
+            const response = await fetch(`/data/${targetShipId}.json`);
+            if (!response.ok) {
+                throw new Error(`Cloud data not found: ${targetShipId}`);
             }
 
-            // CHECK FOR SPLIT STORAGE
-            const shipCablesKey = `SEASTAR_SHIP_${targetShipId}_CABLES`;
-            const shipNodesKey = `SEASTAR_SHIP_${targetShipId}_NODES`;
+            const projectData = await response.json();
 
-            const storedCables = localStorage.getItem(shipCablesKey);
-            const storedNodes = localStorage.getItem(shipNodesKey);
+            // 2. Set Core State
+            if (projectData.cables) setCables(projectData.cables);
+            if (projectData.nodes) setNodes(projectData.nodes);
+            if (projectData.cableTypes) setCableTypes(projectData.cableTypes);
+            if (projectData.deckHeights) setDeckHeights(projectData.deckHeights);
 
-            if (storedCables && storedNodes) {
-                const parsedCables = JSON.parse(storedCables);
-                const parsedNodes = JSON.parse(storedNodes);
+            setDataSource('cache');
+            console.log(`✅ Loaded Standardized Project: ${targetShipId} (${projectData.cables?.length} cables)`);
 
-                if (parsedCables.length > 0) {
-                    setCables(parsedCables);
-                    setNodes(parsedNodes);
-                    setDataSource('localStorage');
-                    console.log(`✅ Loaded ${parsedCables.length} cables from Split Storage for ${targetShipId}`);
-                    setIsLoading(false);
-                    return;
-                }
-            }
-
-            // PRIORITY 4: EXCEL (Legacy Load)
-            console.log(`📊 Attempting Excel Load for ${targetShipId}...`);
-            const loadedNodes = await loadNodesFromExcel(targetShipId);
-            const loadedCables = await loadCablesFromExcel(targetShipId);
-
-            if (loadedNodes.length > 0 && loadedCables.length > 0) {
-                setNodes(loadedNodes);
-                console.log(`📊 Loaded ${loadedCables.length} cables from Excel`);
-
-                // Note: Routing should be triggered by UI or RoutingService separately
-                // But for initial data, basic structure is fine.
-                setCables(loadedCables);
-                setDataSource('excel');
-
-                // Save to Split Storage
-                localStorage.setItem(shipCablesKey, JSON.stringify(loadedCables));
-                localStorage.setItem(shipNodesKey, JSON.stringify(loadedNodes));
-            } else {
-                // Empty State for new projects
-                console.log(`ℹ️ No data found for ${targetShipId}. Initializing empty project.`);
-                setCables([]);
-                setNodes([]);
-                setDataSource('localStorage');
-            }
+            // 3. Sync to LocalStorage for persistence
+            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_CABLES`, JSON.stringify(projectData.cables || []));
+            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_NODES`, JSON.stringify(projectData.nodes || []));
 
         } catch (error) {
-            console.error("❌ Data Load Error:", error);
-            setCables([]);
-            setNodes([]);
+            console.warn("❌ Standardized Load Failed, falling back to local buffer:", error);
+
+            // Fallback: Try LocalStorage
+            const storedCables = localStorage.getItem(`SEASTAR_SHIP_${targetShipId}_CABLES`);
+            const storedNodes = localStorage.getItem(`SEASTAR_SHIP_${targetShipId}_NODES`);
+
+            if (storedCables && storedNodes) {
+                setCables(JSON.parse(storedCables));
+                setNodes(JSON.parse(storedNodes));
+                setDataSource('localStorage');
+            } else {
+                // Final Fallback: Mock
+                setCables(initialCables);
+                setNodes(initialNodes);
+                setDataSource('mock');
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Auto-load DISABLED per user request
-    /*
-    useEffect(() => {
-        const loadData = async () => {
-             // ... original auto logic ...
-        };
-        loadData();
-    }, [shipId]);
-    */
-
-
-    // ... (Helpers remain same) ...
-
     // Save Data - UPDATED for Split Storage
     const saveData = useCallback((newCables?: Cable[], newNodes?: Node[], newTypes?: GenericRow[], newDecks?: DeckConfig) => {
-        // Use args or current state
         const c = newCables || cables;
         const n = newNodes || nodes;
         const t = newTypes || cableTypes;
         const d = newDecks || deckHeights;
 
-        // Save Ship Specific
         localStorage.setItem(`SEASTAR_SHIP_${shipId}_CABLES`, JSON.stringify(c));
         localStorage.setItem(`SEASTAR_SHIP_${shipId}_NODES`, JSON.stringify(n));
 
-        // Save Global
-        // CHECK privilege here? Or assume UI handles it? 
-        // For safety, we always save whatever is passed.
         localStorage.setItem('SEASTAR_GLOBAL_SETTINGS', JSON.stringify({
             cableTypes: t,
             deckHeights: d
@@ -138,7 +100,7 @@ export const useProjectData = () => {
         console.log(`💾 Project Saved (Split) for ${shipId}.`);
     }, [cables, nodes, cableTypes, deckHeights, shipId]);
 
-    // Export cache as JSON (for generating static cache file)
+    // Export cache as JSON
     const exportCacheAsJson = useCallback(() => {
         const data = {
             cables, nodes, cableTypes, deckHeights,
@@ -152,7 +114,6 @@ export const useProjectData = () => {
         a.download = `cache_${shipId}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        console.log(`📁 Exported cache.json - Place this file in /public/data/${shipId}/cache.json`);
     }, [cables, nodes, cableTypes, deckHeights, shipId]);
 
     return {
@@ -163,60 +124,9 @@ export const useProjectData = () => {
         deckHeights, setDeckHeights,
         isLoading, setIsLoading,
         saveData,
-        loadProjectData, // EXPOSED
+        loadProjectData,
         exportCacheAsJson,
         dataSource,
         availableShips: AVAILABLE_SHIPS
     };
-
-};
-
-// Helper Functions for Excel Loading
-const loadNodesFromExcel = async (shipId: string): Promise<Node[]> => {
-    try {
-        const response = await fetch(`./data/${shipId}/nodes.xlsx`);
-        if (!response.ok) return [];
-        const buffer = await response.arrayBuffer();
-        const rawData = ExcelService.readArrayBuffer(buffer);
-        return ExcelService.mapRawToNode(rawData);
-    } catch (error) {
-        console.warn(`Failed to load nodes for ${shipId}`, error);
-        return [];
-    }
-};
-
-const loadCablesFromExcel = async (shipId: string): Promise<Cable[]> => {
-    try {
-        const response = await fetch(`./data/${shipId}/cables.xlsx`);
-        if (!response.ok) return [];
-        const buffer = await response.arrayBuffer();
-        const rawData = ExcelService.readArrayBuffer(buffer);
-        return ExcelService.mapRawToCable(rawData);
-    } catch (error) {
-        console.warn(`Failed to load cables for ${shipId}`, error);
-        return [];
-    }
-};
-
-const computeAllRoutes = (cables: Cable[], nodes: Node[]): Cable[] => {
-    // Simple pass-through if full routing service isn't instantiated
-    // For initial load, we might rely on cached paths or simple straight lines.
-    // If we want real routing, we need RoutingService.
-    // Given the complexity, let's just return cables for now, or instantiate RoutingService.
-    try {
-        const router = new RoutingService(nodes);
-        return cables.map(c => {
-            if (c.calculatedPath) return c; // Already has path?
-            const res = router.findRoute(c.fromNode, c.toNode, c.checkNode);
-            return {
-                ...c,
-                calculatedPath: res.path,
-                calculatedLength: res.distance || c.length,
-                routeError: res.path.length === 0 ? 'No Path' : undefined
-            };
-        });
-    } catch (e) {
-        console.warn("Auto-routing failed during load", e);
-        return cables;
-    }
 };

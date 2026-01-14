@@ -53,6 +53,15 @@ Antigravity MUST decide the model tier before sending to OpenCode:
 - **Agent 5 (QA/Critic)**: Security, Logic Audit & Quality Control.
 - **Synthesis**: All 5 outputs aggregated by Antigravity (Manager) for final verification.
 
+### 7. Triple-Stage Cross-Verification (3회 교차 검증)
+- 복잡한 로직이나 데이터 구조 변경 시, 5인 에이전트 스웜은 반드시 **3회 연속 크로스 검증**을 수행해야 함.
+- 각 회차마다 다른 에이전트가 검토 보고서를 작성하여 정합성을 보장함.
+
+### 8. Automation & Auto-Push Agent
+- 5인 중 한 명의 에이전트는 **자동 푸시 담당**으로 지정됨.
+- 3회 교차 검증이 100% 통과(Stability 100%)되면 해당 에이전트가 즉시 `git push`를 트리거함.
+- Antigravity(Master Orchestrator)는 직접 푸시하지 않고, 깃허브 액션 상태 및 배포 결과만 최종 확인하여 사용자에게 보고함.
+
 ## Auto-Start Behavior
 
 ## CRITICAL WORKFLOW RULE
