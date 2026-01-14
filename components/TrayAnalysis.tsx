@@ -3,7 +3,7 @@ import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { Search, Route, Play, ChevronLeft, ChevronRight, RefreshCw, Layers } from 'lucide-react';
 import TrayVisualizer from './TrayVisualizer';
 import { solveSystem, solveSystemAtWidth } from '../services/solver';
-import { buildGraph, routeCables, calculateShortestPath } from '../services/routing';
+import { buildGraph, routeAllCables, calculateShortestPath } from '../services/routing';
 
 
 interface TrayAnalysisProps {
