@@ -208,7 +208,13 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
 
     const handleMenuAction = (item: MenuItem) => {
         setActiveMenu(null);
-        if (item.action === "Open Project") { fileInputRef.current?.click(); return; }
+        if (item.action === "Open Project") {
+            if (window.confirm("Load processed data (HK2401)?")) {
+                loadProjectData('HK2401');
+                alert("Project HK2401 Loaded.");
+            }
+            return;
+        }
         if (item.action === "Save Project") { saveShipData(); return; }
         if (item.action === "Export") { handleExport(); return; }
         if (item.action === "Exit") { if (!integrationMode) logout(); return; }
