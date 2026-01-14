@@ -104,6 +104,7 @@ export enum MainView {
   INSTALL_STATUS = 'Installation Status',
   PERMISSIONS = 'Permissions',
   ADMIN_CONSOLE = 'Admin Console',
+
   UNIVERSAL = 'UNIVERSAL'
 }
 
