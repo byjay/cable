@@ -3,7 +3,7 @@ import {
     ChevronDown, Terminal, Activity, Wifi, Box, Monitor, Settings as SettingsIcon, Save, X, Upload, FileSpreadsheet, Loader2, User, Lock, Ship, Home, Calendar, Database
 } from 'lucide-react';
 
-import ThreeScene from './components/ThreeScene';
+import ThreeScene from './components/ThreeSceneUltra';
 import CableList from './components/CableList';
 import GenericGrid from './components/GenericGrid';
 import CableTypeManager from './components/CableTypeManager';
@@ -825,7 +825,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                         <span className="text-seastar-cyan">CMS</span>
                     </span>
                     <span className="text-[10px] text-gray-500 ml-1 border border-gray-600 px-1 rounded">v{DATA_VERSION}</span>
-                    <span className="ml-4 text-[10px] text-gray-400 font-mono">Last Push: 2026-01-13 16:55</span>
+
                 </div>
 
                 <div className="flex items-center gap-1">
