@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "echo \"No tests specified\" && exit 0",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {

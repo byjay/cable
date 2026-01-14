@@ -81,12 +81,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                     {/* Header Section */}
                     <div className="w-full py-10 text-center relative overflow-hidden bg-slate-900/50">
                         <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                            <div className="w-24 h-24 rounded-2xl shadow-lg shadow-blue-500/20 mb-2 overflow-hidden bg-white flex items-center justify-center">
-                                <img src="/logo.jpg" alt="SEASTAR Logo" className="w-full h-full object-contain" />
+                            <div className="w-full h-32 mb-2 overflow-hidden bg-transparent flex items-center justify-center">
+                                <img src="/scms_logo.png" alt="SCMS Logo" className="w-full h-full object-contain" />
                             </div>
-                            <h1 className="text-2xl font-black text-white tracking-widest uppercase drop-shadow-lg">
-                                SCMS <span className="text-blue-500">2.0</span>
-                            </h1>
                             <p className="text-[10px] font-bold text-slate-400 tracking-[0.3em] uppercase">
                                 Seastar Cable Management System
                             </p>
@@ -162,22 +159,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                                 {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
                             </div>
                         </div>
+
+                        {/* Integrated Video Section at Bottom of Card */}
+                        <div className="mt-6 -mx-10 -mb-10 h-32 relative overflow-hidden group">
+                            <video
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                className="w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-80"
+                            >
+                                <source src="/video/login.mp4" type="video/mp4" />
+                            </video>
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                            <div className="absolute inset-x-0 bottom-4 flex flex-col items-center justify-center opacity-40">
+                                <span className="text-[8px] font-black text-white tracking-[0.4em] uppercase">Securing Network Integrity</span>
+                                <div className="w-8 h-0.5 bg-blue-500 mt-1"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Footer Video Integration */}
-                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover opacity-40"
-                    >
-                        <source src="/video/login.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/80 z-10" />
-                </div>
+
 
                 {/* Footer Info */}
                 <div className="absolute bottom-6 w-full text-center z-20 space-y-1">

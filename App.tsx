@@ -380,9 +380,9 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             {/* Header */}
             <div className="bg-seastar-900 text-white shadow-md z-30 flex-none h-12 flex items-center justify-between px-4 border-b border-seastar-700">
                 <div className="flex items-center gap-4">
-                    <div className="font-bold text-lg tracking-tight flex items-center gap-2 text-seastar-cyan">
-                        <Wifi size={20} className="text-seastar-cyan animate-pulse-slow" />
-                        SEASTAR <span className="text-gray-400 font-light text-sm">Cable Manager 2.0</span>
+                    <div className="flex items-center gap-2">
+                        <img src="/scms_logo.png" alt="SCMS Logo" className="h-8 object-contain" />
+                        <span className="text-gray-400 font-light text-sm ml-2">v2.0</span>
                     </div>
                     {/* Ship Selector */}
                     <div className="flex items-center bg-seastar-800 rounded px-2 py-0.5 border border-seastar-600">
