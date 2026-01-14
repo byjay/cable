@@ -81,8 +81,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                     {/* Header Section */}
                     <div className="w-full py-10 text-center relative overflow-hidden bg-slate-900/50">
                         <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                            <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mb-2">
-                                <Ship className="w-8 h-8 text-white" />
+                            <div className="w-24 h-24 rounded-2xl shadow-lg shadow-blue-500/20 mb-2 overflow-hidden bg-white flex items-center justify-center">
+                                <img src="/logo.jpg" alt="SEASTAR Logo" className="w-full h-full object-contain" />
                             </div>
                             <h1 className="text-2xl font-black text-white tracking-widest uppercase drop-shadow-lg">
                                 SCMS <span className="text-blue-500">2.0</span>
@@ -225,9 +225,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
                         >
                             <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none group-hover:bg-blue-500/20 transition-all"></div>
 
-                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-all duration-300 ${selectedShip === ship ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40' : 'bg-slate-800 text-slate-500 group-hover:bg-blue-600 group-hover:text-white'
+                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-all duration-300 overflow-hidden bg-white ${selectedShip === ship ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/40' : 'ring-1 ring-slate-600 group-hover:ring-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/40'
                                 }`}>
-                                <Ship size={32} />
+                                <img src="/logo.jpg" alt="SEASTAR Logo" className="w-full h-full object-contain p-2" />
                             </div>
 
                             <div className="relative z-10">
