@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, FileSpreadsheet, Filter, FileText,
-    FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder,
+    FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Upload, Folder,
     AlertTriangle, ChevronUp, ChevronDown, CheckSquare, X
 } from 'lucide-react';
 
