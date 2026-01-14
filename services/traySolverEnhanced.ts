@@ -142,7 +142,12 @@ const findDensePositionWithStacking = (
   const r = cable.od / 2;
   const candidates: { p: Point, score: number }[] = [];
 
+  // Optimization: Sort by X to allow spatial pruning (O(N log N) here, avoids O(N^2) later)
+  // Making total placement O(N^2) instead of O(N^3)
+  const sortedPlaced = [...placed].sort((a, b) => a.x - b.x);
+
   // 1. Base Scanning (Floor Level)
+  // Optimization: Increase step size slightly? Keep 5 for now.
   let scanX = xMin + r;
   while (scanX <= xMax - r) {
     if (!checkCollision(placed, scanX, r, r)) {
@@ -151,13 +156,13 @@ const findDensePositionWithStacking = (
     scanX += 5;
   }
 
-  // 2. Tangent Valley Packing (Circle between Circles)
-  if (placed.length > 0) {
-    for (let i = 0; i < placed.length; i++) {
-      const c1 = placed[i];
+  // 2. Tangent Valley Packing (Circle between Circles) - SPATIALLY OPTIMIZED
+  if (sortedPlaced.length > 0) {
+    for (let i = 0; i < sortedPlaced.length; i++) {
+      const c1 = sortedPlaced[i];
       const r1 = c1.od / 2;
 
-      // Tangent with floor boundary (Valley between a circle and the floor)
+      // Tangent with floor boundary
       const dy = Math.abs(c1.y - r);
       if (dy <= r1 + r) {
         const dx = Math.sqrt(Math.pow(r1 + r, 2) - Math.pow(dy, 2));
@@ -167,11 +172,17 @@ const findDensePositionWithStacking = (
         }
       }
 
-      for (let j = i + 1; j < placed.length; j++) {
-        const pts = getTangentPoints(c1, placed[j], r);
+      // Tangent with other cables (The O(N^2) killer -> Now Optimized)
+      for (let j = i + 1; j < sortedPlaced.length; j++) {
+        const c2 = sortedPlaced[j];
+
+        // SPATIAL BREAK: If X distance is greater than max possible touch distance, stop checking
+        if (c2.x - c1.x > (r1 + c2.od / 2 + 2 * r)) {
+          break; // Since sorted by X, no further cables can touch c1
+        }
+
+        const pts = getTangentPoints(c1, c2, r);
         pts.forEach(tp => {
-          // Valley Constraint: Must be physically supported (resting in the gap)
-          // TangentPoints already provides the two possible centers
           candidates.push({ p: tp, score: tp.y });
         });
       }

@@ -3,7 +3,7 @@ import { Cable } from '../types';
 import {
     Search, Save, Zap, List, Eye, FileSpreadsheet, Filter, FileText,
     FilePlus, FolderOpen, Trash2, ArrowDown, ArrowUp, Calculator, Pin, Printer, Folder,
-    AlertTriangle, ChevronUp, ChevronDown
+    AlertTriangle, ChevronUp, ChevronDown, CheckSquare
 } from 'lucide-react';
 
 interface CableListProps {
@@ -21,7 +21,7 @@ interface CableListProps {
     selectedCableId?: string | null;
 }
 
-const ROW_HEIGHT = 28; // Increased slightly for readability in dark mode
+const ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 30;
 const BUFFER_ROWS = 10;
 
@@ -34,6 +34,9 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const [showMissingLength, setShowMissingLength] = useState(false);
     const [showUnrouted, setShowUnrouted] = useState(false);
 
+    // Dynamic Columns State
+    const [dynamicColumns, setDynamicColumns] = useState<any[]>([]);
+
     // Raw Data Modal
     const [showRawDataModal, setShowRawDataModal] = useState(false);
     const [rawDataSource, setRawDataSource] = useState<Cable | null>(null);
@@ -42,7 +45,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-    // Click Guard - 동시 클릭 방지
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Stats
@@ -50,6 +52,41 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const calculatedPaths = useMemo(() => cables.filter(c => c.calculatedPath).length, [cables]);
 
     const isInternalSelection = useRef(false);
+
+    // Initialize/Update Columns based on Data
+    useEffect(() => {
+        if (cables.length > 0) {
+            const firstCable = cables[0];
+            // 1. Check if originalData exists (Dynamic Excel Import)
+            if (firstCable.originalData && Object.keys(firstCable.originalData).length > 0) {
+                const keys = Object.keys(firstCable.originalData);
+                const cols = keys.map(key => ({
+                    key: key,
+                    label: key.toUpperCase().replace(/_/g, ' '),
+                    width: 'w-32',
+                    isDynamic: true
+                }));
+
+                // Add System Columns that might override or augment
+                if (!keys.includes('length')) cols.push({ key: 'length', label: 'LENGTH', width: 'w-24', isDynamic: false });
+                if (!keys.includes('path')) cols.push({ key: 'path', label: 'PATH', width: 'w-64', isDynamic: false });
+
+                setDynamicColumns(cols);
+            } else {
+                // 2. Fallback to Fixed Default Columns
+                setDynamicColumns([
+                    { key: 'id', label: 'NO', width: 'w-10', align: 'center' },
+                    { key: 'system', label: 'SYSTEM', width: 'w-20' },
+                    { key: 'name', label: 'CABLE NAME', width: 'w-32', color: 'text-cyan-400 font-bold' },
+                    { key: 'type', label: 'TYPE', width: 'w-24' },
+                    { key: 'fromNode', label: 'FROM ND', width: 'w-24', bg: 'bg-blue-900/30' },
+                    { key: 'toNode', label: 'TO ND', width: 'w-24', bg: 'bg-green-900/30' },
+                    { key: 'length', label: 'LENGTH', width: 'w-24', align: 'right', color: 'text-yellow-400 font-mono font-bold' },
+                    { key: 'path', label: 'PATH', width: 'w-64', color: 'text-green-400 font-mono text-[10px]' },
+                ]);
+            }
+        }
+    }, [cables]);
 
     useEffect(() => {
         if (!initialFilter) return;
@@ -59,12 +96,10 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
     useEffect(() => {
         if (selectedCableId) {
-            // Only update if it's NOT an internal selection (prevents wiping multi-select on row click)
             if (!isInternalSelection.current) {
                 setSelectedIds(new Set([selectedCableId]));
                 setLastSelectedId(selectedCableId);
             }
-            // Reset the flag for the next cycle
             isInternalSelection.current = false;
         }
     }, [selectedCableId]);
@@ -78,23 +113,14 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         }
     };
 
-    const missingLengthCount = useMemo(() =>
-        cables.filter(c => !c.length || c.length === 0).length,
-        [cables]);
-
-    const unroutedCount = useMemo(() =>
-        cables.filter(c => !c.calculatedPath || c.calculatedPath.length === 0).length,
-        [cables]);
+    const missingLengthCount = useMemo(() => cables.filter(c => !c.length || c.length === 0).length, [cables]);
+    const unroutedCount = useMemo(() => cables.filter(c => !c.calculatedPath || c.calculatedPath.length === 0).length, [cables]);
 
     const selectedCable = useMemo(() => {
         if (selectedIds.size === 0) return null;
         const firstId = Array.from(selectedIds)[0];
         return cables.find(c => c.id === firstId) || null;
     }, [selectedIds, cables]);
-
-    const getSelectedCables = (): Cable[] => {
-        return cables.filter(c => selectedIds.has(c.id));
-    };
 
     const handleToggleAll = (checked: boolean) => {
         if (checked) {
@@ -108,26 +134,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         }
     };
 
-    // Columns - Styled for Dark Theme (Matches 라우팅.html headers)
-    const FIXED_COLUMNS = [
-        { key: 'id', label: 'NO', width: 'w-10', align: 'center' },
-        { key: 'system', label: 'SYSTEM', width: 'w-20' },
-        { key: 'page', label: 'PAGE', width: 'w-16', align: 'center' },
-        { key: 'name', label: 'CABLE NAME', width: 'w-32', color: 'text-cyan-400 font-bold' },
-        { key: 'type', label: 'TYPE', width: 'w-24' },
-        { key: 'fromRoom', label: 'FROM RM', width: 'w-24', bg: 'bg-blue-900/30' },
-        { key: 'fromEquip', label: 'FROM EQ', width: 'w-32', bg: 'bg-blue-900/30' },
-        { key: 'fromNode', label: 'FROM ND', width: 'w-24', bg: 'bg-blue-900/30' },
-        { key: 'toRoom', label: 'TO ROOM', width: 'w-24', bg: 'bg-green-900/30' },
-        { key: 'toEquip', label: 'TO EQ', width: 'w-32', bg: 'bg-green-900/30' },
-        { key: 'toNode', label: 'TO ND', width: 'w-24', bg: 'bg-green-900/30' },
-        { key: 'length', label: 'LENGTH', width: 'w-24', align: 'right', color: 'text-yellow-400 font-mono font-bold' },
-        { key: 'path', label: 'PATH', width: 'w-64', color: 'text-green-400 font-mono text-[10px]' },
-        { key: 'od', label: 'DIA', width: 'w-16', align: 'right' },
-        { key: 'checkNode', label: 'CHECK NODE', width: 'w-24' },
-        { key: 'remark', label: 'REMARK', width: 'w-32' },
-    ];
-
     const filteredCables = useMemo(() => {
         const searchTerm = filterName.toLowerCase();
         let result = cables.filter(c => {
@@ -136,23 +142,24 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 String(val || '').toLowerCase().includes(searchTerm)
             );
         });
-        if (showMissingLength) {
-            result = result.filter(c => !c.length || c.length === 0);
-        }
-        if (showUnrouted) {
-            result = result.filter(c => !c.calculatedPath || c.calculatedPath.length === 0);
-        }
+        if (showMissingLength) result = result.filter(c => !c.length || c.length === 0);
+        if (showUnrouted) result = result.filter(c => !c.calculatedPath || c.calculatedPath.length === 0);
+
         if (sortColumn) {
             result = [...result].sort((a, b) => {
-                const aVal = a[sortColumn] ?? '';
-                const bVal = b[sortColumn] ?? '';
-                if (typeof aVal === 'number' && typeof bVal === 'number') {
-                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                const aVal = a.originalData ? a.originalData[sortColumn] : a[sortColumn]; // Prioritize original data for sorting
+                const bVal = b.originalData ? b.originalData[sortColumn] : b[sortColumn];
+
+                if (aVal == bVal) return 0;
+                const valA = aVal || '';
+                const valB = bVal || '';
+
+                if (!isNaN(Number(valA)) && !isNaN(Number(valB))) {
+                    return sortDirection === 'asc' ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
                 }
-                const aStr = String(aVal).toLowerCase();
-                const bStr = String(bVal).toLowerCase();
-                if (sortDirection === 'asc') return aStr.localeCompare(bStr);
-                return bStr.localeCompare(aStr);
+                return sortDirection === 'asc'
+                    ? String(valA).localeCompare(String(valB))
+                    : String(valB).localeCompare(String(valA));
             });
         }
         return result;
@@ -162,45 +169,49 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         if (!onUpdateCable) return;
         const cable = cables.find(c => c.id === id);
         if (!cable) return;
-        const oldValue = cable[field];
-        if (oldValue == value) return;
 
-        const today = new Date().toISOString().split('T')[0];
-        const user = "ADMIN";
-        const changeLog = `${today} [${user}] ${field}: ${oldValue} -> ${value}`;
-        const newRevComment = cable.revComment ? `${cable.revComment}\n${changeLog}` : changeLog;
-
-        onUpdateCable({ ...cable, [field]: value, revComment: newRevComment });
+        // Update both standard prop and originalData prop to keep sync
+        const newOriginal = cable.originalData ? { ...cable.originalData, [field]: value } : undefined;
+        onUpdateCable({ ...cable, [field]: value, originalData: newOriginal });
     };
 
     const handleRowClick = (e: React.MouseEvent, cable: Cable, index: number) => {
-        // 3D View Integration: Trigger highlighting if available
+        // 3D View Integration
         if (onView3D) {
             onView3D(cable);
         }
 
         const id = cable.id;
-        let newSet = new Set(selectedIds);
+        let newSet: Set<string>;
 
         if (e.ctrlKey || e.metaKey) {
-            // Toggle selection
+            // Toggle
+            newSet = new Set(selectedIds);
             if (newSet.has(id)) newSet.delete(id);
             else newSet.add(id);
             setLastSelectedId(id);
         } else if (e.shiftKey && lastSelectedId) {
-            // Range selection
-            const lastIndex = filteredCables.findIndex(c => c.id === lastSelectedId);
-            if (lastIndex !== -1) {
-                const start = Math.min(lastIndex, index);
-                const end = Math.max(lastIndex, index);
+            // Range
+            newSet = new Set(selectedIds); // Keep existing? No, usually shift click replaces except for range
+            // Standard OS behavior: Shift+Click extends selection from anchor. 
+            // Usually it clears others unless Ctrl is also held.
+            // For simplicity here, we'll clear others to avoid "stuck" multi-select.
+            newSet = new Set();
 
-                newSet = new Set(); // Clear others for pure Shift-Select
+            const lastIndex = filteredCables.findIndex(c => c.id === lastSelectedId);
+            const currentIndex = filteredCables.findIndex(c => c.id === id);
+
+            if (lastIndex !== -1 && currentIndex !== -1) {
+                const start = Math.min(lastIndex, currentIndex);
+                const end = Math.max(lastIndex, currentIndex);
                 for (let i = start; i <= end; i++) {
-                    if (filteredCables[i]) newSet.add(filteredCables[i].id);
+                    newSet.add(filteredCables[i].id);
                 }
+            } else {
+                newSet.add(id);
             }
         } else {
-            // Single select
+            // Single Click -> STRICT RESET
             newSet = new Set();
             newSet.add(id);
             setLastSelectedId(id);
@@ -209,11 +220,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         setSelectedIds(newSet);
         isInternalSelection.current = true;
         onSelectCable(cable);
-    };
-
-    const handleViewRawData = (cable: Cable) => {
-        setRawDataSource(cable);
-        setShowRawDataModal(true);
     };
 
     // --- CLICK GUARD WRAPPER ---
@@ -225,7 +231,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         } catch (e) {
             console.error("Action failed:", e);
         } finally {
-            // Add slight delay to prevent instant re-click
             setTimeout(() => setIsProcessing(false), 300);
         }
     };
@@ -243,10 +248,12 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
     const Divider = () => <div className="w-px h-5 bg-slate-600 mx-1"></div>;
 
-    // --- DARK THEME STYLES (MATCHES 라우팅.html) ---
-    // Background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%)
-    // Headers: linear-gradient(135deg, #1e40af, #3b82f6)
-    // Table Rows: Dark with hover
+    const getDisplayValue = (cable: Cable, col: any) => {
+        if (col.isDynamic && cable.originalData) {
+            return cable.originalData[col.key] || cable[col.key]; // Fallback to root prop
+        }
+        return cable[col.key];
+    };
 
     return (
         <div className="flex flex-col h-full font-sans text-gray-200">
@@ -259,21 +266,32 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 <Divider />
                 <IconBtn icon={Search} label="Search" />
                 <Divider />
+
+                {/* ROUTE ALL BUTTON */}
                 <button
                     onClick={safeHandler(onCalculateAll)}
                     disabled={isProcessing}
                     className={`flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white rounded mx-1 shadow-lg shadow-blue-900/50 transition-all border ${isProcessing ? 'bg-gray-600 border-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 border-blue-400'}`}
                 >
-                    {isProcessing ? (
-                        <span className="animate-spin">⏳</span>
-                    ) : (
-                        <Calculator size={14} />
-                    )}
+                    {isProcessing ? <span className="animate-spin">⏳</span> : <Calculator size={14} />}
                     {isProcessing ? 'PROCESSING...' : 'ROUTE ALL'}
                 </button>
+
+                {/* ROUTE SELECTED BUTTON (NEW) */}
+                <button
+                    onClick={safeHandler(() => onCalculateSelected(filteredCables.filter(c => selectedIds.has(c.id))))}
+                    disabled={isProcessing || selectedIds.size === 0}
+                    className={`flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white rounded mx-1 shadow-lg transition-all border 
+                    ${isProcessing || selectedIds.size === 0
+                            ? 'bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-500 border-green-400 shadow-green-900/50'}`}
+                >
+                    <CheckSquare size={14} />
+                    ROUTE SELECTED ({selectedIds.size})
+                </button>
+
                 <div className="flex-1"></div>
 
-                {/* Status Badges */}
                 <div className="flex items-center gap-2 mr-2">
                     <div className="bg-slate-800 border border-slate-600 px-3 py-0.5 rounded text-[10px] text-cyan-400 font-mono">
                         TOTAL: <span className="text-white font-bold">{cables.length}</span>
@@ -285,7 +303,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* --- LEFT SIDEBAR (Cable Group Tree) --- */}
+                {/* LEFT SIDEBAR (Cable Group Tree) */}
                 <div className="w-56 bg-[#0f172a]/95 border-r border-slate-700 flex flex-col shadow-inner">
                     <div className="p-3 border-b border-slate-700 bg-slate-800/50">
                         <div className="text-[11px] font-bold text-slate-400 mb-1">SEARCH CABLES</div>
@@ -304,7 +322,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                         >
                             <Eye size={14} /> 3D ROUTE VIEW
                         </button>
-
                         <div className="text-[10px] uppercase font-bold text-slate-500 mt-4 mb-2 px-2">Filters</div>
                         <button
                             onClick={() => setShowMissingLength(!showMissingLength)}
@@ -323,9 +340,9 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     </div>
                 </div>
 
-                {/* --- MAIN CONTENT --- */}
+                {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden relative">
-                    {/* --- DETAIL PANEL (Top of Grid) --- */}
+                    {/* DETAIL PANEL */}
                     <div className="bg-slate-800/90 border-b border-slate-600 p-3 min-h-[140px] shadow-lg z-10">
                         {selectedCable ? (
                             <div className="flex gap-6 h-full">
@@ -375,7 +392,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                         )}
                     </div>
 
-                    {/* --- TABLE --- */}
+                    {/* TABLE */}
                     <div
                         ref={scrollContainerRef}
                         className="flex-1 overflow-auto custom-scrollbar bg-transparent"
@@ -394,10 +411,10 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                 className="cursor-pointer"
                                             />
                                         </th>
-                                        {FIXED_COLUMNS.map(col => (
+                                        {dynamicColumns.map(col => (
                                             <th
                                                 key={col.key}
-                                                className={`px-2 py-2 font-bold text-white border-r border-blue-500 whitespace-nowrap ${col.width} text-center cursor-pointer select-none hover:bg-blue-600 transition-colors shadow-sm`}
+                                                className={`px-2 py-2 font-bold text-white border-r border-blue-500 whitespace-nowrap ${col.width || 'w-24'} text-center cursor-pointer select-none hover:bg-blue-600 transition-colors shadow-sm`}
                                                 onClick={() => handleSort(col.key)}
                                             >
                                                 <div className="flex items-center justify-center gap-1">
@@ -419,7 +436,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
                                         return (
                                             <>
-                                                {startIdx > 0 && <tr style={{ height: startIdx * ROW_HEIGHT }}><td colSpan={FIXED_COLUMNS.length + 2}></td></tr>}
+                                                {startIdx > 0 && <tr style={{ height: startIdx * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
                                                 {visibleCables.map((cable, localIdx) => {
                                                     const idx = startIdx + localIdx;
                                                     const isSelected = selectedIds.has(cable.id);
@@ -438,18 +455,19 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                                     type="checkbox"
                                                                     title="Select Row"
                                                                     checked={isSelected}
-                                                                    onChange={() => { }}
+                                                                    onChange={() => { /* Handled by Row Click */ }}
                                                                     className="cursor-pointer bg-slate-700 border-none"
                                                                 />
                                                             </td>
-                                                            {FIXED_COLUMNS.map(col => (
+                                                            {dynamicColumns.map(col => (
                                                                 <td key={`${cable.id}-${col.key}`} className={`px-2 border-r border-slate-700/50 whitespace-nowrap overflow-hidden text-ellipsis ${!isSelected && col.bg ? col.bg : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
                                                                     <input
                                                                         type="text"
                                                                         className={`w-full bg-transparent border-none p-0 text-inherit focus:ring-0 cursor-pointer ${col.color || ''}`}
-                                                                        value={cable[col.key] || ''}
+                                                                        value={getDisplayValue(cable, col) || ''}
                                                                         onChange={(e) => handleCellChange(cable.id, col.key, e.target.value)}
-                                                                        readOnly={col.key === 'id' || col.key === 'length' || col.key === 'path'}
+                                                                        readOnly={col.key === 'id' || col.key === 'length' || col.key === 'path' || col.isDynamic}
+                                                                        title={getDisplayValue(cable, col) || ''}
                                                                     />
                                                                 </td>
                                                             ))}
@@ -461,7 +479,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                                                         </tr>
                                                     );
                                                 })}
-                                                {endIdx < filteredCables.length && <tr style={{ height: (filteredCables.length - endIdx) * ROW_HEIGHT }}><td colSpan={FIXED_COLUMNS.length + 2}></td></tr>}
+                                                {endIdx < filteredCables.length && <tr style={{ height: (filteredCables.length - endIdx) * ROW_HEIGHT }}><td colSpan={dynamicColumns.length + 2}></td></tr>}
                                             </>
                                         );
                                     })()}
@@ -472,7 +490,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                 </div>
             </div>
 
-            {/* --- BOTTOM STATUS BAR --- */}
+            {/* BOTTOM STATUS BAR */}
             <div className="h-6 bg-slate-900/80 backdrop-blur border-t border-slate-700 flex justify-between items-center px-4 text-[10px] text-slate-500">
                 <div>SEASTAR CABLE MANAGER V6.2 (Verified: 2026-01-14 07:50)</div>
                 <div>Status: <span className="text-green-500">Connected</span> • System Ready</div>

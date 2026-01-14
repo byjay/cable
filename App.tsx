@@ -949,6 +949,20 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
                     </div>
                 </div>
             )}
+
+            {/* GLOBAL STATUS BAR (User Requested) */}
+            {(isRouting || isProcessing) && (
+                <div className="fixed bottom-0 left-0 right-0 z-[100] bg-seastar-900/95 border-t border-seastar-neon p-2 flex items-center justify-center space-x-4 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-5">
+                    <Loader2 className="w-5 h-5 text-seastar-neon animate-spin" />
+                    <div className="text-seastar-cyan font-bold font-mono tracking-wider">
+                        {isRouting ? "데이터 라우팅 및 경로 계산 중입니다... (PROCESSING ROUTE)" : "시스템 처리 중... (SYSTEM PROCESSING)"}
+                    </div>
+                    <div className="h-1 w-32 bg-gray-700 rounded overflow-hidden">
+                        <div className="h-full bg-seastar-neon animate-progress-indeterminate"></div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

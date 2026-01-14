@@ -118,76 +118,77 @@ const TrayVisualizer: React.FC<TrayVisualizerProps> = ({ systemResult }) => {
                                     fontSize="12"
                                     fontWeight="900"
                                     fill="#334155"
-                                    text={`T${idx + 1} (${tier.cables.length}개, ${Math.min(100, Math.round(tier.fillRatio))}%)`}
-                            </text>
+                                >
+                                    {`T${idx + 1} (${tier.cables.length}개, ${Math.min(100, Math.round(tier.fillRatio))}%)`}
+                                </text>
 
-                                {/* Tray Beam */ }
-                        <rect
-                            x={pos.x}
-                            y={beamY}
-                            width={TRAY_WIDTH}
-                            height={BEAM_HEIGHT}
-                            fill="#475569"
-                            stroke="#1e293b"
-                            strokeWidth="1"
-                        />
+                                {/* Tray Beam */}
+                                <rect
+                                    x={pos.x}
+                                    y={beamY}
+                                    width={TRAY_WIDTH}
+                                    height={BEAM_HEIGHT}
+                                    fill="#475569"
+                                    stroke="#1e293b"
+                                    strokeWidth="1"
+                                />
 
-                        {/* Side walls */ }
+                                {/* Side walls */}
                                 <rect x={pos.x - 5} y={pos.y - 5} width={5} height={TRAY_HEIGHT + BEAM_HEIGHT + 10} fill="#64748b" />
                                 <rect x={pos.x + TRAY_WIDTH} y={pos.y - 5} width={5} height={TRAY_HEIGHT + BEAM_HEIGHT + 10} fill="#64748b" />
 
-                        {/* Height limit */ }
-                        <line
-                            x1={pos.x} y1={pos.y}
-                            x2={pos.x + TRAY_WIDTH} y2={pos.y}
-                            stroke="#ef4444" strokeWidth="1" strokeDasharray="3,2"
-                        />
+                                {/* Height limit */}
+                                <line
+                                    x1={pos.x} y1={pos.y}
+                                    x2={pos.x + TRAY_WIDTH} y2={pos.y}
+                                    stroke="#ef4444" strokeWidth="1" strokeDasharray="3,2"
+                                />
 
-                        {/* Cables */ }
-                        {
-                            tier.cables.map((c) => {
-                                const r = c.od / 2;
-                                const cx = pos.x + c.x;
-                                const cy = beamY - c.y;
+                                {/* Cables */}
+                                {
+                                    tier.cables.map((c) => {
+                                        const r = c.od / 2;
+                                        const cx = pos.x + c.x;
+                                        const cy = beamY - c.y;
 
-                                return (
-                                    <g key={c.id}>
-                                        <circle
-                                            cx={cx} cy={cy} r={r}
-                                            fill={getTypeColor(c.type)}
-                                            stroke="#1e293b" strokeWidth="0.5"
-                                        />
-                                        <text
-                                            x={cx} y={cy}
-                                            fontSize={Math.max(Math.min(c.od * 0.35, 8), 4)}
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                            fill="#000"
-                                            fontWeight="900"
-                                        >
-                                            {c.displayIndex}
-                                        </text>
-                                    </g>
-                                );
-                            })
-                        }
+                                        return (
+                                            <g key={c.id}>
+                                                <circle
+                                                    cx={cx} cy={cy} r={r}
+                                                    fill={getTypeColor(c.type)}
+                                                    stroke="#1e293b" strokeWidth="0.5"
+                                                />
+                                                <text
+                                                    x={cx} y={cy}
+                                                    fontSize={Math.max(Math.min(c.od * 0.35, 8), 4)}
+                                                    textAnchor="middle"
+                                                    dominantBaseline="middle"
+                                                    fill="#000"
+                                                    fontWeight="900"
+                                                >
+                                                    {c.displayIndex}
+                                                </text>
+                                            </g>
+                                        );
+                                    })
+                                }
 
-                        {/* Width label */ }
-                        <text
-                            x={pos.x + TRAY_WIDTH / 2}
-                            y={beamY + BEAM_HEIGHT + 18}
-                            textAnchor="middle"
-                            fontSize="10"
-                            fontWeight="bold"
-                            fill="#000"
-                        >
-                            {TRAY_WIDTH}mm
-                        </text>
+                                {/* Width label */}
+                                <text
+                                    x={pos.x + TRAY_WIDTH / 2}
+                                    y={beamY + BEAM_HEIGHT + 18}
+                                    textAnchor="middle"
+                                    fontSize="10"
+                                    fontWeight="bold"
+                                    fill="#000"
+                                >
+                                    {TRAY_WIDTH}mm
+                                </text>
                             </g>
-                );
+                        );
                     })}
-            </svg>
-        </div>
+                </svg>
+            </div>
         </div >
     );
 };
