@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
-import { AlertTriangle, CheckCircle, Layers, Search, RefreshCw, Route, Play, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
-import TrayVisualizerEnhanced from './TrayVisualizerEnhanced';
-import { autoSolveSystem, solveSystem, solveSystemAtWidth, calculateBasicStats } from '../services/traySolverEnhanced';
+import { Search, Route, Play, ChevronLeft, ChevronRight, RefreshCw, Layers } from 'lucide-react';
+import TrayVisualizer from './TrayVisualizer';
+import { autoSolveSystem, solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
 import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
 
 interface TrayAnalysisProps {
@@ -18,12 +18,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     const [solverResult, setSolverResult] = useState<SystemResult | null>(null);
     const [routingService, setRoutingService] = useState<EnhancedRoutingService | null>(null);
     const [showRouting, setShowRouting] = useState(false);
-    const [routeStart, setRouteStart] = useState('');
-    const [routeEnd, setRouteEnd] = useState('');
     const [routeWaypoints, setRouteWaypoints] = useState('');
-    const [routeResult, setRouteResult] = useState<any>(null);
-    const [allRoutes, setAllRoutes] = useState<any[]>([]);
-    const [showQuickFill, setShowQuickFill] = useState(false);
 
     // FILL Configuration State
     const [numberOfTiers, setNumberOfTiers] = useState(1);
@@ -32,41 +27,21 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     const [manualWidth, setManualWidth] = useState<number | null>(null);
     const [isCalculating, setIsCalculating] = useState(false);
 
-    // CACHE for solver results (key: nodeName + params)
+    // CACHE for solver results
     const solverCache = useRef<Map<string, SystemResult>>(new Map());
 
     // Initialize routing service
     useEffect(() => {
         if (nodes.length > 0) {
-            const service = new EnhancedRoutingService(nodes);
-            setRoutingService(service);
-
-            // Calculate all routes
-            const routes = cables.map(cable => {
-                if (cable.fromNode && cable.toNode) {
-                    const route = service.findRoute(cable.fromNode, cable.toNode);
-                    return {
-                        cableId: cable.id,
-                        cableName: cable.name,
-                        fromNode: cable.fromNode,
-                        toNode: cable.toNode,
-                        path: route.path,
-                        distance: route.distance,
-                        error: route.error
-                    };
-                }
-                return null;
-            }).filter(Boolean);
-            setAllRoutes(routes);
+            setRoutingService(new EnhancedRoutingService(nodes));
         }
-    }, [nodes, cables]);
+    }, [nodes]);
 
     // Calculate fill ratio for each node (Quick Check for List)
     const nodeAnalysis = useMemo(() => {
         const nodeMap = new Map<string, Node>();
         nodes.forEach(n => nodeMap.set(n.name, n));
 
-        // Group cables by node usage (Pre-calculation)
         const nodeCableIds = new Map<string, string[]>();
 
         cables.forEach(c => {
@@ -127,7 +102,6 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         return cables
             .filter(c => {
                 const hasId = selectedNode.cables.includes(c.id);
-                // Support both 'od' and 'CABLE_OUTDIA' properties
                 const odValue = c.od || (c as any).CABLE_OUTDIA || (c as any).OUT_DIA || 0;
                 return hasId && odValue > 0;
             })
@@ -144,7 +118,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
             id: c.id,
             name: c.name,
             type: c.type,
-            od: c.od || (c as any).CABLE_OUTDIA || 10, // Support both properties
+            od: c.od || (c as any).CABLE_OUTDIA || 10,
             color: undefined
         }));
     }, [selectedCables]);
@@ -163,7 +137,6 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
 
         const cacheKey = getCacheKey(selectedNode.nodeName, numberOfTiers, maxHeightLimit, fillRatioLimit, overrideWidth);
 
-        // Check cache first (unless forceRecalc)
         if (!forceRecalc && solverCache.current.has(cacheKey)) {
             setSolverResult(solverCache.current.get(cacheKey)!);
             return;
@@ -178,7 +151,6 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                 solution = solveSystem(solverData, numberOfTiers, maxHeightLimit, fillRatioLimit);
             }
 
-            // Store in cache
             solverCache.current.set(cacheKey, solution);
             setSolverResult(solution);
             setIsCalculating(false);
@@ -215,7 +187,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         }
     }, [selectedNode, numberOfTiers, maxHeightLimit, fillRatioLimit, solverData.length]);
 
-    // Width adjustment (Standard Industrial Steps)
+    // Width adjustment
     const STANDARD_WIDTHS_UI = [150, 300, 450, 600, 750, 900, 1050, 1200];
 
     const adjustWidth = (delta: number) => {
@@ -237,23 +209,35 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
         calculate(null);
     };
 
-    const recommendedWidth = useMemo(() => {
-        if (!solverResult) return 0;
-        const w = solverResult.systemWidth;
-        const match = STANDARD_WIDTHS_UI.find(sw => sw >= w);
-        return match || 1200;
-    }, [solverResult]);
+    // Generate warning if manual selection is suboptimal
+    const widthWarning = useMemo(() => {
+        if (!manualWidth || !solverResult) return null;
+
+        // 1. Overfill Check
+        if (!solverResult.success) {
+            return { type: 'error', text: '⚠️ 용량 부족 (Insufficient)' };
+        }
+
+        // 2. Underfill Check (Wasteful)
+        // If fill ratio is significantly lower than limit (e.g., < 30% of limit), it might be wasteful
+        // But only if there is a smaller valid width in the matrix (if we have matrix data)
+        const currentMaxFill = Math.max(...solverResult.tiers.map(t => t.fillRatio));
+        if (currentMaxFill < (fillRatioLimit * 0.5)) {
+            return { type: 'warning', text: '⚠️ 규격 과다 (Oversized)' };
+        }
+
+        return null;
+    }, [manualWidth, solverResult, fillRatioLimit]);
 
     return (
         <div className="flex flex-col h-full bg-[#f1f5f9]">
-            {/* Top Toolbar (Glassmorphism) */}
+            {/* Top Toolbar */}
             <div className="bg-white/90 backdrop-blur-md border-b border-white/20 flex items-center gap-4 shadow-md h-16 shrink-0 z-20 px-4 relative">
                 <div className="flex flex-col">
                     <span className="font-extrabold text-lg text-slate-800 tracking-tight">전로폭 산출</span>
                     <span className="text-[10px] text-slate-500 font-medium -mt-1">Tray Fill Analysis</span>
                 </div>
 
-                {/* Vertical Divider */}
                 <div className="h-8 w-px bg-slate-200 mx-2"></div>
 
                 {/* Deck Filter & Search */}
@@ -288,49 +272,20 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                     {showRouting ? 'Hide Routing' : 'Show Routing'}
                 </button>
 
-                {/* Re-route All Panel */}
+                {/* Routing Waypoints Input (Only visible when active) */}
                 {showRouting && (
-                    <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg p-1.5 ml-2 animate-in fade-in slide-in-from-left-2 duration-200">
-                        <div className="flex flex-col gap-0.5 px-1">
-                            <span className="text-[9px] text-blue-600 font-extrabold uppercase tracking-wide">Waypoints</span>
-                            <input
-                                type="text"
-                                placeholder="e.g. T1-01, T2-05"
-                                className="bg-white border border-blue-200 text-xs px-2 py-0.5 rounded shadow-sm w-40 outline-none focus:ring-2 focus:ring-blue-400/30 text-slate-700 font-mono"
-                                value={routeWaypoints}
-                                onChange={(e) => setRouteWaypoints(e.target.value)}
-                                title="Comma separated node names to pass through"
-                            />
-                        </div>
-                        <div className="h-6 w-px bg-blue-200"></div>
-                        <button
-                            className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
-                            onClick={() => {
-                                if (routingService) {
-                                    const routes = cables.map(cable => {
-                                        if (cable.fromNode && cable.toNode) {
-                                            const route = routingService.findRoute(cable.fromNode, cable.toNode, routeWaypoints);
-                                            return {
-                                                cableId: cable.id,
-                                                cableName: cable.name,
-                                                fromNode: cable.fromNode,
-                                                toNode: cable.toNode,
-                                                path: route.path,
-                                                distance: route.distance,
-                                                error: route.error
-                                            };
-                                        }
-                                        return null;
-                                    }).filter(Boolean);
-                                    setAllRoutes(routes);
-                                }
-                            }}
-                        >
-                            <RefreshCw size={12} className="inline" />
-                            Re-route All
-                        </button>
+                    <div className="flex items-center gap-2 ml-2">
+                        <input
+                            type="text"
+                            placeholder="Waypoints eg T1-01"
+                            className="text-xs border p-1 rounded"
+                            value={routeWaypoints}
+                            onChange={(e) => setRouteWaypoints(e.target.value)}
+                        />
+                        <button className="bg-blue-500 text-white text-xs px-2 py-1 rounded">Re-calc</button>
                     </div>
                 )}
+
 
                 {/* FILL Controls */}
                 <div className="flex items-center gap-3 ml-auto">
@@ -371,7 +326,7 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                     </div>
 
                     {/* Width Override */}
-                    <div className="flex items-center gap-0.5 bg-slate-100 rounded p-0.5 border border-slate-200">
+                    <div className="flex items-center gap-0.5 bg-slate-100 rounded p-0.5 border border-slate-200 relative">
                         <button onClick={() => adjustWidth(-100)} className="p-1 text-slate-500 hover:text-blue-600">
                             <ChevronLeft size={14} />
                         </button>
@@ -385,6 +340,16 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                             <button onClick={resetToAuto} className="p-0.5 text-yellow-500 hover:text-yellow-600" title="Reset to Auto">
                                 <RefreshCw size={12} />
                             </button>
+                        )}
+
+                        {/* WARNING BADGE */}
+                        {widthWarning && (
+                            <div className={`absolute top-full right-0 mt-1 px-2 py-1 rounded text-[10px] font-bold shadow-md whitespace-nowrap z-50 animate-bounce cursor-help
+                                ${widthWarning.type === 'error' ? 'bg-red-500 text-white' : 'bg-orange-400 text-white'}`}
+                                title={widthWarning.text}
+                            >
+                                {widthWarning.text}
+                            </div>
                         )}
                     </div>
 
@@ -403,9 +368,9 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                 </div>
             </div>
 
-            {/* Split Pane Content */}
+            {/* Main Content Area */}
             <div className="flex-1 flex overflow-hidden">
-                {/* LEFT: Node List */}
+                {/* LEFT: Node List Sidebar */}
                 <div className="w-[320px] flex flex-col border-r border-gray-300 bg-white shrink-0">
                     <div className="bg-slate-100 p-2 text-xs font-bold border-b border-gray-200 text-gray-600">
                         Node List ({filteredNodes.length})
@@ -424,8 +389,6 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                                 <div className="text-xs text-gray-400">
                                     Width: {item.trayWidth}mm
                                 </div>
-
-                                {/* Quick Fill Button */}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -441,124 +404,13 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                     </div>
                 </div>
 
-                {/* RIGHT: Detail View */}
-                <div className="flex-1 flex flex-col bg-[#f8fafc] h-full overflow-hidden">
+                {/* RIGHT: Visualizer Area (Takes full remaining space) */}
+                <div className="flex-1 flex flex-col bg-[#f8fafc] h-full overflow-hidden p-4">
                     {selectedNode && solverResult ? (
-                        <>
-                            {/* TOP: Visualizer + Recommendation Panel */}
-                            <div className="h-[320px] flex border-b border-gray-300 bg-white">
-                                {/* Visualizer Area (70%) */}
-                                <div className="flex-1 border-r border-gray-200 relative">
-                                    <TrayVisualizerEnhanced systemResult={solverResult} fillRatioLimit={fillRatioLimit} />
-                                    {/* Calculated Info Overlay */}
-                                    <div className="absolute top-2 right-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded shadow pointer-events-none">
-                                        W{solverResult.systemWidth} x H{maxHeightLimit} x {solverResult.tiers.length}단 | {selectedCables.length}개 (OD &gt; 0)
-                                    </div>
-                                </div>
-
-                                {/* Recommendation Panel (30%) */}
-                                <div className="w-[220px] bg-slate-50 p-4 flex flex-col gap-4 overflow-y-auto">
-                                    <div className="pb-2 border-b border-gray-200">
-                                        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                                            <CheckCircle className="text-green-500" size={16} />
-                                            Recommendation
-                                        </h3>
-                                        <p className="text-[10px] text-gray-500 mt-1">Based on OD & Fill {fillRatioLimit}%</p>
-                                    </div>
-
-                                    <div className="bg-white border rounded p-3 shadow-sm text-center">
-                                        <div className="text-xs text-gray-500 mb-1">Physical Analysis</div>
-                                        {(() => {
-                                            const stats = calculateBasicStats(solverData);
-                                            return (
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex justify-between text-[10px] border-b border-dashed pb-1">
-                                                        <span>Total OD:</span>
-                                                        <span className="font-bold text-blue-600">{stats.totalODSum.toFixed(1)} mm</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-[10px] border-b border-dashed pb-1">
-                                                        <span>Area Sum:</span>
-                                                        <span className="font-bold text-purple-600">{stats.totalAreaSum.toFixed(0)} mm²</span>
-                                                    </div>
-                                                    <div className="text-[9px] text-gray-400 mt-1">
-                                                        * Used for Tier Calculation
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-
-                                    <div className="bg-white border rounded p-3 shadow-sm text-center">
-                                        <div className="text-xs text-gray-500 mb-1">Recommended Type</div>
-                                        <div className="text-2xl font-black text-blue-600">
-                                            {recommendedWidth} <span className="text-sm text-gray-400">mm</span>
-                                        </div>
-                                        <div className="text-xs font-bold text-slate-700 mt-1 text-center bg-slate-100 rounded py-1">
-                                            {solverResult.tiers.length}단 (Tiers)
-                                        </div>
-                                    </div>
-
-                                    <div className="text-[10px] text-gray-400">
-                                        * Standard tray widths (200~900mm) applied.
-                                    </div>
-
-                                    {/* Stats */}
-                                    <div className="bg-white border rounded p-2 text-xs">
-                                        <div className="flex justify-between py-1 border-b border-gray-100">
-                                            <span className="text-gray-500">Total Cables</span>
-                                            <span className="font-bold">{selectedCables.length}</span>
-                                        </div>
-                                        <div className="flex justify-between py-1 border-b border-gray-100">
-                                            <span className="text-gray-500">Avg Fill</span>
-                                            <span className="font-bold">
-                                                {solverResult.tiers.length > 0
-                                                    ? (solverResult.tiers.reduce((sum, t) => sum + t.fillRatio, 0) / solverResult.tiers.length).toFixed(1)
-                                                    : 0}%
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between py-1">
-                                            <span className="text-gray-500">Success</span>
-                                            <span className={`font-bold ${solverResult.success ? 'text-green-600' : 'text-red-600'}`}>
-                                                {solverResult.success ? 'OK' : 'FAIL'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* BOTTOM: Cable List */}
-                            <div className="flex-1 overflow-auto custom-scrollbar flex flex-col">
-                                <div className="bg-slate-100 px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-600 sticky top-0">
-                                    Cables in Tray ({selectedCables.length})
-                                </div>
-                                <table className="w-full text-xs text-left border-collapse">
-                                    <thead className="bg-white text-gray-500 sticky top-0 shadow-sm z-10">
-                                        <tr>
-                                            <th className="p-2 w-10 text-center border-b">No</th>
-                                            <th className="p-2 border-b">Circuit</th>
-                                            <th className="p-2 border-b">Type</th>
-                                            <th className="p-2 w-20 text-right border-b">OD</th>
-                                            <th className="p-2 w-20 text-right border-b">Length</th>
-                                            <th className="p-2 border-b">From</th>
-                                            <th className="p-2 border-b">To</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 bg-white">
-                                        {selectedCables.map((cable, idx) => (
-                                            <tr key={cable.id} className="hover:bg-blue-50">
-                                                <td className="p-2 text-center text-gray-400 bg-slate-50">{idx + 1}</td>
-                                                <td className="p-2 font-bold text-blue-700">{cable.name}</td>
-                                                <td className="p-2 text-gray-600">{cable.type}</td>
-                                                <td className="p-2 text-right font-mono">{cable.od}</td>
-                                                <td className="p-2 text-right font-mono text-gray-400">{cable.calculatedLength?.toFixed(1) || '-'}</td>
-                                                <td className="p-2 text-gray-500 truncate max-w-[80px]" title={cable.fromNode}>{cable.fromNode}</td>
-                                                <td className="p-2 text-gray-500 truncate max-w-[80px]" title={cable.toNode}>{cable.toNode}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </>
+                        <div className="w-full h-full bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                            {/* The TrayVisualizer handles its own internal layout (Visualizer Left, Matrix Bottom, Cable Index Right) */}
+                            <TrayVisualizer systemResult={solverResult} fillRatioLimit={fillRatioLimit} />
+                        </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400">
                             <Layers size={48} className="mb-2 opacity-20" />
