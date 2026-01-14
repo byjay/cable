@@ -2,8 +2,9 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Cable, Node, NodeFillData, SystemResult, CableData } from '../types';
 import { Search, Route, Play, ChevronLeft, ChevronRight, RefreshCw, Layers } from 'lucide-react';
 import TrayVisualizer from './TrayVisualizer';
-import { solveSystem, solveSystemAtWidth } from '../services/traySolverEnhanced';
-import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
+import { solveSystem, solveSystemAtWidth } from '../services/solver';
+import { buildGraph, routeCables, calculateShortestPath } from '../services/routing';
+
 
 interface TrayAnalysisProps {
     cables: Cable[];
@@ -16,7 +17,6 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     const [filterDeck, setFilterDeck] = useState('ALL');
     const [searchText, setSearchText] = useState('');
     const [solverResult, setSolverResult] = useState<SystemResult | null>(null);
-    const [routingService, setRoutingService] = useState<EnhancedRoutingService | null>(null);
     const [showRouting, setShowRouting] = useState(false);
     const [routeWaypoints, setRouteWaypoints] = useState('');
 
@@ -30,12 +30,12 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
     // CACHE for solver results
     const solverCache = useRef<Map<string, SystemResult>>(new Map());
 
-    // Initialize routing service
-    useEffect(() => {
-        if (nodes.length > 0) {
-            setRoutingService(new EnhancedRoutingService(nodes));
-        }
+    // Build graph from nodes for routing (using tray-fill logic)
+    const graph = useMemo(() => {
+        if (nodes.length === 0) return {};
+        return buildGraph(nodes.map(n => ({ name: n.name, relation: n.relation })));
     }, [nodes]);
+
 
     // Calculate fill ratio for each node (Quick Check for List)
     const nodeAnalysis = useMemo(() => {

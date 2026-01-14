@@ -1,7 +1,11 @@
+/**
+ * Auto Routing Hook - 라우팅.html 로직 기반
+ * Uses Dijkstra algorithm with linkLength weights
+ */
+
 import { useState, useEffect, useCallback } from 'react';
-import { Cable, Node, RouteResult } from '../types';
-import { RoutingService } from '../services/routingService';
-import { EnhancedRoutingService } from '../services/EnhancedRoutingService';
+import { Cable, Node, NodeData } from '../types';
+import { calculatePath, routeAllCables, RouteResult } from '../services/routing';
 
 interface AutoRoutingProps {
     nodes: Node[];
@@ -11,91 +15,37 @@ interface AutoRoutingProps {
 }
 
 export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRoutingProps) => {
-    const [routingService, setRoutingService] = useState<RoutingService | EnhancedRoutingService | null>(null);
     const [routePath, setRoutePath] = useState<string[]>([]);
     const [autoRouted, setAutoRouted] = useState(false);
     const [isRouting, setIsRouting] = useState(false);
-    const [routingProgress, setRoutingProgress] = useState(0); // 0-100 percentage
+    const [routingProgress, setRoutingProgress] = useState(0);
 
-    // Initialize Routing Service when nodes change
-    useEffect(() => {
-        if (nodes.length > 0) {
-            const svc = new EnhancedRoutingService(nodes);
-            setRoutingService(svc);
-        }
-    }, [nodes]);
+    // Convert nodes to NodeData format for routing
+    const nodeData: NodeData[] = nodes.map(n => ({
+        name: n.name,
+        relation: n.relation,
+        linkLength: n.linkLength
+    } as NodeData));
 
-    // Helper for Length Calculation: (Path + FromRest + ToRest), then Ceil
-    const calculateFinalLength = (distance: number, fromRest: any, toRest: any) => {
-        const fRest = parseFloat(String(fromRest || 0)) || 0;
-        const tRest = parseFloat(String(toRest || 0)) || 0;
-        return Math.ceil(distance + fRest + tRest);
-    };
-
-    // CAPACITY-AWARE ROUTING: Calculate penalties based on current occupancy
-    const refreshRoutingPenalties = useCallback(() => {
-        if (!routingService) return;
-
-        const penalties: { [key: string]: number } = {};
-        const nodeOccupancy: { [key: string]: number } = {}; // Sum of cable ODs
-
-        // 1. Calculate current OD sum per node
-        cables.forEach(cable => {
-            if (cable.calculatedPath) {
-                cable.calculatedPath.forEach(nodeName => {
-                    nodeOccupancy[nodeName] = (nodeOccupancy[nodeName] || 0) + (cable.od || 10);
-                });
-            }
-        });
-
-        // 2. Map occupancy to penalty multiplier
-        // Standard tray: 300mm width. OD sum > 300 means multiple layers or crowding.
-        nodes.forEach(node => {
-            const currentOD = nodeOccupancy[node.name] || 0;
-            const capacity = node.maxCable || 300; // Default 300mm capacity
-            const ratio = currentOD / capacity;
-
-            let p = 1.0;
-            if (ratio > 0.8) p = 10.0; // Critical: Avoid
-            else if (ratio > 0.6) p = 3.0; // Heavy: Avoid if easy
-            else if (ratio > 0.4) p = 1.5; // Moderate: Slight bias
-
-            penalties[node.name] = p;
-        });
-
-        if ('setPenalties' in routingService) {
-            (routingService as any).setPenalties(penalties);
-            console.log('✅ Routing Penalties Updated:', Object.keys(penalties).filter(k => penalties[k] > 1.0).length, 'nodes penalized.');
-        }
-    }, [routingService, cables, nodes]);
-
-    // Initial Penalty Update
-    useEffect(() => {
-        if (routingService && cables.length > 0) {
-            refreshRoutingPenalties();
-        }
-    }, [routingService, cables.length, refreshRoutingPenalties]);
-
-    // Single Cable Routing
+    // Single Cable Routing - 라우팅.html calculatePath 사용
     const calculateRoute = useCallback((cable: Cable) => {
-        if (!routingService) {
-            alert("Routing Engine not ready. Please load Node data.");
+        if (nodeData.length === 0) {
+            alert("라우팅 엔진이 준비되지 않았습니다. 노드 데이터를 로드해주세요.");
             return;
         }
 
-        const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
+        const result = calculatePath(nodeData, cable.fromNode, cable.toNode, cable.checkNode || '');
 
-        if (result.path.length > 0) {
+        if (result && result.path.length > 0) {
             setRoutePath(result.path);
-            const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
 
             const updatedCables = cables.map(c =>
                 c.id === cable.id
                     ? {
                         ...c,
                         calculatedPath: result.path,
-                        calculatedLength: totalLength, // Store result
-                        length: totalLength, // Update main length
+                        calculatedLength: result.length,
+                        length: result.length,
                         path: result.path.join(','),
                         routeError: undefined
                     }
@@ -106,23 +56,22 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
         } else {
             const updatedCables = cables.map(c =>
                 c.id === cable.id
-                    ? { ...c, routeError: result.error || 'Unknown routing error' }
+                    ? { ...c, routeError: '경로를 찾을 수 없습니다' }
                     : c
             );
             setCables(updatedCables);
             saveData(updatedCables);
-            alert(`Routing Failed: ${result.error || 'Unknown error'}`);
+            alert(`라우팅 실패: 경로를 찾을 수 없습니다`);
         }
-    }, [routingService, cables, setCables, saveData]);
+    }, [nodeData, cables, setCables, saveData]);
 
-    // Batch Routing (All)
+    // Batch Routing (All) - 라우팅.html calculateAllPaths 로직
     const calculateAllRoutes = useCallback(async () => {
-        if (!routingService) return;
+        if (nodeData.length === 0) return;
         setIsRouting(true);
         setRoutingProgress(0);
 
         return new Promise<void>((resolve) => {
-            // Use setTimeout to allow UI to update to loading state
             setTimeout(() => {
                 const chunkSize = 100;
                 let processed = 0;
@@ -135,23 +84,21 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                     for (let i = processed; i < end; i++) {
                         const cable = currentCables[i];
                         if (cable.fromNode && cable.toNode) {
-                            const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                            if (result.path.length > 0) {
+                            const result = calculatePath(nodeData, cable.fromNode, cable.toNode, cable.checkNode || '');
+                            if (result && result.path.length > 0) {
                                 calculatedCount++;
-                                const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
-
                                 currentCables[i] = {
                                     ...cable,
                                     calculatedPath: result.path,
-                                    calculatedLength: totalLength,
-                                    length: totalLength,
+                                    calculatedLength: result.length,
+                                    length: result.length,
                                     path: result.path.join(','),
                                     routeError: undefined
                                 };
                             } else {
                                 currentCables[i] = {
                                     ...cable,
-                                    routeError: result.error || 'Unknown routing error'
+                                    routeError: '경로 없음'
                                 };
                             }
                         }
@@ -161,14 +108,12 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                     setRoutingProgress(Math.round((processed / total) * 100));
 
                     if (processed < total) {
-                        // Schedule next chunk
                         setTimeout(processChunk, 10);
                     } else {
-                        // Finished
                         setCables(currentCables);
                         saveData(currentCables);
                         setIsRouting(false);
-                        alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
+                        alert(`라우팅 완료: ${calculatedCount}개 경로 산출됨`);
                         resolve();
                     }
                 };
@@ -176,11 +121,11 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                 processChunk();
             }, 100);
         });
-    }, [routingService, cables, setCables, saveData]);
+    }, [nodeData, cables, setCables, saveData]);
 
     // Batch Routing (Selected)
     const calculateSelectedRoutes = useCallback(async (selectedCables: Cable[]) => {
-        if (!routingService || selectedCables.length === 0) return;
+        if (nodeData.length === 0 || selectedCables.length === 0) return;
         setIsRouting(true);
 
         return new Promise<void>((resolve) => {
@@ -189,16 +134,14 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                 const selectedIds = new Set(selectedCables.map(c => c.id));
                 const updatedCables = cables.map(cable => {
                     if (selectedIds.has(cable.id) && cable.fromNode && cable.toNode) {
-                        const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                        if (result.path.length > 0) {
+                        const result = calculatePath(nodeData, cable.fromNode, cable.toNode, cable.checkNode || '');
+                        if (result && result.path.length > 0) {
                             calculatedCount++;
-                            const totalLength = calculateFinalLength(result.distance, cable.fromRest, cable.toRest);
-
                             return {
                                 ...cable,
                                 calculatedPath: result.path,
-                                calculatedLength: totalLength,
-                                length: totalLength,
+                                calculatedLength: result.length,
+                                length: result.length,
                                 path: result.path.join(',')
                             };
                         }
@@ -207,20 +150,23 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                 });
 
                 setCables(updatedCables);
-                saveData(updatedCables); // Save changes
+                saveData(updatedCables);
                 setIsRouting(false);
-                alert(`Selected Route Generation Complete. ${calculatedCount} routes updated.`);
+                alert(`선택 라우팅 완료: ${calculatedCount}개 경로 산출됨`);
                 resolve();
             }, 100);
         });
-    }, [routingService, cables, setCables, saveData]);
+    }, [nodeData, cables, setCables, saveData]);
 
-    // Startup Auto-Routing Trigger
+    // Auto-Routing Trigger DISABLED - Manual load via button required
+    // User requested: No automatic data loading at startup
+    // Data loading is triggered when user selects a ship and clicks "Load Data" button
+    /*
     useEffect(() => {
-        if (routingService && cables.length > 0 && nodes.length > 0 && !autoRouted) {
+        if (nodeData.length > 0 && cables.length > 0 && !autoRouted) {
             const needsRouting = cables.some(c => !c.calculatedPath || c.calculatedPath.length === 0);
             if (needsRouting) {
-                console.log('🚀 Auto-routing cables on startup...');
+                console.log('🚀 자동 라우팅 시작...');
                 setTimeout(() => {
                     calculateAllRoutes();
                     setAutoRouted(true);
@@ -229,17 +175,18 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
                 setAutoRouted(true);
             }
         }
-    }, [routingService, cables.length, nodes.length, autoRouted, calculateAllRoutes]);
+    }, [nodeData.length, cables.length, autoRouted, calculateAllRoutes]);
+    */
+
 
     return {
-        routingService,
+        routingService: null, // Compatibility
         routePath, setRoutePath,
         isRouting,
         routingProgress,
         calculateRoute,
         calculateAllRoutes,
         calculateSelectedRoutes,
-        refreshRoutingPenalties,
-        isReady: !!routingService
+        isReady: nodeData.length > 0
     };
 };

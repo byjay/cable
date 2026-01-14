@@ -1,196 +1,174 @@
-import { Node, RouteResult } from '../types';
-import { LevelMapService } from './levelMapService';
+/**
+ * Simplified Routing Service based on tray-fill/routing.ts
+ * Uses BFS (Breadth-First Search) with Checkpoint support
+ */
 
-interface Graph {
-  [key: string]: { [neighbor: string]: number };
+import { CableData, NodeData, Cable, Node } from '../types';
+
+interface GraphNode {
+  name: string;
+  neighbors: string[];
 }
 
+// Build graph from node relation strings
+export const buildGraph = (nodes: (NodeData | Node)[]): Record<string, GraphNode> => {
+  const graph: Record<string, GraphNode> = {};
+  nodes.forEach(node => {
+    const relation = (node as any).relation || '';
+    const neighbors = relation
+      ? String(relation).split(',').map((s: string) => s.trim()).filter((s: string) => s)
+      : [];
+    graph[node.name] = { name: node.name, neighbors };
+  });
+  return graph;
+};
+
+// BFS shortest path (simpler than Dijkstra, same result for unweighted graphs)
+export const calculateShortestPath = (
+  graph: Record<string, GraphNode>,
+  start: string,
+  end: string
+): string[] | null => {
+  if (start === end) return [start];
+  if (!graph[start] || !graph[end]) return null;
+
+  const queue: string[] = [start];
+  const visited = new Set<string>();
+  const parent: Record<string, string> = {};
+
+  visited.add(start);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current === end) {
+      const path: string[] = [];
+      let curr: string | undefined = end;
+      while (curr) {
+        path.unshift(curr);
+        curr = parent[curr];
+      }
+      return path;
+    }
+
+    const neighbors = graph[current]?.neighbors || [];
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        parent[neighbor] = current;
+        queue.push(neighbor);
+      }
+    }
+  }
+  return null;
+};
+
+// Route all cables with checkpoint (CHECK_NODE) support
+export const routeCables = (cables: (CableData | Cable)[], nodes: (NodeData | Node)[]): (CableData | Cable)[] => {
+  if (nodes.length === 0) return cables;
+
+  const graph = buildGraph(nodes);
+
+  return cables.map(cable => {
+    const fromNode = (cable as any).fromNode;
+    const toNode = (cable as any).toNode;
+    const checkNode = (cable as any).checkNode;
+
+    if (!fromNode || !toNode) return cable;
+
+    let path: string[] | null = null;
+
+    // Check Node Logic (Checkpoint)
+    if (checkNode) {
+      const checks = checkNode.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+      if (checks.length > 0) {
+        const fullPath: string[] = [];
+        let currentStart = fromNode;
+        let valid = true;
+
+        // From Start -> Check1 -> Check2 ... -> End
+        for (const check of checks) {
+          const seg = calculateShortestPath(graph, currentStart, check);
+          if (seg) {
+            if (fullPath.length > 0) fullPath.pop(); // Remove duplicate junction
+            fullPath.push(...seg);
+            currentStart = check;
+          } else {
+            valid = false;
+            break;
+          }
+        }
+
+        if (valid) {
+          const finalSeg = calculateShortestPath(graph, currentStart, toNode);
+          if (finalSeg) {
+            if (fullPath.length > 0) fullPath.pop();
+            fullPath.push(...finalSeg);
+            path = fullPath;
+          }
+        }
+      } else {
+        path = calculateShortestPath(graph, fromNode, toNode);
+      }
+    } else {
+      path = calculateShortestPath(graph, fromNode, toNode);
+    }
+
+    return {
+      ...cable,
+      calculatedPath: path || undefined
+    };
+  });
+};
+
+// Simple routing service class for compatibility
 export class RoutingService {
-  private graph: Graph = {};
-  private levelMapService: LevelMapService;
-  private nodePenalties: { [key: string]: number } = {};
+  private graph: Record<string, GraphNode> = {};
 
-  constructor(nodes: Node[]) {
-    this.buildGraph(nodes);
-    this.levelMapService = new LevelMapService(nodes);
+  constructor(nodes: (NodeData | Node)[]) {
+    this.graph = buildGraph(nodes);
   }
 
-  /**
-   * Inject fill-ratio based penalties to guide routing.
-   * @param penalties Map of node name to cost multiplier (e.g. 1.0 = normal, 5.0 = avoid)
-   */
-  public setPenalties(penalties: { [key: string]: number }) {
-    this.nodePenalties = penalties;
-  }
+  findRoute(start: string, end: string, checkNodeStr?: string): { path: string[], distance: number, error?: string } {
+    if (!this.graph[start]) return { path: [], distance: -1, error: `FROM node not found: [${start}]` };
+    if (!this.graph[end]) return { path: [], distance: -1, error: `TO node not found: [${end}]` };
 
-  private buildGraph(nodes: Node[]) {
-    this.graph = {};
-    nodes.forEach(node => {
-      // Ensure node entry exists
-      if (!this.graph[node.name]) {
-        this.graph[node.name] = {};
-      }
+    let path: string[] | null = null;
 
-      // Legacy HTML Logic Parser: Handles "NodeA, NodeB" format
-      if (node.relation) {
-        const neighbors = node.relation.split(',').map(n => n.trim()).filter(n => n);
-        neighbors.forEach(neighbor => {
-          // Add edge - Default to distance 20m if not specified or linkLength is 0
-          const dist = (node.linkLength && node.linkLength > 0) ? node.linkLength : 20;
-          this.graph[node.name][neighbor] = dist;
+    if (checkNodeStr) {
+      const checks = checkNodeStr.split(',').map(s => s.trim()).filter(s => s);
+      if (checks.length > 0) {
+        const fullPath: string[] = [];
+        let currentStart = start;
+        let valid = true;
 
-          // Bidirectional safety (Force create neighbor if not exists)
-          if (!this.graph[neighbor]) {
-            this.graph[neighbor] = {};
+        for (const check of checks) {
+          const seg = calculateShortestPath(this.graph, currentStart, check);
+          if (seg) {
+            if (fullPath.length > 0) fullPath.pop();
+            fullPath.push(...seg);
+            currentStart = check;
+          } else {
+            valid = false;
+            break;
           }
-          // Ensure return path exists (Undirected Graph)
-          this.graph[neighbor][node.name] = dist;
-        });
-      }
-    });
-  }
-
-  // Enhanced routing with level-aware navigation
-  public findRoute(start: string, end: string, checkNodeStr?: string): RouteResult {
-    const waypoints = checkNodeStr ? checkNodeStr.split(',').map(s => s.trim()).filter(s => s) : [];
-
-    if (waypoints.length > 0) {
-      return this.calculatePathWithWaypoints(start, end, waypoints);
-    }
-
-    // Try level-aware routing first
-    const levelRoute = this.levelMapService.findRoute(start, end);
-    if (levelRoute.distance >= 0 && levelRoute.path.length > 0) {
-      return levelRoute;
-    }
-
-    // Fallback to original Dijkstra routing
-    return this.dijkstra(start, end);
-  }
-
-  // Get level map visualization data
-  public getLevelMapData(): any {
-    return this.levelMapService.getLevelVisualizationData();
-  }
-
-  // Get navigation map for debugging
-  public getNavigationMap(): any {
-    return this.levelMapService.getNavigationMap();
-  }
-
-  private calculatePathWithWaypoints(start: string, end: string, waypoints: string[]): RouteResult {
-    const fullPath: string[] = [start];
-    let totalDistance = 0;
-    let current = start;
-
-    // Visit each waypoint
-    for (const waypoint of waypoints) {
-      const segment = this.dijkstra(current, waypoint);
-
-      if (segment.distance < 0) {
-        return {
-          path: [],
-          distance: -1,
-          error: `Cannot reach waypoint ${waypoint} from ${current}`
-        };
-      }
-
-      // Add segment to path (exclude first node to avoid duplication)
-      fullPath.push(...segment.path.slice(1));
-      totalDistance += segment.distance;
-      current = waypoint;
-    }
-
-    // Final leg from last waypoint to end
-    const finalSegment = this.dijkstra(current, end);
-    if (finalSegment.distance < 0) {
-      return {
-        path: [],
-        distance: -1,
-        error: `Cannot reach destination ${end} from last waypoint ${current}`
-      };
-    }
-
-    fullPath.push(...finalSegment.path.slice(1));
-    totalDistance += finalSegment.distance;
-
-    return { path: fullPath, distance: totalDistance };
-  }
-
-  private dijkstra(start: string, end: string): RouteResult {
-    // Basic checks with detailed error messages
-    const startExists = !!this.graph[start];
-    const endExists = !!this.graph[end];
-
-    if (!startExists && !endExists) {
-      return { path: [], distance: -1, error: `Both nodes missing: FROM[${start}] TO[${end}]` };
-    }
-    if (!startExists) {
-      return { path: [], distance: -1, error: `FROM node not found: [${start}]` };
-    }
-    if (!endExists) {
-      return { path: [], distance: -1, error: `TO node not found: [${end}]` };
-    }
-    if (start === end) {
-      return { path: [start], distance: 0 };
-    }
-
-    const distances: { [key: string]: number } = {};
-    const previous: { [key: string]: string | null } = {};
-    const unvisited = new Set<string>();
-
-    // Initialize
-    for (const node in this.graph) {
-      distances[node] = Infinity;
-      previous[node] = null;
-      unvisited.add(node);
-    }
-    distances[start] = 0;
-
-    while (unvisited.size > 0) {
-      // Get node with min distance
-      let u: string | null = null;
-      let minDesc = Infinity;
-
-      for (const node of unvisited) {
-        if (distances[node] < minDesc) {
-          minDesc = distances[node];
-          u = node;
         }
-      }
 
-      if (u === null || distances[u] === Infinity) break; // unreachable remaining
-      if (u === end) break; // found target
-
-      unvisited.delete(u);
-
-      const neighbors = this.graph[u];
-      for (const v in neighbors) {
-        if (unvisited.has(v)) {
-          // CAPACITY-AWARE LOGIC: Apply penalty if node v is crowded
-          const penalty = (this.nodePenalties && this.nodePenalties[v]) || 1.0;
-          const alt = distances[u] + (neighbors[v] * penalty);
-
-          if (alt < distances[v]) {
-            distances[v] = alt;
-            previous[v] = u;
+        if (valid) {
+          const finalSeg = calculateShortestPath(this.graph, currentStart, end);
+          if (finalSeg) {
+            if (fullPath.length > 0) fullPath.pop();
+            fullPath.push(...finalSeg);
+            path = fullPath;
           }
         }
       }
+    } else {
+      path = calculateShortestPath(this.graph, start, end);
     }
 
-    // Reconstruct path
-    if (distances[end] === Infinity) {
-      return { path: [], distance: -1, error: "Target unreachable" };
+    if (path) {
+      return { path, distance: path.length - 1 };
     }
-
-    const path: string[] = [];
-    let curr: string | null = end;
-    while (curr) {
-      path.unshift(curr);
-      curr = previous[curr];
-    }
-
-    return { path, distance: distances[end] };
+    return { path: [], distance: -1, error: 'Path not found' };
   }
 }

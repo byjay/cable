@@ -69,12 +69,14 @@ interface MenuGroup {
 const MENU_STRUCTURE: MenuGroup[] = [
     {
         id: 'file', title: 'File', items: [
+            { label: "📂 Load Data", action: "Load Data" },  // Manual data load button
             { label: "Open Project", action: "Open Project" },
             { label: "Save Project", action: "Save Project", restricted: true },
             { label: "Export", action: "Export" },
             { label: "Exit", action: "Exit" }
         ]
     },
+
     {
         id: 'schedule', title: 'Schedule', items: [
             { label: "Cable List", action: "Schedule" },

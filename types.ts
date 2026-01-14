@@ -131,6 +131,13 @@ export interface CableData {
   color?: string;
 }
 
+// Simplified Node data for routing (from tray-fill)
+export interface NodeData {
+  name: string;
+  relation?: string;
+}
+
+
 export interface Point {
   x: number;
   y: number;
