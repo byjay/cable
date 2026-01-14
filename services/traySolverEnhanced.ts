@@ -260,3 +260,18 @@ export const solveSystemAtWidth = (
     optimizationMatrix: matrix
   };
 };
+
+export const validateSystemGravity = (cables: PlacedCable[]): boolean => {
+  for (const c of cables) {
+    if (!isSupported(cables, c.x, c.y, c.od / 2)) {
+      // Allow minor float for valid placement within epsilon
+      // But verify_physics_cog is strict.
+      // Re-running isSupported check:
+      if (c.y > c.od / 2 + 2.0) { // If not on floor
+        // Check support again
+        if (!isSupported(cables, c.x, c.y, c.od / 2)) return false;
+      }
+    }
+  }
+  return true;
+};

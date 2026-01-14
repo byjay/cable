@@ -29,9 +29,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
     const [isAddingShip, setIsAddingShip] = useState(false);
     const [newShipId, setNewShipId] = useState('');
 
+    const [isMobile, setIsMobile] = useState(false);
+
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
+
+        // Mobile Detection
+        const checkMobile = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
+                setIsMobile(true);
+            } else {
+                setIsMobile(window.innerWidth <= 768);
+            }
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
+        return () => {
+            clearInterval(timer);
+            window.removeEventListener('resize', checkMobile);
+        };
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -162,15 +181,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
 
                         {/* Integrated Video Section at Bottom of Card */}
                         <div className="mt-6 -mx-10 -mb-10 h-32 relative overflow-hidden group">
-                            <video
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                className="w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-80"
-                            >
-                                <source src="/video/login.mp4" type="video/mp4" />
-                            </video>
+                            {!isMobile ? (
+                                <video
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    className="w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-80"
+                                >
+                                    <source src="/video/login.mp4" type="video/mp4" />
+                                </video>
+                            ) : (
+                                <div className="w-full h-full bg-blue-900/40" />
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
                             <div className="absolute inset-x-0 bottom-4 flex flex-col items-center justify-center opacity-40">
                                 <span className="text-[8px] font-black text-white tracking-[0.4em] uppercase">Securing Network Integrity</span>
@@ -196,21 +219,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Shared Video Background with Overlay */}
             <div className="absolute inset-0 overflow-hidden">
-                <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="absolute w-full h-full object-cover opacity-10 grayscale"
-                >
-                    <source src="/video/background.mp4" type="video/mp4" />
-                </video>
+                {!isMobile ? (
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute w-full h-full object-cover opacity-10 grayscale"
+                    >
+                        <source src="/video/background.mp4" type="video/mp4" />
+                    </video>
+                ) : (
+                    <div className="absolute w-full h-full bg-[url('/bg-mobile-static.jpg')] bg-cover bg-center opacity-20 grayscale" />
+                )}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900/90 to-blue-950/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900/90 to-blue-950/20"></div>
 
             <div className="max-w-6xl w-full relative z-10">
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h2 className="text-5xl font-black text-white mb-4 tracking-tight">Welcome back, <span className="text-blue-500">{user?.name}</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">Welcome back, <span className="text-blue-500">{user?.name}</span></h2>
                     <p className="text-slate-400 text-xl font-light">Select a project to authorize system access</p>
                 </div>
 

@@ -323,6 +323,14 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
         if (pendingFile?.type === 'cables') {
             const newCables = ExcelService.mapRawToCable(transformedData);
 
+            // Legacy Path Parsing Logic (Required for 3D Viewer backward compatibility)
+            // Ensures strings are converted to arrays if needed
+            newCables.forEach((cable: any) => {
+                if (typeof cable.path === 'string' && cable.path.includes(',')) {
+                    cable.route = cable.path.split(',').map((s: string) => s.trim()).filter(s => s);
+                }
+            });
+
             // Record History for Upload
             import('./services/historyService').then(({ HistoryService }) => {
                 const summary = HistoryService.summarizeDiff(cables, newCables, nodes, nodes);
