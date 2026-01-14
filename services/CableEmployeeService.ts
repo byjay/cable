@@ -17,10 +17,18 @@ export interface CableEmployee {
     createdAt: string;
     lastLogin?: string;
     shipAccess?: string[]; // HK2401, S1001_35K_FD, etc.
+    settings?: UserSettings; // User-specific settings
+}
+
+export interface UserSettings {
+    theme?: 'light' | 'dark';
+    lastShipId?: string;
+    dataVersion?: string;
 }
 
 const EMPLOYEES_KEY = 'cable_employees';
-const DEFAULT_PASSWORD = '1';
+const GLOBAL_LOG_KEY = 'cable_system_logs_global'; // Logs visible to everyone/admin
+const USER_DATA_PREFIX = 'cable_data_'; // Prefix for user-specific data
 
 // SUPER_ADMIN - Only Kim Bong-jung
 export const SUPER_ADMIN_EMAIL = 'designsir@seastargo.com';
@@ -49,10 +57,13 @@ class CableEmployeeService {
     }
 
     private initDefaultUsers(): void {
-        const CURRENT_VERSION = 'v1';
+        const CURRENT_VERSION = 'v2-isolated'; // Bump version for migration
         const storedVersion = localStorage.getItem('cable_employees_version');
 
         if (storedVersion !== CURRENT_VERSION) {
+            // Keep existing if possible, or migrate
+            // For now, simple re-init for safety or merge if needed
+            // simplified for implementation:
             this.employees = [
                 // ==========================================
                 // SUPER_ADMIN - Kim Bong-jung (ONLY ONE)
@@ -137,9 +148,11 @@ class CableEmployeeService {
             ];
             this.saveEmployees();
             localStorage.setItem('cable_employees_version', CURRENT_VERSION);
-            console.log('[CableEmployeeService] Default users initialized');
+            console.log('[CableEmployeeService] Default users initialized (v2-isolated)');
         }
     }
+
+    // ... login, changePassword, etc keep same ...
 
     /**
      * Login with name, email, or ID
@@ -162,6 +175,10 @@ class CableEmployeeService {
             }
             employee.lastLogin = new Date().toISOString();
             this.saveEmployees();
+
+            // Log login event
+            this.logSystemEvent(employee.id, 'LOGIN', `${employee.name} logged in`);
+
             return employee;
         }
 
@@ -233,6 +250,50 @@ class CableEmployeeService {
      */
     isSuperAdmin(email: string): boolean {
         return email === SUPER_ADMIN_EMAIL;
+    }
+
+    // ==========================================
+    // DATA ISOLATION HELPERS
+    // ==========================================
+
+    /**
+     * Get storage key for specific user
+     */
+    getUserStorageKey(userId: string, keyDetail: string): string {
+        return `${USER_DATA_PREFIX}${userId}_${keyDetail}`;
+    }
+
+    /**
+     * Log a system event (User Isolated + Global Admin Stream)
+     */
+    logSystemEvent(userId: string, type: string, message: string) {
+        // 1. User's private log
+        const userKey = this.getUserStorageKey(userId, 'logs');
+        const userLogs = JSON.parse(localStorage.getItem(userKey) || '[]');
+        userLogs.unshift({ timestamp: new Date().toISOString(), type, message });
+        if (userLogs.length > 100) userLogs.pop(); // Limit 100
+        localStorage.setItem(userKey, JSON.stringify(userLogs));
+
+        // 2. Global log (for Admin Console)
+        // Only if it's a significant event or we want centralized logging simulation
+        const globalLogs = JSON.parse(localStorage.getItem(GLOBAL_LOG_KEY) || '[]');
+        globalLogs.unshift({ timestamp: new Date().toISOString(), userId, type, message });
+        if (globalLogs.length > 1000) globalLogs.pop(); // Limit 1000
+        localStorage.setItem(GLOBAL_LOG_KEY, JSON.stringify(globalLogs));
+    }
+
+    /**
+     * Get logs for a user
+     */
+    getUserLogs(userId: string) {
+        return JSON.parse(localStorage.getItem(this.getUserStorageKey(userId, 'logs')) || '[]');
+    }
+
+    /**
+     * Get global logs (Admin only)
+     */
+    getGlobalLogs() {
+        return JSON.parse(localStorage.getItem(GLOBAL_LOG_KEY) || '[]');
     }
 }
 

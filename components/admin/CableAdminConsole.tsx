@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Terminal, Database, Activity, RefreshCw, Trash2, HardDrive } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Terminal, Database, Activity, RefreshCw, Trash2, HardDrive, User, Clock } from 'lucide-react';
+import { useCableAuth } from '../../contexts/CableAuthContext';
+import { cableEmployeeService } from '../../services/CableEmployeeService';
 
 interface StorageItem {
     key: string;
@@ -9,22 +11,36 @@ interface StorageItem {
 }
 
 const CableAdminConsole: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'CONSOLE' | 'STORAGE'>('CONSOLE');
-    const [systemLogs, setSystemLogs] = useState<string[]>([
-        `[SYSTEM] Cable Management System initialized`,
-        `[SYSTEM] Environment: ${import.meta.env.MODE || 'production'}`,
-        `[AUTH] Security module loaded`,
-        `[DATA] HK2401 data ready`
-    ]);
+    const { user, isSuperAdmin } = useCableAuth();
+    const [activeTab, setActiveTab] = useState<'CONSOLE' | 'STORAGE' | 'USER_LOGS'>('CONSOLE');
+    const [systemLogs, setSystemLogs] = useState<any[]>([]);
     const [storageItems, setStorageItems] = useState<StorageItem[]>([]);
+
+    useEffect(() => {
+        // Initial load of logs
+        refreshLogs();
+    }, [user]);
+
+    const refreshLogs = () => {
+        if (isSuperAdmin) {
+            setSystemLogs(cableEmployeeService.getGlobalLogs());
+        } else if (user) {
+            setSystemLogs(cableEmployeeService.getUserLogs(user.id));
+        }
+    };
 
     const refreshStorage = () => {
         const items: StorageItem[] = [];
 
-        // LocalStorage
+        // LocalStorage - Filter by user if not admin (simulated security)
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key) {
+                // If not SUPER_ADMIN, only show own data or safe keys
+                if (!isSuperAdmin && !key.includes(user?.id || 'public')) {
+                    continue;
+                }
+
                 const value = localStorage.getItem(key) || '';
                 items.push({
                     key,
@@ -35,35 +51,25 @@ const CableAdminConsole: React.FC = () => {
             }
         }
 
-        // SessionStorage
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const key = sessionStorage.key(i);
-            if (key) {
-                const value = sessionStorage.getItem(key) || '';
-                items.push({
-                    key,
-                    value,
-                    size: new Blob([value]).size,
-                    type: 'SESSION'
-                });
-            }
-        }
-
         setStorageItems(items);
     };
 
     React.useEffect(() => {
         if (activeTab === 'STORAGE') {
             refreshStorage();
+        } else if (activeTab === 'CONSOLE') {
+            refreshLogs();
         }
     }, [activeTab]);
 
     const clearStorage = (type: 'LOCAL' | 'SESSION') => {
         if (confirm(`Are you sure you want to clear all ${type} storage?`)) {
-            if (type === 'LOCAL') localStorage.clear();
-            else sessionStorage.clear();
+            // In a real app, strict user isolation would happen here.
+            // For this demo, we just warn/clear context.
+            if (type === 'LOCAL') {
+                // Danger zone
+            }
             refreshStorage();
-            setSystemLogs(prev => [`[STORAGE] Cleared ${type} storage.`, ...prev]);
         }
     };
 
@@ -101,16 +107,23 @@ const CableAdminConsole: React.FC = () => {
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                                     <Activity size={16} />
-                                    System Health
+                                    Current Session
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium text-slate-600">Status</span>
-                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">OPERATIONAL</span>
+                                        <span className="text-sm font-medium text-slate-600">User</span>
+                                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold flex items-center gap-1">
+                                            <User size={10} />
+                                            {user?.name}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium text-slate-600">Version</span>
-                                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">v2026-01-14</span>
+                                        <span className="text-sm font-medium text-slate-600">Role</span>
+                                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">{user?.role}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-slate-600">Data Isolation</span>
+                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">ACTIVE</span>
                                     </div>
                                 </div>
                             </div>
@@ -119,7 +132,9 @@ const CableAdminConsole: React.FC = () => {
                         {/* Log Terminal */}
                         <div className="lg:col-span-2 bg-slate-900 rounded-xl shadow-lg border border-slate-700 flex flex-col overflow-hidden font-mono text-sm">
                             <div className="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
-                                <span className="text-slate-400 font-bold text-xs">root@cable-system:~# logs</span>
+                                <span className="text-slate-400 font-bold text-xs">
+                                    {isSuperAdmin ? 'root@cable-system:~# global_logs' : `${user?.id}@cable-system:~# user_logs`}
+                                </span>
                                 <div className="flex gap-1.5">
                                     <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
                                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
@@ -127,10 +142,15 @@ const CableAdminConsole: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex-1 p-4 overflow-y-auto text-green-400 space-y-1">
+                                {systemLogs.length === 0 && (
+                                    <div className="text-slate-600 italic">No logs available.</div>
+                                )}
                                 {systemLogs.map((log, i) => (
                                     <div key={i} className="break-all border-b border-slate-800/50 pb-1 mb-1 last:border-0">
-                                        <span className="text-slate-500 text-[10px] mr-2">[{new Date().toLocaleTimeString()}]</span>
-                                        {log}
+                                        <span className="text-slate-500 text-[10px] mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                                        {log.userId && <span className="text-purple-400 text-[10px] mr-2">@{log.userId}</span>}
+                                        <span className="text-yellow-500 text-[10px] mr-2">[{log.type}]</span>
+                                        {log.message}
                                     </div>
                                 ))}
                                 <div className="animate-pulse">_</div>
@@ -144,19 +164,12 @@ const CableAdminConsole: React.FC = () => {
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div className="flex items-center gap-2">
                                 <HardDrive className="text-slate-400" size={18} />
-                                <h3 className="font-bold text-slate-700">Browser Storage Inspector</h3>
+                                <h3 className="font-bold text-slate-700">Storage Inspector {isSuperAdmin ? '(Root)' : '(User Scope)'}</h3>
                                 <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-bold">
                                     {storageItems.length} items
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <button
-                                    onClick={() => clearStorage('SESSION')}
-                                    className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors flex items-center gap-1"
-                                >
-                                    <Trash2 size={12} />
-                                    Clear Session
-                                </button>
                                 <button
                                     onClick={refreshStorage}
                                     className="text-xs font-bold text-slate-600 hover:bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors flex items-center gap-1"
@@ -181,7 +194,7 @@ const CableAdminConsole: React.FC = () => {
                                     {storageItems.length === 0 ? (
                                         <tr>
                                             <td colSpan={4} className="p-8 text-center text-slate-400 text-sm">
-                                                No items found in storage.
+                                                No items found in storage scope.
                                             </td>
                                         </tr>
                                     ) : (

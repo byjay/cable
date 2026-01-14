@@ -1,134 +1,180 @@
-import React, { useState } from 'react';
-import { Ship, Lock, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useCableAuth } from '../contexts/CableAuthContext';
+import { LogIn, Ship, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface LandingPageProps {
     onShipSelected: (shipId: string) => void;
 }
 
-const AVAILABLE_SHIPS = [
-    { id: "HK2401", name: "HK2401 - 35K Product Carrier", status: "Active" },
-    { id: "S1001_35K_FD", name: "S1001 - 35K Product Carrier", status: "Active" },
-    { id: "S1002_LNG", name: "S1002 - 174K LNG Carrier", status: "Active" },
-    { id: "H5500_CONT", name: "H5500 - 16K TEU Container", status: "Active" },
-];
+const AVAILABLE_SHIPS = ['HK2401', 'S1001_35K_FD', 'S1002_LNG', 'H5500_CONT'];
 
 const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
-    const [selectedShip, setSelectedShip] = useState<string | null>(null);
+    const { login, error: authError } = useCableAuth();
+
+    // Auth State
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    // Selection state
+    const [selectedShip, setSelectedShip] = useState<string | null>(null);
+    const [step, setStep] = useState<'LOGIN' | 'SHIP_SELECT'>('LOGIN');
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        setIsLoading(true);
 
-        if (!selectedShip) {
-            setError('호선을 선택해주세요.');
-            return;
-        }
-
-        if (!password) {
-            setError('비밀번호를 입력해주세요.');
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        // Simple password check (can be enhanced with backend auth)
-        if (password === 'admin' || password === '1234') {
-            setTimeout(() => {
-                onShipSelected(selectedShip);
-                setLoading(false);
-            }, 500);
-        } else {
-            setError('비밀번호가 올바르지 않습니다.');
-            setLoading(false);
+        try {
+            await login(email, password);
+            setStep('SHIP_SELECT');
+        } catch (err: any) {
+            setError(err.message || 'Login failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4">
-            <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 text-center">
-                    <Ship className="w-16 h-16 mx-auto mb-3 text-white" />
-                    <h1 className="text-2xl font-bold text-white">SCMS</h1>
-                    <p className="text-sm text-blue-100 mt-1">SEASTAR CABLE MANAGEMENT SYSTEM</p>
-                </div>
+    const handleShipSelect = (ship: string) => {
+        setSelectedShip(ship);
+    };
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Ship Selection */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                            호선 선택 (Select Ship)
-                        </label>
-                        <div className="grid grid-cols-1 gap-2">
-                            {AVAILABLE_SHIPS.map((ship) => (
-                                <button
-                                    key={ship.id}
-                                    type="button"
-                                    onClick={() => setSelectedShip(ship.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${selectedShip === ship.id
-                                            ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/20'
-                                            : 'border-slate-600 bg-slate-700/50 hover:border-slate-500'
-                                        }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="font-bold text-white text-sm">{ship.name}</div>
-                                            <div className="text-xs text-slate-400 mt-1">Status: {ship.status}</div>
-                                        </div>
-                                        {selectedShip === ship.id && (
-                                            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                                                <div className="w-2 h-2 rounded-full bg-white"></div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </button>
-                            ))}
+    const handleEnter = () => {
+        if (selectedShip) {
+            onShipSelected(selectedShip);
+        }
+    };
+
+    if (step === 'LOGIN') {
+        return (
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+                {/* Background Effects */}
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498084393753-b411b2d26b34?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 filter blur-sm scale-110"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
+
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/20 relative z-10 animate-in fade-in zoom-in duration-500">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 shadow-lg shadow-blue-500/30 mb-4 ring-4 ring-blue-500/20">
+                            <Ship className="w-8 h-8 text-white" />
                         </div>
+                        <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Cable Manager</h1>
+                        <p className="text-blue-200 text-sm font-medium">SEASTAR Digital Solutions</p>
                     </div>
 
-                    {/* Password */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                            Access Password
-                        </label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-1.5 ml-1">
+                                Username / Email
+                            </label>
                             <input
-                                type="password"
-                                placeholder="Enter password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-slate-700 transition-all"
+                                type="text"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Enter your ID or Email"
                             />
                         </div>
-                    </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="p-3 rounded-lg bg-red-500/20 text-red-400 text-sm flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                            <span>{error}</span>
+                        <div>
+                            <label className="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-1.5 ml-1">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Enter password"
+                            />
                         </div>
-                    )}
 
-                    {/* Submit Button */}
+                        {error && (
+                            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
+                                <AlertTriangle size={16} />
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-lg shadow-lg shadow-blue-600/30 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+                        >
+                            {isLoading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <LogIn size={20} />
+                                    Sign In
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <p className="text-xs text-slate-400">
+                            Authorized personnel only. <br />All activities are monitored and logged.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="max-w-4xl w-full">
+                <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <h2 className="text-3xl font-black text-slate-900 mb-3">Select a Ship</h2>
+                    <p className="text-slate-500 text-lg">Choose a vessel to manage cable data</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {AVAILABLE_SHIPS.map((ship, idx) => (
+                        <button
+                            key={ship}
+                            onClick={() => handleShipSelect(ship)}
+                            className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left hover:shadow-xl ${selectedShip === ship
+                                    ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-500/20 scale-[1.02]'
+                                    : 'border-white bg-white hover:border-blue-300 hover:scale-[1.02]'
+                                } animate-in fade-in slide-in-from-bottom-8 duration-700`}
+                            style={{ animationDelay: `${idx * 100}ms` }}
+                        >
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${selectedShip === ship ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                                }`}>
+                                <Ship size={24} />
+                            </div>
+                            <h3 className={`font-bold text-lg mb-1 transition-colors ${selectedShip === ship ? 'text-blue-700' : 'text-slate-700'
+                                }`}>
+                                {ship}
+                            </h3>
+                            <p className="text-xs text-slate-400 font-medium">Cable Management System</p>
+
+                            {selectedShip === ship && (
+                                <div className="absolute top-4 right-4 text-blue-600 animate-in zoom-in">
+                                    <ShieldCheck size={20} />
+                                </div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mt-10 flex justify-center">
                     <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleEnter}
+                        disabled={!selectedShip}
+                        className={`
+                            flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl
+                            ${selectedShip
+                                ? 'bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 active:scale-95 shadow-slate-900/30'
+                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            }
+                        `}
                     >
-                        {loading ? '접속 중...' : '접속하기 (Access)'}
+                        Enter System
+                        <ArrowRight size={20} className={selectedShip ? 'animate-pulse' : ''} />
                     </button>
-                </form>
-
-                {/* Footer */}
-                <div className="px-6 pb-6 text-center text-xs text-slate-500">
-                    <p>문의: designsir@seastargo.com</p>
-                    <p className="mt-1">© 2026 SEASTAR ENGINEERING</p>
                 </div>
             </div>
         </div>
