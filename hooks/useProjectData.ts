@@ -32,159 +32,86 @@ export const useProjectData = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [dataSource, setDataSource] = useState<'cache' | 'excel' | 'localStorage' | 'mock'>('mock');
 
-    // Load Data with Priority: 1. Split Storage -> 2. Monolithic Storage (Migration) -> 3. JSON Cache -> 4. Excel -> 5. Mock
+    // Manual Load Trigger
+    const loadProjectData = async (targetShipId: string) => {
+        setIsLoading(true);
+        setShipId(targetShipId); // Update state to target ship
+        console.log(`🔄 Manual Data Load Triggered for ${targetShipId}...`);
+
+        try {
+            // LOAD GLOBAL SETTINGS FIRST
+            const globalData = localStorage.getItem('SEASTAR_GLOBAL_SETTINGS');
+            if (globalData) {
+                const parsedGlobal = JSON.parse(globalData);
+                setCableTypes(parsedGlobal.cableTypes || initialCableTypes);
+                setDeckHeights(parsedGlobal.deckHeights || DEFAULT_DECK_CONFIG);
+            }
+
+            // CHECK FOR SPLIT STORAGE
+            const shipCablesKey = `SEASTAR_SHIP_${targetShipId}_CABLES`;
+            const shipNodesKey = `SEASTAR_SHIP_${targetShipId}_NODES`;
+
+            const storedCables = localStorage.getItem(shipCablesKey);
+            const storedNodes = localStorage.getItem(shipNodesKey);
+
+            if (storedCables && storedNodes) {
+                const parsedCables = JSON.parse(storedCables);
+                const parsedNodes = JSON.parse(storedNodes);
+
+                if (parsedCables.length > 0) {
+                    setCables(parsedCables);
+                    setNodes(parsedNodes);
+                    setDataSource('localStorage');
+                    console.log(`✅ Loaded ${parsedCables.length} cables from Split Storage for ${targetShipId}`);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            // PRIORITY 4: EXCEL (Legacy Load)
+            console.log(`📊 Attempting Excel Load for ${targetShipId}...`);
+            const loadedNodes = await loadNodesFromExcel(targetShipId);
+            const loadedCables = await loadCablesFromExcel(targetShipId);
+
+            if (loadedNodes.length > 0 && loadedCables.length > 0) {
+                setNodes(loadedNodes);
+                console.log(`📊 Loaded ${loadedCables.length} cables from Excel`);
+
+                // Note: Routing should be triggered by UI or RoutingService separately
+                // But for initial data, basic structure is fine.
+                setCables(loadedCables);
+                setDataSource('excel');
+
+                // Save to Split Storage
+                localStorage.setItem(shipCablesKey, JSON.stringify(loadedCables));
+                localStorage.setItem(shipNodesKey, JSON.stringify(loadedNodes));
+            } else {
+                // Empty State for new projects
+                console.log(`ℹ️ No data found for ${targetShipId}. Initializing empty project.`);
+                setCables([]);
+                setNodes([]);
+                setDataSource('localStorage');
+            }
+
+        } catch (error) {
+            console.error("❌ Data Load Error:", error);
+            setCables([]);
+            setNodes([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Auto-load DISABLED per user request
+    /*
     useEffect(() => {
         const loadData = async () => {
-            setIsLoading(true);
-            console.log(`🔄 Loading data for ${shipId}...`);
-
-            try {
-                // LOAD GLOBAL SETTINGS FIRST
-                const globalData = localStorage.getItem('SEASTAR_GLOBAL_SETTINGS');
-                if (globalData) {
-                    const parsedGlobal = JSON.parse(globalData);
-                    setCableTypes(parsedGlobal.cableTypes || initialCableTypes);
-                    setDeckHeights(parsedGlobal.deckHeights || DEFAULT_DECK_CONFIG);
-                    // Add other global master data here if needed
-                }
-
-                // CHECK FOR SPLIT STORAGE (NEW MODEL)
-                const shipCablesKey = `SEASTAR_SHIP_${shipId}_CABLES`;
-                const shipNodesKey = `SEASTAR_SHIP_${shipId}_NODES`;
-
-                const storedCables = localStorage.getItem(shipCablesKey);
-                const storedNodes = localStorage.getItem(shipNodesKey);
-
-                if (storedCables && storedNodes) {
-                    const parsedCables = JSON.parse(storedCables);
-                    const parsedNodes = JSON.parse(storedNodes);
-
-                    if (parsedCables.length > 0) {
-                        setCables(parsedCables);
-                        setNodes(parsedNodes);
-                        setDataSource('localStorage');
-                        console.log(`✅ Loaded ${parsedCables.length} cables from Split Storage for ${shipId}`);
-                        setIsLoading(false);
-                        return;
-                    }
-                }
-
-                // FALLBACK: CHECK MONOLITHIC STORAGE (OLD MODEL) & MIGRATE
-                const oldKey = `SEASTAR_DATA_${shipId}`;
-                const savedData = localStorage.getItem(oldKey);
-                if (savedData) {
-                    const parsed = JSON.parse(savedData);
-                    if (parsed.cables && parsed.cables.length > 0) {
-                        console.log("⚠️ Old Data Format Detected. Migrating to Split Storage...");
-
-                        // Migrate to Split Keys
-                        localStorage.setItem(shipCablesKey, JSON.stringify(parsed.cables));
-                        localStorage.setItem(shipNodesKey, JSON.stringify(parsed.nodes || []));
-
-                        // Save Global if not exists (or overwrite? prefer preserve existing global if new)
-                        if (!globalData) {
-                            const globalPayload = {
-                                cableTypes: parsed.cableTypes || initialCableTypes,
-                                deckHeights: parsed.deckHeights || DEFAULT_DECK_CONFIG
-                            };
-                            localStorage.setItem('SEASTAR_GLOBAL_SETTINGS', JSON.stringify(globalPayload));
-                            setCableTypes(globalPayload.cableTypes);
-                            setDeckHeights(globalPayload.deckHeights);
-                        }
-
-                        setCables(parsed.cables);
-                        setNodes(parsed.nodes || []);
-                        setDataSource('localStorage');
-                        setIsLoading(false);
-                        return;
-                    }
-                }
-
-                // PRIORITY 3: JSON CACHE (TODO: Update cache loader to support split or adapt monolithic cache)
-                // For now, assume cache is still monolithic source of truth for new ships
-                try {
-                    const cacheUrl = `./data/${shipId}/cache.json`;
-                    console.log(`🔍 Checking for JSON cache at ${cacheUrl}...`);
-                    const cacheResponse = await fetch(cacheUrl);
-                    if (cacheResponse.ok) {
-                        const cacheData = await cacheResponse.json();
-                        if (cacheData.cables && cacheData.cables.length > 0) {
-                            setCables(cacheData.cables);
-                            setNodes(cacheData.nodes || []);
-
-                            // Initialize Global from Cache if empty
-                            if (!globalData) {
-                                setCableTypes(cacheData.cableTypes || initialCableTypes);
-                                setDeckHeights(cacheData.deckHeights || DEFAULT_DECK_CONFIG);
-                                localStorage.setItem('SEASTAR_GLOBAL_SETTINGS', JSON.stringify({
-                                    cableTypes: cacheData.cableTypes || initialCableTypes,
-                                    deckHeights: cacheData.deckHeights || DEFAULT_DECK_CONFIG
-                                }));
-                            }
-
-                            setDataSource('cache');
-                            console.log(`✅ Loaded ${cacheData.cables.length} cables from JSON cache`);
-
-                            // Save to Split Storage immediately
-                            localStorage.setItem(shipCablesKey, JSON.stringify(cacheData.cables));
-                            localStorage.setItem(shipNodesKey, JSON.stringify(cacheData.nodes || []));
-
-                            setIsLoading(false);
-                            return;
-                        }
-                    }
-                } catch (cacheError) {
-                    console.log(`⚠️ JSON cache not available: ${cacheError}`);
-                }
-
-                // PRIORITY 4: EXCEL (Legacy Load)
-                // ... (Existing Excel Logic - reusing helper functions)
-                const loadedNodes = await loadNodesFromExcel(shipId);
-                const loadedCables = await loadCablesFromExcel(shipId);
-
-                if (loadedNodes.length > 0 && loadedCables.length > 0) {
-                    setNodes(loadedNodes);
-                    console.log(`📊 Loaded ${loadedCables.length} cables from Excel`);
-                    const routedCables = computeAllRoutes(loadedCables, loadedNodes);
-                    setCables(routedCables);
-                    setDataSource('excel');
-
-                    // Save to Split Storage
-                    localStorage.setItem(shipCablesKey, JSON.stringify(routedCables));
-                    localStorage.setItem(shipNodesKey, JSON.stringify(loadedNodes));
-                    if (!globalData) {
-                        localStorage.setItem('SEASTAR_GLOBAL_SETTINGS', JSON.stringify({
-                            cableTypes: initialCableTypes,
-                            deckHeights: DEFAULT_DECK_CONFIG
-                        }));
-                    }
-                } else {
-                    // PRIORITY 5: MOCK (Only for dev/unknown ships)
-                    const isProductionShip = AVAILABLE_SHIPS.some(s => s.id === shipId);
-                    if (isProductionShip) {
-                        console.log(`ℹ️ New/Empty Production Ship (${shipId}). Starting precise.`);
-                        setCables([]);
-                        setNodes([]);
-                        setDataSource('localStorage'); // Treat as valid empty state
-                    } else {
-                        console.warn(`⚠️ Could not load data, using mock`);
-                        setCables(initialCables);
-                        setNodes(initialNodes);
-                        setDataSource('mock');
-                    }
-                }
-
-            } catch (error) {
-                console.error("❌ Data Load Error:", error);
-                setCables(initialCables);
-                setNodes(initialNodes);
-            } finally {
-                setIsLoading(false);
-            }
+             // ... original auto logic ...
         };
-
         loadData();
     }, [shipId]);
+    */
+
 
     // ... (Helpers remain same) ...
 
@@ -236,10 +163,12 @@ export const useProjectData = () => {
         deckHeights, setDeckHeights,
         isLoading, setIsLoading,
         saveData,
+        loadProjectData, // EXPOSED
         exportCacheAsJson,
         dataSource,
         availableShips: AVAILABLE_SHIPS
     };
+
 };
 
 // Helper Functions for Excel Loading

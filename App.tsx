@@ -218,6 +218,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
         shipId, setShipId,
         isLoading: isDataLoading,
         saveData,
+        loadProjectData, // Added for manual load
         availableShips
     } = useProjectData();
 
@@ -227,6 +228,18 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
             setShipId(initialShipId);
         }
     }, [initialShipId, shipId]);
+
+    // Handler for Manual Data Load
+    const handleDataLoadRequest = () => {
+        setShowShipModal(true);
+    };
+
+    const executeDataLoad = async (targetShipId: string) => {
+        console.log("🚀 Executing Manual Data Load for:", targetShipId);
+        await loadProjectData(targetShipId);
+        setShowShipModal(false);
+    };
+
 
     const handleLogin = () => {
         const user = AuthService.getCurrentUser();
