@@ -283,6 +283,8 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                         : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-300'
                         }`}
                     onClick={() => setShowRouting(!showRouting)}
+                    title={showRouting ? "Hide Routing Controls" : "Show Routing Controls"}
+                    aria-label={showRouting ? "Hide Routing" : "Show Routing"}
                 >
                     <Route size={14} />
                     {showRouting ? 'Hide Routing' : 'Show Routing'}

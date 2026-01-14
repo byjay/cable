@@ -87,9 +87,9 @@ const TrayVisualizer: React.FC<TrayVisualizerProps> = ({ systemResult, fillRatio
                             <span className="text-[10px] text-slate-700 font-black uppercase tracking-widest">Target Fill: {fillRatioLimit}%</span>
                         </div>
                         <div className="flex gap-1.5 bg-white p-1 rounded border border-slate-200">
-                            <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="p-1 text-slate-400 hover:text-slate-900 transition-colors"><ZoomOut size={14} /></button>
-                            <button onClick={() => setZoom(1.0)} className="p-1 text-slate-400 hover:text-slate-900 transition-colors"><Maximize size={14} /></button>
-                            <button onClick={() => setZoom(z => Math.min(4, z + 0.1))} className="p-1 text-slate-400 hover:text-slate-900 transition-colors"><ZoomIn size={14} /></button>
+                            <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="p-1 text-slate-400 hover:text-slate-900 transition-colors" title="Zoom Out" aria-label="Zoom Out"><ZoomOut size={14} /></button>
+                            <button onClick={() => setZoom(1.0)} className="p-1 text-slate-400 hover:text-slate-900 transition-colors" title="Reset Zoom" aria-label="Reset Zoom"><Maximize size={14} /></button>
+                            <button onClick={() => setZoom(z => Math.min(4, z + 0.1))} className="p-1 text-slate-400 hover:text-slate-900 transition-colors" title="Zoom In" aria-label="Zoom In"><ZoomIn size={14} /></button>
                         </div>
                     </div>
 
