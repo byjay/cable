@@ -1,43 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { useCableAuth } from '../contexts/CableAuthContext';
-import { LogIn, Ship, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, Eye, EyeOff, Ship, ArrowRight, Plus, X, ShieldCheck } from 'lucide-react';
+import CableNetworkBackground from './CableNetworkBackground';
 
 interface LandingPageProps {
     onShipSelected: (shipId: string) => void;
 }
 
-const AVAILABLE_SHIPS = ['HK2401', 'S1001_35K_FD', 'S1002_LNG', 'H5500_CONT'];
+const BUILD_VERSION = "2026-01-14 15:45 (KST)";
+const VIDEO_1 = "/video/background.mp4"; // Using local video asset
 
 const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
-    const { login, error: authError } = useCableAuth();
+    const { login, registerShip, user } = useCableAuth();
 
-    // Auth State
+    // UI State
+    const [step, setStep] = useState<'LOGIN' | 'SHIP_SELECT'>('LOGIN');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // Login Form State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
-    // Selection state
+    // Ship Selection State
     const [selectedShip, setSelectedShip] = useState<string | null>(null);
-    const [step, setStep] = useState<'LOGIN' | 'SHIP_SELECT'>('LOGIN');
+    const [isAddingShip, setIsAddingShip] = useState(false);
+    const [newShipId, setNewShipId] = useState('');
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
         setIsLoading(true);
+        setError(null);
 
         try {
             await login(email, password);
-            setStep('SHIP_SELECT');
+            setStep('SHIP_SELECT'); // Move to ship selection on success
         } catch (err: any) {
-            setError(err.message || 'Login failed');
+            setError(err.message || '로그인 실패. ID와 비밀번호를 확인하세요.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleShipSelect = (ship: string) => {
-        setSelectedShip(ship);
+    const handleAddShip = async () => {
+        if (!newShipId.trim()) return;
+        try {
+            await registerShip(newShipId.trim());
+            setIsAddingShip(false);
+            setNewShipId('');
+        } catch (e: any) {
+            console.error(e);
+        }
     };
 
     const handleEnter = () => {
@@ -46,161 +66,255 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShipSelected }) => {
         }
     };
 
+    const myShips = user?.shipAccess || [];
+
+    // RENDER: LOGIN SCREEN
     if (step === 'LOGIN') {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-                {/* Video Background (Veo3 Integration Placeholder) */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute w-full h-full object-cover opacity-60 scale-105"
-                    >
-                        <source src="/video/background.mp4" type="video/mp4" />
-                    </video>
-                </div>
-                {/* Gradient Overlay for Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-slate-900/30"></div>
+            <div className="h-[100dvh] flex flex-col items-center justify-center bg-slate-900 overflow-hidden relative">
+                {/* Background - Solid gradient with video overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-900" />
 
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/20 relative z-10 animate-in fade-in zoom-in duration-500">
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 shadow-lg shadow-blue-500/30 mb-4 ring-4 ring-blue-500/20">
-                            <Ship className="w-8 h-8 text-white" />
-                        </div>
-                        <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Cable Manager</h1>
-                        <p className="text-blue-200 text-sm font-medium">SEASTAR Digital Solutions</p>
-                    </div>
+                {/* LOGIN CARD */}
+                <div className="w-full max-w-[420px] bg-[#1e293b]/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/5 relative z-20 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
 
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-1.5 ml-1">
-                                Username / Email
-                            </label>
-                            <input
-                                type="text"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Enter your ID or Email"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-1.5 ml-1">
-                                Password
-                            </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Enter password"
-                            />
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
-                                <AlertTriangle size={16} />
-                                {error}
+                    {/* Header Section */}
+                    <div className="w-full py-10 text-center relative overflow-hidden bg-slate-900/50">
+                        <div className="relative z-10 flex flex-col items-center justify-center gap-3">
+                            <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mb-2">
+                                <Ship className="w-8 h-8 text-white" />
                             </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-lg shadow-lg shadow-blue-600/30 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <LogIn size={20} />
-                                    Sign In
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-xs text-slate-400">
-                            Authorized personnel only. <br />All activities are monitored and logged.
-                        </p>
+                            <h1 className="text-2xl font-black text-white tracking-widest uppercase drop-shadow-lg">
+                                SCMS <span className="text-blue-500">2.0</span>
+                            </h1>
+                            <p className="text-[10px] font-bold text-slate-400 tracking-[0.3em] uppercase">
+                                Seastar Cable Management System
+                            </p>
+                        </div>
                     </div>
+
+                    {/* Login Form */}
+                    <div className="px-10 pb-10 pt-4 space-y-6">
+
+                        <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-20 mb-6"></div>
+
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            {/* ID Input */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Account ID</label>
+                                <div className="relative group">
+                                    <User className="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Employee ID"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        className="w-full pl-12 pr-4 py-3.5 bg-slate-950/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 font-medium transition-all"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password Input */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                                <div className="relative group">
+                                    <Lock className="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        className="w-full pl-12 pr-12 py-3.5 bg-slate-950/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 font-medium transition-all"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-300 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Error Message */}
+                            {error && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2 animate-in slide-in-from-top-1">
+                                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
+                            {/* Login Button */}
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 mt-6 tracking-wide"
+                            >
+                                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'SECURE LOGIN'}
+                            </button>
+                        </form>
+
+                        <div className="text-center">
+                            <div className="inline-block px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-slate-500 text-[10px] font-mono tracking-tight">
+                                {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Video Integration */}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                    <CableNetworkBackground />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/50 z-10" />
+                </div>
+
+                {/* Footer Info */}
+                <div className="absolute bottom-6 w-full text-center z-20 space-y-1">
+                    <p className="text-[10px] text-slate-500 font-mono tracking-wider">SECURE CONNECTION ESTABLISHED</p>
+                    <p className="text-[10px] text-slate-600">v{BUILD_VERSION}</p>
                 </div>
             </div>
         );
     }
 
+    // RENDER: SHIP SELECT SCREEN
     return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Shared Video Background */}
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Shared Video Background with Overlay */}
             <div className="absolute inset-0 overflow-hidden">
                 <video
                     autoPlay
                     loop
                     muted
                     playsInline
-                    className="absolute w-full h-full object-cover opacity-40 scale-105"
+                    className="absolute w-full h-full object-cover opacity-10 grayscale"
                 >
                     <source src="/video/background.mp4" type="video/mp4" />
                 </video>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-800/80"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900/90 to-blue-950/20"></div>
 
-            <div className="max-w-4xl w-full relative z-10">
-                <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h2 className="text-3xl font-black text-white mb-3">Select a Ship</h2>
-                    <p className="text-blue-200 text-lg">Choose a vessel to manage cable data</p>
+            <div className="max-w-6xl w-full relative z-10">
+                <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <h2 className="text-5xl font-black text-white mb-4 tracking-tight">Welcome back, <span className="text-blue-500">{user?.name}</span></h2>
+                    <p className="text-slate-400 text-xl font-light">Select a project to authorize system access</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {AVAILABLE_SHIPS.map((ship, idx) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
+                    {/* Dynamic User Ships */}
+                    {myShips.map((ship, idx) => (
                         <button
                             key={ship}
-                            onClick={() => handleShipSelect(ship)}
-                            className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left hover:shadow-xl ${selectedShip === ship
-                                ? 'border-blue-500 bg-blue-900/40 ring-4 ring-blue-500/20 scale-[1.02] backdrop-blur-md'
-                                : 'border-white/10 bg-white/5 hover:border-blue-400/50 hover:bg-white/10 hover:scale-[1.02] backdrop-blur-sm'
-                                } animate-in fade-in slide-in-from-bottom-8 duration-700`}
+                            onClick={() => setSelectedShip(ship)}
+                            className={`group relative p-8 rounded-3xl border transition-all duration-300 text-left hover:shadow-2xl hover:-translate-y-2 ${selectedShip === ship
+                                ? 'border-blue-500 bg-blue-600/10 ring-1 ring-blue-500/50 backdrop-blur-xl'
+                                : 'border-white/5 bg-[#0f172a]/60 hover:border-blue-500/30 hover:bg-[#1e293b]/80 backdrop-blur-md'
+                                } animate-in fade-in slide-in-from-bottom-8 duration-700 overflow-hidden`}
                             style={{ animationDelay: `${idx * 100}ms` }}
                         >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${selectedShip === ship ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 group-hover:bg-blue-500 group-hover:text-white'
+                            <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none group-hover:bg-blue-500/20 transition-all"></div>
+
+                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-all duration-300 ${selectedShip === ship ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40' : 'bg-slate-800 text-slate-500 group-hover:bg-blue-600 group-hover:text-white'
                                 }`}>
-                                <Ship size={24} />
+                                <Ship size={32} />
                             </div>
-                            <h3 className={`font-bold text-lg mb-1 transition-colors ${selectedShip === ship ? 'text-blue-300' : 'text-slate-200'
-                                }`}>
-                                {ship}
-                            </h3>
-                            <p className="text-xs text-slate-400 font-medium">Cable Management System</p>
+
+                            <div className="relative z-10">
+                                <h3 className={`font-bold text-2xl mb-2 transition-colors ${selectedShip === ship ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>
+                                    {ship}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${selectedShip === ship ? 'bg-green-400' : 'bg-slate-600 group-hover:bg-blue-400'}`}></div>
+                                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider group-hover:text-blue-200">Active Project</p>
+                                </div>
+                            </div>
 
                             {selectedShip === ship && (
-                                <div className="absolute top-4 right-4 text-blue-400 animate-in zoom-in">
-                                    <ShieldCheck size={20} />
+                                <div className="absolute bottom-6 right-6 text-blue-500 animate-in zoom-in">
+                                    <ShieldCheck size={24} />
                                 </div>
                             )}
                         </button>
                     ))}
+
+                    {/* Add New Ship Button */}
+                    <button
+                        onClick={() => setIsAddingShip(true)}
+                        className="group relative p-8 rounded-3xl border-2 border-dashed border-slate-700 hover:border-blue-500/50 bg-transparent hover:bg-slate-800/30 transition-all duration-300 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-8"
+                        style={{ animationDelay: `${(myShips.length) * 100}ms` }}
+                    >
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-slate-800/50 text-slate-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                            <Plus size={32} />
+                        </div>
+                        <h3 className="font-bold text-xl text-slate-500 group-hover:text-white mb-2">Register Project</h3>
+                        <p className="text-sm text-slate-600 font-medium group-hover:text-slate-400">Add New Ship Access</p>
+                    </button>
                 </div>
 
-                <div className="mt-10 flex justify-center">
+                <div className="mt-20 flex justify-center">
                     <button
                         onClick={handleEnter}
                         disabled={!selectedShip}
                         className={`
-                            flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl
+                            group flex items-center gap-4 px-16 py-6 rounded-full font-black text-xl transition-all duration-300 shadow-2xl relative overflow-hidden
                             ${selectedShip
-                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30 hover:scale-105 active:scale-95'
-                                : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                                ? 'bg-blue-600 text-white hover:bg-blue-500 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95'
+                                : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-white/5'
                             }
                         `}
                     >
-                        Enter System
-                        <ArrowRight size={20} className={selectedShip ? 'animate-pulse' : ''} />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        <span>ENTER SYSTEM</span>
+                        <ArrowRight size={24} className={`transition-transform duration-300 ${selectedShip ? 'group-hover:translate-x-1' : ''}`} />
                     </button>
                 </div>
+
+                {/* Add Ship Modal */}
+                {isAddingShip && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in">
+                        <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl scale-100 animate-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                                    <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                                    Register New Project
+                                </h3>
+                                <button onClick={() => setIsAddingShip(false)} className="text-slate-400 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-8 leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                Enter the Ship Project ID (e.g., HK2401) to add it to your dashboard.
+                                <span className="block mt-2 text-blue-400 text-xs font-bold">Valid Project ID required for data loading.</span>
+                            </p>
+                            <input
+                                type="text"
+                                value={newShipId}
+                                onChange={(e) => setNewShipId(e.target.value.toUpperCase())}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-6 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-8 text-xl tracking-wider text-center font-bold"
+                                placeholder="PROJECT-ID"
+                                autoFocus
+                            />
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setIsAddingShip(false)}
+                                    className="flex-1 px-4 py-4 bg-slate-800 text-slate-300 rounded-xl font-bold hover:bg-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddShip}
+                                    disabled={!newShipId.trim()}
+                                    className="flex-1 px-4 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 disabled:opacity-50 transition-colors shadow-lg shadow-blue-900/20"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

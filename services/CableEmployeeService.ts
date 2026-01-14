@@ -257,6 +257,23 @@ class CableEmployeeService {
     // ==========================================
 
     /**
+     * Register a new ship access for a user
+     */
+    registerShipAccess(userId: string, shipId: string): boolean {
+        const employee = this.employees.find(e => e.id === userId);
+        if (employee) {
+            if (!employee.shipAccess) employee.shipAccess = [];
+            if (!employee.shipAccess.includes(shipId)) {
+                employee.shipAccess.push(shipId);
+                this.saveEmployees();
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
      * Get storage key for specific user
      */
     getUserStorageKey(userId: string, keyDetail: string): string {

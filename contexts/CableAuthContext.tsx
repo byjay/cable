@@ -15,6 +15,7 @@ interface CableAuthContextType {
     login: (nameOrEmail: string, password: string) => Promise<void>;
     logout: () => void;
     changePassword: (newPassword: string) => Promise<boolean>;
+    registerShip: (shipId: string) => Promise<boolean>;
 }
 
 const CableAuthContext = createContext<CableAuthContextType | undefined>(undefined);
@@ -109,6 +110,26 @@ export const CableAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return cableEmployeeService.changePassword(user.id, newPassword);
     };
 
+    /**
+     * Register Ship
+     */
+    const registerShip = async (shipId: string): Promise<boolean> => {
+        if (!user) return false;
+        const success = cableEmployeeService.registerShipAccess(user.id, shipId);
+        if (success) {
+            // Update local state instantly
+            const updatedUser = { ...user, shipAccess: [...(user.shipAccess || []), shipId] };
+            setUser(updatedUser);
+            // Update session storage
+            localStorage.setItem('cable_session', JSON.stringify({
+                user: updatedUser,
+                loginTime: sessionStart
+            }));
+            return true;
+        }
+        return false;
+    };
+
     const isSuperAdmin = user ? user.email === SUPER_ADMIN_EMAIL : false;
 
     return (
@@ -119,7 +140,9 @@ export const CableAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             isSuperAdmin,
             login,
             logout,
-            changePassword
+
+            changePassword,
+            registerShip
         }}>
             {children}
         </CableAuthContext.Provider>
