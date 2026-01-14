@@ -102,6 +102,8 @@ export enum MainView {
   WD_EXTRACTION = 'WD Extraction',
   ANALYTICS = 'Analytics',
   INSTALL_STATUS = 'Installation Status',
+  PERMISSIONS = 'Permissions',
+  ADMIN_CONSOLE = 'Admin Console',
   UNIVERSAL = 'UNIVERSAL'
 }
 
