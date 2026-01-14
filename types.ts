@@ -123,6 +123,11 @@ export interface CableData {
   name: string;
   type: string;
   od: number;
+  system?: string; // Added for sorting parity
+  fromNode?: string; // Added for sorting parity
+  toNode?: string;
+  checkNode?: string;
+  calculatedPath?: string[];
   color?: string;
 }
 
@@ -146,6 +151,7 @@ export interface SingleTrayResult {
   fillRatio: number;
   totalODSum: number;
   totalCableArea: number;
+  maxStackHeight: number; // Actual height of the cable pile
 }
 
 export interface MatrixCell {

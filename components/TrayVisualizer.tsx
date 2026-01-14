@@ -150,6 +150,9 @@ const TrayVisualizer: React.FC<TrayVisualizerProps> = ({ systemResult, fillRatio
                                                 <text x="0" y="32" fontSize="10" fontWeight="bold" fill="#64748b" className="tracking-tight font-mono">
                                                     A(C): {tier.totalCableArea.toFixed(0)} <tspan fill="#cbd5e1">/</tspan> A(T): {(TRAY_WIDTH * TRAY_HEIGHT).toFixed(0)} mm²
                                                 </text>
+                                                <text x="0" y="44" fontSize="10" fontWeight="bold" fill="#2563eb" className="tracking-tight font-mono">
+                                                    ACTUAL H: {tier.maxStackHeight.toFixed(1)} mm
+                                                </text>
                                             </g>
                                         </g>
                                     );

@@ -106,9 +106,18 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
                 return hasId && odValue > 0;
             })
             .sort((a, b) => {
-                const odA = a.od || (a as any).CABLE_OUTDIA || (a as any).OUT_DIA || 0;
-                const odB = b.od || (b as any).CABLE_OUTDIA || (b as any).OUT_DIA || 0;
-                return odB - odA;
+                // 1. System
+                const sysA = a.system || '';
+                const sysB = b.system || '';
+                if (sysA !== sysB) return sysA.localeCompare(sysB);
+                // 2. OD (Desc)
+                const odA = a.od || 0;
+                const odB = b.od || 0;
+                if (odA !== odB) return odB - odA;
+                // 3. From Node
+                const nodeA = a.fromNode || '';
+                const nodeB = b.fromNode || '';
+                return nodeA.localeCompare(nodeB);
             });
     }, [selectedNode, cables]);
 
@@ -119,6 +128,11 @@ const TrayAnalysis: React.FC<TrayAnalysisProps> = ({ cables, nodes }) => {
             name: c.name,
             type: c.type,
             od: c.od || (c as any).CABLE_OUTDIA || 10,
+            system: c.system,
+            fromNode: c.fromNode,
+            toNode: c.toNode,
+            checkNode: c.checkNode,
+            calculatedPath: c.calculatedPath,
             color: undefined
         }));
     }, [selectedCables]);
