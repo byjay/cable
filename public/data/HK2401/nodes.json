@@ -1,0 +1,2837 @@
+[
+  {
+    "id": "FISH LAMP 12",
+    "name": "FISH LAMP 12",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU26",
+    "name": "AU26",
+    "type": "TRAY",
+    "relation": "AU09,AU17,AU21,AU27",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF42",
+    "name": "EF42",
+    "type": "TRAY",
+    "relation": "EF06,EF07,EF11,EF41,EF43,EF44",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FWD MASTHEAD LIGHT",
+    "name": "FWD MASTHEAD LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 2",
+    "name": "FISH LAMP 2",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF05",
+    "name": "EF05",
+    "type": "TRAY",
+    "relation": "EF04,EF06,EF14,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN02",
+    "name": "AN02",
+    "type": "TRAY",
+    "relation": "AN01,AN17,AN18",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN10",
+    "name": "AN10",
+    "type": "TRAY",
+    "relation": "AN05,AN13",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E225",
+    "name": "E225",
+    "type": "TRAY",
+    "relation": "E223,E226,E227",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN03",
+    "name": "AN03",
+    "type": "TRAY",
+    "relation": "AN01,AN06,AN09",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "BS",
+    "name": "BS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN12",
+    "name": "AN12",
+    "type": "TRAY",
+    "relation": "AN11,AN13,AN14",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DECK MACH. CONSOLE",
+    "name": "DECK MACH. CONSOLE",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF45",
+    "name": "EF45",
+    "type": "TRAY",
+    "relation": "EF46,EF57,EF73",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN11",
+    "name": "AN11",
+    "type": "TRAY",
+    "relation": "AN08,AN12,AN14",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FS25(E)",
+    "name": "FS25(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NAV.BRIDGE DECK(LED 600W) STBD",
+    "name": "NAV.BRIDGE DECK(LED 600W) STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "S50(E)",
+    "name": "S50(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "WCC",
+    "name": "WCC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.9 BALLAST",
+    "name": "NO.9 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E205",
+    "name": "E205",
+    "type": "TRAY",
+    "relation": "AU01,E204,E247,E275",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AUP",
+    "name": "AUP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "P13",
+    "name": "P13",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF14",
+    "name": "EF14",
+    "type": "TRAY",
+    "relation": "EF05,EF06,EF12,EF13,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "WGP(SLP)",
+    "name": "WGP(SLP)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KING POST FWD(LED 600W)",
+    "name": "KING POST FWD(LED 600W)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.7 BALLAST",
+    "name": "NO.7 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E213",
+    "name": "E213",
+    "type": "TRAY",
+    "relation": "E214,E220,E263,E265,E278,EF43",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU04",
+    "name": "AU04",
+    "type": "TRAY",
+    "relation": "AU03,AU06,AU07,AU12,AU13",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "JB(NAVI.-CHA.PANEL RM)",
+    "name": "JB(NAVI.-CHA.PANEL RM)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E239",
+    "name": "E239",
+    "type": "TRAY",
+    "relation": "E202,E238",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E243",
+    "name": "E243",
+    "type": "TRAY",
+    "relation": "E242,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU22",
+    "name": "AU22",
+    "type": "TRAY",
+    "relation": "AN09,AU09,AU19,AU20",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FHS",
+    "name": "FHS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E270",
+    "name": "E270",
+    "type": "TRAY",
+    "relation": "E267,E271,E278",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KP(TOWING LIGHT)",
+    "name": "KP(TOWING LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 15",
+    "name": "FISH LAMP 15",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ETS",
+    "name": "ETS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FH2C",
+    "name": "FH2C",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H FWD.TOP(LED 400W)STBD",
+    "name": "W/H FWD.TOP(LED 400W)STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SEARCH LIGHT",
+    "name": "SEARCH LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 1",
+    "name": "FISH LAMP 1",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU32",
+    "name": "AU32",
+    "type": "TRAY",
+    "relation": "AN04,AU05,AU06,AU12,AU13",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E249",
+    "name": "E249",
+    "type": "TRAY",
+    "relation": "E204,E238,E247",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.1 BALLAST",
+    "name": "NO.1 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "BRIDGE DK AFT(LED 400W)",
+    "name": "BRIDGE DK AFT(LED 400W)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H GROUP PANEL(LD-1)",
+    "name": "W/H GROUP PANEL(LD-1)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF10",
+    "name": "EF10",
+    "type": "TRAY",
+    "relation": "EF09,EF11",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DM(DOME LIGHT)",
+    "name": "DM(DOME LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 17",
+    "name": "FISH LAMP 17",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU39",
+    "name": "AU39",
+    "type": "TRAY",
+    "relation": "AU15,AU16,E242",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FH",
+    "name": "FH",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E215",
+    "name": "E215",
+    "type": "TRAY",
+    "relation": "E216,E234,E264,E266,E267",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DW",
+    "name": "DW",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E210",
+    "name": "E210",
+    "type": "TRAY",
+    "relation": "E208,E212,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E207",
+    "name": "E207",
+    "type": "TRAY",
+    "relation": "AU01,AU14,AU33,E206,E208",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EWR",
+    "name": "EWR",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "CDS",
+    "name": "CDS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FLASHING LIGHT",
+    "name": "FLASHING LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "S/W",
+    "name": "S/W",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E2S",
+    "name": "E2S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FH2S",
+    "name": "FH2S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM LOWER)PORT",
+    "name": "LED 600W(MAIN BOOM LOWER)PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ANS",
+    "name": "ANS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF15",
+    "name": "EF15",
+    "type": "TRAY",
+    "relation": "E235,EF44,EF57",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EH2P",
+    "name": "EH2P",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SIGNAL CONT. PNL.",
+    "name": "SIGNAL CONT. PNL.",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN09",
+    "name": "AN09",
+    "type": "TRAY",
+    "relation": "AN03,AN06,AN08,AU19,AU22",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FH2P",
+    "name": "FH2P",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E274",
+    "name": "E274",
+    "type": "TRAY",
+    "relation": "E209,E245,E273,E275",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E244",
+    "name": "E244",
+    "type": "TRAY",
+    "relation": "E241,E245",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF44",
+    "name": "EF44",
+    "type": "TRAY",
+    "relation": "EF15,EF41,EF42",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF02",
+    "name": "EF02",
+    "type": "TRAY",
+    "relation": "EF01,EF03,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "WGP(NLP)",
+    "name": "WGP(NLP)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E227",
+    "name": "E227",
+    "type": "TRAY",
+    "relation": "E225",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.1 G/E BODY",
+    "name": "NO.1 G/E BODY",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "F25(E)",
+    "name": "F25(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF58",
+    "name": "EF58",
+    "type": "TRAY",
+    "relation": "EF52,EF57",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FT03F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FT03F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 16",
+    "name": "FISH LAMP 16",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E242",
+    "name": "E242",
+    "type": "TRAY",
+    "relation": "AU39,E240,E241,E243",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU14",
+    "name": "AU14",
+    "type": "TRAY",
+    "relation": "AU13,AU15,AU33,E207",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NAV.BRIDGE DECK(LED 600W) PORT",
+    "name": "NAV.BRIDGE DECK(LED 600W) PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E214",
+    "name": "E214",
+    "type": "TRAY",
+    "relation": "E213,E217,E265,E266,EF43",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 7",
+    "name": "FISH LAMP 7",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E263",
+    "name": "E263",
+    "type": "TRAY",
+    "relation": "E212,E213,E278",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H GROUP PANEL(FL)",
+    "name": "W/H GROUP PANEL(FL)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "GYRO PSU (CONSOL INNER. CONN)",
+    "name": "GYRO PSU (CONSOL INNER. CONN)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF71",
+    "name": "EF71",
+    "type": "TRAY",
+    "relation": "EF13,EF40",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FHP",
+    "name": "FHP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 4",
+    "name": "FISH LAMP 4",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN13",
+    "name": "AN13",
+    "type": "TRAY",
+    "relation": "AN10,AN12",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF13",
+    "name": "EF13",
+    "type": "TRAY",
+    "relation": "E216,EF11,EF12,EF13,EF14,EF71",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FA11F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FA11F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "0",
+    "name": "0",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU18",
+    "name": "AU18",
+    "type": "TRAY",
+    "relation": "AU02,AU05,AU20,AU23,AU34",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.3 BALLAST",
+    "name": "NO.3 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "STERN LIGHT",
+    "name": "STERN LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E262",
+    "name": "E262",
+    "type": "TRAY",
+    "relation": "E229",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 5",
+    "name": "FISH LAMP 5",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU21",
+    "name": "AU21",
+    "type": "TRAY",
+    "relation": "AU09,AU20,AU26,AU27",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF07",
+    "name": "EF07",
+    "type": "TRAY",
+    "relation": "EF08,EF41,EF42,EF53,EF72",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KP",
+    "name": "KP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU01",
+    "name": "AU01",
+    "type": "TRAY",
+    "relation": "AU02,AU03,AU13,E204,E205,E207,E247",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF11",
+    "name": "EF11",
+    "type": "TRAY",
+    "relation": "E216,EF06,EF10,EF13,EF42",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU34",
+    "name": "AU34",
+    "type": "TRAY",
+    "relation": "AU02,AU18,AU19,AU23",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E247",
+    "name": "E247",
+    "type": "TRAY",
+    "relation": "AU01,E204,E205,E249",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF72",
+    "name": "EF72",
+    "type": "TRAY",
+    "relation": "EF07,EF53",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 14",
+    "name": "FISH LAMP 14",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E273",
+    "name": "E273",
+    "type": "TRAY",
+    "relation": "AU38,E209,E271,E272,E274",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF09",
+    "name": "EF09",
+    "type": "TRAY",
+    "relation": "EF08,EF10,EF46,EF73",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E216",
+    "name": "E216",
+    "type": "TRAY",
+    "relation": "E215,E264,E267,EF11,EF12,EF13",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "N.U.C LIGHT",
+    "name": "N.U.C LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM LOWER)STBD",
+    "name": "LED 600W(MAIN BOOM LOWER)STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EFP",
+    "name": "EFP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E238",
+    "name": "E238",
+    "type": "TRAY",
+    "relation": "E231,E234,E239,E249",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU19",
+    "name": "AU19",
+    "type": "TRAY",
+    "relation": "AN09,AU05,AU22,AU23,AU34",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.5 BALLAST",
+    "name": "NO.5 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NAV. BRIDGE DK AFT(LED 400W) STBD",
+    "name": "NAV. BRIDGE DK AFT(LED 400W) STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KING POST AFT(LED 600W)STBD",
+    "name": "KING POST AFT(LED 600W)STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU15",
+    "name": "AU15",
+    "type": "TRAY",
+    "relation": "AU13,AU14,AU16,AU39",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "M10(MIRROR LIGHT)",
+    "name": "M10(MIRROR LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF08",
+    "name": "EF08",
+    "type": "TRAY",
+    "relation": "EF07,EF09,EF46,EF73",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "Z",
+    "name": "Z",
+    "type": "TRAY",
+    "relation": "AU03,AU12,E210,E217,E235,E240,E243,EF02,EF03,EF04,EF05,EF06,EF14,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "UT-J/B",
+    "name": "UT-J/B",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF41",
+    "name": "EF41",
+    "type": "TRAY",
+    "relation": "EF07,EF40,EF42,EF43,EF44",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E230",
+    "name": "E230",
+    "type": "TRAY",
+    "relation": "E228,E229,E231,E232",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E222",
+    "name": "E222",
+    "type": "TRAY",
+    "relation": "E217,E223,E228,E252",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E245",
+    "name": "E245",
+    "type": "TRAY",
+    "relation": "E209,E244,E274",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "F40(E)",
+    "name": "F40(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "OUTLET. RECEP.",
+    "name": "OUTLET. RECEP.",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU05",
+    "name": "AU05",
+    "type": "TRAY",
+    "relation": "AN04,AU07,AU12,AU13,AU18,AU19,AU20,AU23,AU32",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E266",
+    "name": "E266",
+    "type": "TRAY",
+    "relation": "E214,E215,E217,E264,E265",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AUC",
+    "name": "AUC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU36",
+    "name": "AU36",
+    "type": "TRAY",
+    "relation": "AU10,AU28,AU35,AU37,AU38",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EH2S",
+    "name": "EH2S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISHING LIGHT",
+    "name": "FISHING LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E2P",
+    "name": "E2P",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF73",
+    "name": "EF73",
+    "type": "TRAY",
+    "relation": "EF08,EF09,EF45",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU16",
+    "name": "AU16",
+    "type": "TRAY",
+    "relation": "AU11,AU15,AU17,AU39",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF12",
+    "name": "EF12",
+    "type": "TRAY",
+    "relation": "E216,EF13,EF14",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E226",
+    "name": "E226",
+    "type": "TRAY",
+    "relation": "E221,E225",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 9",
+    "name": "FISH LAMP 9",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E234",
+    "name": "E234",
+    "type": "TRAY",
+    "relation": "E215,E238,E268,E269",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ETP",
+    "name": "ETP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF57",
+    "name": "EF57",
+    "type": "TRAY",
+    "relation": "E235,EF15,EF45,EF58",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF01",
+    "name": "EF01",
+    "type": "TRAY",
+    "relation": "EF02",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E5S",
+    "name": "E5S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 6",
+    "name": "FISH LAMP 6",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU29",
+    "name": "AU29",
+    "type": "TRAY",
+    "relation": "AU24,AU25",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "S25(E)",
+    "name": "S25(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E232",
+    "name": "E232",
+    "type": "TRAY",
+    "relation": "E228,E230,E231",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E204",
+    "name": "E204",
+    "type": "TRAY",
+    "relation": "AU01,E203,E205,E206,E247,E249",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "UP",
+    "name": "UP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 11",
+    "name": "FISH LAMP 11",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LD-3",
+    "name": "LD-3",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "JB",
+    "name": "JB",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DM",
+    "name": "DM",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E252",
+    "name": "E252",
+    "type": "TRAY",
+    "relation": "E217,E222",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "BWC",
+    "name": "BWC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "US",
+    "name": "US",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E217",
+    "name": "E217",
+    "type": "TRAY",
+    "relation": "E214,E219,E222,E252,E265,E266,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DUAL RECEP.",
+    "name": "DUAL RECEP.",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LD-2",
+    "name": "LD-2",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "B13(BULKHEAD LIGHT)",
+    "name": "B13(BULKHEAD LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E6S",
+    "name": "E6S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "S50",
+    "name": "S50",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "UC",
+    "name": "UC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ANC",
+    "name": "ANC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "M-JB-01",
+    "name": "M-JB-01",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU20",
+    "name": "AU20",
+    "type": "TRAY",
+    "relation": "AU05,AU18,AU21,AU22,AU23",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF40",
+    "name": "EF40",
+    "type": "TRAY",
+    "relation": "EF41,EF71",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E229",
+    "name": "E229",
+    "type": "TRAY",
+    "relation": "E224,E228,E230,E262,E264",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU07",
+    "name": "AU07",
+    "type": "TRAY",
+    "relation": "AU04,AU05,AU06,AU08",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU23",
+    "name": "AU23",
+    "type": "TRAY",
+    "relation": "AU05,AU18,AU19,AU20,AU34",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "CDP",
+    "name": "CDP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM C.)",
+    "name": "LED 600W(MAIN BOOM C.)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "DW(DECORATIVE LIGHT)",
+    "name": "DW(DECORATIVE LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.6 BALLAST",
+    "name": "NO.6 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "F25",
+    "name": "F25",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FCL",
+    "name": "FCL",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H CONSOLE(SC-PSU) :INNER CONN",
+    "name": "W/H CONSOLE(SC-PSU) :INNER CONN",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM TOP)PORT",
+    "name": "LED 600W(MAIN BOOM TOP)PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H CONSOLE(S-IFU 5) :INNER CONN",
+    "name": "W/H CONSOLE(S-IFU 5) :INNER CONN",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN17",
+    "name": "AN17",
+    "type": "TRAY",
+    "relation": "AN02,AN04,AN18",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E233",
+    "name": "E233",
+    "type": "TRAY",
+    "relation": "E219,E221,E269",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E212",
+    "name": "E212",
+    "type": "TRAY",
+    "relation": "E210,E263,E272",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AUS",
+    "name": "AUS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU",
+    "name": "AU",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E241",
+    "name": "E241",
+    "type": "TRAY",
+    "relation": "E240,E242,E244",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.2 BALLAST",
+    "name": "NO.2 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU10",
+    "name": "AU10",
+    "type": "TRAY",
+    "relation": "AU24,AU25,AU27,AU28,AU30,AU36",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EFS",
+    "name": "EFS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E4S",
+    "name": "E4S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU31",
+    "name": "AU31",
+    "type": "TRAY",
+    "relation": "AU11,AU30",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF46",
+    "name": "EF46",
+    "type": "TRAY",
+    "relation": "EF08,EF09,EF45",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "F50",
+    "name": "F50",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E206",
+    "name": "E206",
+    "type": "TRAY",
+    "relation": "E202,E203,E204,E207,E208",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LOCAL",
+    "name": "LOCAL",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF52",
+    "name": "EF52",
+    "type": "TRAY",
+    "relation": "EF53,EF58",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FHC",
+    "name": "FHC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ANP",
+    "name": "ANP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KMP",
+    "name": "KMP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E209",
+    "name": "E209",
+    "type": "TRAY",
+    "relation": "AU25,E245,E273,E274",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.4 LIGHTING DIST. BOARD (LD-4)",
+    "name": "NO.4 LIGHTING DIST. BOARD (LD-4)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU37",
+    "name": "AU37",
+    "type": "TRAY",
+    "relation": "AU36,AU38",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU25",
+    "name": "AU25",
+    "type": "TRAY",
+    "relation": "AU10,AU24,AU29,E209,E272",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN05",
+    "name": "AN05",
+    "type": "TRAY",
+    "relation": "AN10,AN18",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E268",
+    "name": "E268",
+    "type": "TRAY",
+    "relation": "E231,E234",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AFT MASTHEAD LIGHT",
+    "name": "AFT MASTHEAD LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 3",
+    "name": "FISH LAMP 3",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E218",
+    "name": "E218",
+    "type": "TRAY",
+    "relation": "E219,E220,E235",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN01",
+    "name": "AN01",
+    "type": "TRAY",
+    "relation": "AN02,AN03",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "USB",
+    "name": "USB",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E219",
+    "name": "E219",
+    "type": "TRAY",
+    "relation": "E217,E218,E233,E235,E269",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU30",
+    "name": "AU30",
+    "type": "TRAY",
+    "relation": "AU10,AU11,AU28,AU31",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FT01F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FT01F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E202",
+    "name": "E202",
+    "type": "TRAY",
+    "relation": "E201,E203,E206,E239",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LS(DOOR LIMIT S/W)",
+    "name": "LS(DOOR LIMIT S/W)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "RECEP. W/ROTARY S/W",
+    "name": "RECEP. W/ROTARY S/W",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "BT",
+    "name": "BT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E272",
+    "name": "E272",
+    "type": "TRAY",
+    "relation": "AU25,AU38,E212,E271,E273",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E265",
+    "name": "E265",
+    "type": "TRAY",
+    "relation": "E213,E214,E217,E220,E256,E266,EF43",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF06",
+    "name": "EF06",
+    "type": "TRAY",
+    "relation": "EF05,EF11,EF14,EF42,EF43,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU17",
+    "name": "AU17",
+    "type": "TRAY",
+    "relation": "AU11,AU16,AU24,AU26,AU27",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN04",
+    "name": "AN04",
+    "type": "TRAY",
+    "relation": "AN17,AU05,AU06,AU32",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU11",
+    "name": "AU11",
+    "type": "TRAY",
+    "relation": "AU16,AU17,AU30,AU31",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "B6",
+    "name": "B6",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FT02F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FT02F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E228",
+    "name": "E228",
+    "type": "TRAY",
+    "relation": "E222,E229,E230,E232,E269",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN18",
+    "name": "AN18",
+    "type": "TRAY",
+    "relation": "AN02,AN05,AN17",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NAV. BRIDGE DK AFT(LED 400W) PORT",
+    "name": "NAV. BRIDGE DK AFT(LED 400W) PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU33",
+    "name": "AU33",
+    "type": "TRAY",
+    "relation": "AU13,AU14,E207",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AFT ANCHOR LIGHT",
+    "name": "AFT ANCHOR LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "JB(NAVI.-HELI.SHOP)",
+    "name": "JB(NAVI.-HELI.SHOP)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E235",
+    "name": "E235",
+    "type": "TRAY",
+    "relation": "E218,E219,EF15,EF57,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN06",
+    "name": "AN06",
+    "type": "TRAY",
+    "relation": "AN03,AN08,AN09",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E224",
+    "name": "E224",
+    "type": "TRAY",
+    "relation": "E229,E264",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM MID)STBD",
+    "name": "LED 600W(MAIN BOOM MID)STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E264",
+    "name": "E264",
+    "type": "TRAY",
+    "relation": "E215,E216,E224,E229,E266,E267",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "STBD SIDE LIGHT",
+    "name": "STBD SIDE LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU08",
+    "name": "AU08",
+    "type": "TRAY",
+    "relation": "AU06,AU07",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E3S",
+    "name": "E3S",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E256",
+    "name": "E256",
+    "type": "TRAY",
+    "relation": "E265",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF",
+    "name": "EF",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NAV. BRIDGE DK AFT(LED 600W) STBD",
+    "name": "NAV. BRIDGE DK AFT(LED 600W) STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E278",
+    "name": "E278",
+    "type": "TRAY",
+    "relation": "E213,E240,E263,E267,E270",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU02",
+    "name": "AU02",
+    "type": "TRAY",
+    "relation": "AU01,AU03,AU18,AU34",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU12",
+    "name": "AU12",
+    "type": "TRAY",
+    "relation": "AU03,AU04,AU05,AU13,AU32,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E267",
+    "name": "E267",
+    "type": "TRAY",
+    "relation": "E215,E216,E240,E264,E270,E278",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 10",
+    "name": "FISH LAMP 10",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "M10",
+    "name": "M10",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EC",
+    "name": "EC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H CONSOLE(S-IFU 4) :INNER CONN",
+    "name": "W/H CONSOLE(S-IFU 4) :INNER CONN",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "RECEP.",
+    "name": "RECEP.",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E220",
+    "name": "E220",
+    "type": "TRAY",
+    "relation": "E213,E218,E265",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU27",
+    "name": "AU27",
+    "type": "TRAY",
+    "relation": "AU10,AU17,AU21,AU24,AU26",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "ETC",
+    "name": "ETC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E221",
+    "name": "E221",
+    "type": "TRAY",
+    "relation": "E226,E233",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU09",
+    "name": "AU09",
+    "type": "TRAY",
+    "relation": "AU06,AU21,AU22,AU26",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "MSBD",
+    "name": "MSBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E223",
+    "name": "E223",
+    "type": "TRAY",
+    "relation": "E222,E225,E269",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "PORT SIDE LIGHT",
+    "name": "PORT SIDE LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU06",
+    "name": "AU06",
+    "type": "TRAY",
+    "relation": "AN04,AU04,AU07,AU08,AU09,AU32",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LF (LAUNCHING LIGHT)",
+    "name": "LF (LAUNCHING LIGHT)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E271",
+    "name": "E271",
+    "type": "TRAY",
+    "relation": "E270,E272,E273",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E240",
+    "name": "E240",
+    "type": "TRAY",
+    "relation": "E241,E242,E267,E278,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU35",
+    "name": "AU35",
+    "type": "TRAY",
+    "relation": "AU28,AU36",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 18",
+    "name": "FISH LAMP 18",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF04",
+    "name": "EF04",
+    "type": "TRAY",
+    "relation": "EF03,EF05,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "JB(UPPER-RIG.RM.)",
+    "name": "JB(UPPER-RIG.RM.)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EX CEILING LIGHT",
+    "name": "EX CEILING LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU03",
+    "name": "AU03",
+    "type": "TRAY",
+    "relation": "AU01,AU02,AU04,AU12,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "R.A.M LIGHT",
+    "name": "R.A.M LIGHT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF53",
+    "name": "EF53",
+    "type": "TRAY",
+    "relation": "EF07,EF52,EF72",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.8 BALLAST",
+    "name": "NO.8 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EWFS",
+    "name": "EWFS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "RECEP.(FWD STORE)",
+    "name": "RECEP.(FWD STORE)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN",
+    "name": "AN",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN14",
+    "name": "AN14",
+    "type": "TRAY",
+    "relation": "AN11,AN12",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "PRP",
+    "name": "PRP",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FEC",
+    "name": "FEC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SGR",
+    "name": "SGR",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM MID)PORT",
+    "name": "LED 600W(MAIN BOOM MID)PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KING POST AFT(LED 600W)",
+    "name": "KING POST AFT(LED 600W)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EFC",
+    "name": "EFC",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E231",
+    "name": "E231",
+    "type": "TRAY",
+    "relation": "E230,E232,E238,E268",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "UPPER DECK(LED 600W) PORT",
+    "name": "UPPER DECK(LED 600W) PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "B12",
+    "name": "B12",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU24",
+    "name": "AU24",
+    "type": "TRAY",
+    "relation": "AU10,AU17,AU25,AU27,AU29",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU13",
+    "name": "AU13",
+    "type": "TRAY",
+    "relation": "AU01,AU04,AU05,AU12,AU14,AU15,AU32,AU33",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E203",
+    "name": "E203",
+    "type": "TRAY",
+    "relation": "E202,E204,E206",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FFS",
+    "name": "FFS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "W/H FWD.TOP(LED 400W)PORT",
+    "name": "W/H FWD.TOP(LED 400W)PORT",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "NO.4 BALLAST",
+    "name": "NO.4 BALLAST",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FA06F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FA06F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E201",
+    "name": "E201",
+    "type": "TRAY",
+    "relation": "E202",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU38",
+    "name": "AU38",
+    "type": "TRAY",
+    "relation": "AU28,AU36,AU37,E272,E273",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "JB(KP)",
+    "name": "JB(KP)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AN08",
+    "name": "AN08",
+    "type": "TRAY",
+    "relation": "AN06,AN09,AN11",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "S25",
+    "name": "S25",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "PRS",
+    "name": "PRS",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF43",
+    "name": "EF43",
+    "type": "TRAY",
+    "relation": "E213,E214,E265,EF06,EF41,EF42,EF43",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "F50(E)",
+    "name": "F50(E)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "KP(JB)",
+    "name": "KP(JB)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E208",
+    "name": "E208",
+    "type": "TRAY",
+    "relation": "E206,E207,E210",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E269",
+    "name": "E269",
+    "type": "TRAY",
+    "relation": "E219,E223,E228,E233,E234",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 13",
+    "name": "FISH LAMP 13",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "EF03",
+    "name": "EF03",
+    "type": "TRAY",
+    "relation": "EF02,EF04,Z",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E275",
+    "name": "E275",
+    "type": "TRAY",
+    "relation": "E205,E274",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "E2C",
+    "name": "E2C",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "SL(SIGHT GLASS W/SHADE)/(FT04F)",
+    "name": "SL(SIGHT GLASS W/SHADE)/(FT04F)",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "AU28",
+    "name": "AU28",
+    "type": "TRAY",
+    "relation": "AU10,AU30,AU35,AU36,AU38",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "LED 600W(MAIN BOOM TOP)STBD",
+    "name": "LED 600W(MAIN BOOM TOP)STBD",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  {
+    "id": "FISH LAMP 8",
+    "name": "FISH LAMP 8",
+    "type": "TRAY",
+    "relation": "",
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }
+]

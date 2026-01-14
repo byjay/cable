@@ -1,0 +1,470 @@
+[
+  {
+    "id": "M2",
+    "name": "M2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "S6",
+    "name": "S6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D1",
+    "name": "D1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC7",
+    "name": "MC7",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T95",
+    "name": "T95",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TTC4",
+    "name": "TTC4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "CAT6A",
+    "name": "CAT6A",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T10",
+    "name": "T10",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FMC12",
+    "name": "FMC12",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FT2",
+    "name": "FT2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "RT2",
+    "name": "RT2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "M7",
+    "name": "M7",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "SA70",
+    "name": "SA70",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC2",
+    "name": "MC2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DE6",
+    "name": "DE6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC",
+    "name": "MC",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T70",
+    "name": "T70",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DC2",
+    "name": "DC2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "CAT6",
+    "name": "CAT6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T1",
+    "name": "T1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T4",
+    "name": "T4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T25",
+    "name": "T25",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FD4",
+    "name": "FD4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D35",
+    "name": "D35",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TTC10",
+    "name": "TTC10",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D10",
+    "name": "D10",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FTA1",
+    "name": "FTA1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "M19",
+    "name": "M19",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC19",
+    "name": "MC19",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FMC4",
+    "name": "FMC4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "CAT5e",
+    "name": "CAT5e",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FM2",
+    "name": "FM2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D6",
+    "name": "D6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DE2",
+    "name": "DE2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TTC2",
+    "name": "TTC2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TC1",
+    "name": "TC1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TT-4C",
+    "name": "TT-4C",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MS37",
+    "name": "MS37",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "S2",
+    "name": "S2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T16",
+    "name": "T16",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "ME4",
+    "name": "ME4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FT1",
+    "name": "FT1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DE1",
+    "name": "DE1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D2",
+    "name": "D2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FD6",
+    "name": "FD6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "S16",
+    "name": "S16",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "nan",
+    "name": "nan",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "RDE1",
+    "name": "RDE1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "RG10UY",
+    "name": "RG10UY",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "RG8UY",
+    "name": "RG8UY",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC4",
+    "name": "MC4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FD10",
+    "name": "FD10",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DA2",
+    "name": "DA2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FD2",
+    "name": "FD2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FMC7",
+    "name": "FMC7",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TTC1",
+    "name": "TTC1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "TT1",
+    "name": "TT1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T50",
+    "name": "T50",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T6",
+    "name": "T6",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "S95",
+    "name": "S95",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "SA35",
+    "name": "SA35",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "RGB",
+    "name": "RGB",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T35",
+    "name": "T35",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DAE1",
+    "name": "DAE1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "DC1",
+    "name": "DC1",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC27",
+    "name": "MC27",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "M4",
+    "name": "M4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "D4",
+    "name": "D4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC37",
+    "name": "MC37",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "S50",
+    "name": "S50",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FMC2",
+    "name": "FMC2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "FTTC4",
+    "name": "FTTC4",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "HDMI",
+    "name": "HDMI",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "M/C",
+    "name": "M/C",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "MC12",
+    "name": "MC12",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T10(VFD)",
+    "name": "T10(VFD)",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "T2",
+    "name": "T2",
+    "diameter": 15,
+    "weight": 0.5
+  },
+  {
+    "id": "M12",
+    "name": "M12",
+    "diameter": 15,
+    "weight": 0.5
+  }
+]

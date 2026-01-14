@@ -1,0 +1,29 @@
+Analyzing dist/data/HK2401 Cable List-포설실적용_251203.xlsm...
+Header found at Row 11
+Columns: ['CIRCUIT\nNO.', 'SYS', 'CABLE\nTYPE', 'CABLE DIA', 'FROM EQUIPMENT', 'FROM CODE', 'TO EQUIPMENT', 'TO CODE', 'LENGTH', 'ROUTE1', 'ROUTE2', 'ROUTE3', 'ROUTE4', 'ROUTE5', 'ROUTE6', 'ROUTE7', 'ROUTE8', 'ROUTE9', 'ROUTE10', 'ROUTE11', 'ROUTE12', 'ROUTE13', 'ROUTE14', 'ROUTE15', 'ROUTE16', 'ROUTE17', 'ROUTE18', 'ROUTE19', 'ROUTE20', 'LENGTH, ROUTE1, ROUTE2, ROUTE3, ROUTE4, ROUTE5, ROUTE6, ROUTE7, ROUTE8, ROUTE9, ROUTE10, ROUTE11, ROUTE12, ROUTE13, ROUTE14, ROUTE15, ROUTE16, ROUTE17, ROUTE18, ROUTE19, ROUTE20', 'ROUTE', 'NODE구분', '포설일자']
+First 3 Data Rows:
+  CIRCUIT\nNO. SYS CABLE\nTYPE  CABLE DIA           FROM EQUIPMENT FROM CODE TO EQUIPMENT TO CODE  LENGTH ROUTE1 ROUTE2 ROUTE3 ROUTE4 ROUTE5 ROUTE6 ROUTE7 ROUTE8 ROUTE9 ROUTE10 ROUTE11 ROUTE12 ROUTE13 ROUTE14 ROUTE15 ROUTE16 ROUTE17 ROUTE18 ROUTE19 ROUTE20 LENGTH, ROUTE1, ROUTE2, ROUTE3, ROUTE4, ROUTE5, ROUTE6, ROUTE7, ROUTE8, ROUTE9, ROUTE10, ROUTE11, ROUTE12, ROUTE13, ROUTE14, ROUTE15, ROUTE16, ROUTE17, ROUTE18, ROUTE19, ROUTE20                                     ROUTE NODE구분       포설일자
+0        C0101   C          T2       13.5  ENGINE WATCHING CONSOLE       EWR          CMS     EFP    40.0   EF41   EF44   EF15   E235   E218   E220   E265    NaN    NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN                                                                                                                                                                               NaN  EF41, EF44, EF15, E235, E218, E220, E265     ER 2025-12-03
+1        C0102   C          D2       12.8  ENGINE WATCHING CONSOLE       EWR           CP     EFS    36.0   EF41   EF07   EF08   EF09    NaN    NaN    NaN    NaN    NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN                                                                                                                                                                               NaN                    EF41, EF07, EF08, EF09     ER 2025-12-04
+2        C0103   C          D2       12.8  ENGINE WATCHING CONSOLE       EWR           CP     EFP    29.0   EF41   EF44   EF15   EF57    NaN    NaN    NaN    NaN    NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN     NaN                                                                                                                                                                               NaN                    EF41, EF44, EF15, EF57     ER 2025-12-05
+
+Route Column: ROUTE1
+0    EF41
+1    EF41
+2    EF41
+3    EF41
+4    EF41
+5    EF42
+6    EF41
+7    EF41
+8    EF41
+9    EF41
+
+--- Sheet: 포설실적보고 ---
+Columns: ['케이블 포설 실적 요약 보고서', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4']
+  케이블 포설 실적 요약 보고서 Unnamed: 1 Unnamed: 2 Unnamed: 3 Unnamed: 4
+0              NaN        NaN        NaN        NaN        NaN
+1    ■ TYPE별 포설 현황        NaN        NaN        NaN        NaN
+2              NaN        NaN        NaN        NaN        NaN
+3             TYPE    포설완료(m)     미포설(m)      전체(m)     진행률(%)
+4               T2       2200        916       3116   0.706033
