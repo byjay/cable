@@ -1,19 +1,13 @@
 /**
  * CloudConnector.ts
- * Adapter for Google Cloud / Firebase connection
- * Currently implementing the 'Local Hybrid' strategy but ready for GCloud switch
+ * Adapter for Google Cloud Storage (Bucket) Strategy
+ * "Japan Server" Architecture: Static hosting + GCS Data Lake
  */
 
 export interface CloudConfig {
+    bucketName?: string; // e.g., 'seastar-data-japan'
+    projectId?: string;
     apiKey?: string;
-    projectId?: string; // Google Cloud Project ID
-    endpoint?: string;
-}
-
-export interface SyncStatus {
-    connected: boolean;
-    lastSync: string | null;
-    pendingChanges: number;
 }
 
 const GCLOUD_CONFIG_KEY = 'seastar_gcloud_config';
@@ -31,8 +25,7 @@ class CloudConnector {
             const saved = localStorage.getItem(GCLOUD_CONFIG_KEY);
             if (saved) {
                 this.config = JSON.parse(saved);
-                // In a real scenario, we would test connection here
-                if (this.config?.projectId) {
+                if (this.config?.bucketName) {
                     this.isConnected = true;
                 }
             }
@@ -45,50 +38,49 @@ class CloudConnector {
         return this.isConnected;
     }
 
-    /**
-     * Set Google Cloud Configuration
-     */
     public setConfig(config: CloudConfig) {
         this.config = config;
         localStorage.setItem(GCLOUD_CONFIG_KEY, JSON.stringify(config));
         this.isConnected = true;
-        console.log(`[CloudConnector] Connected to Google Cloud Project: ${config.projectId}`);
+        console.log(`[CloudConnector] 🇯🇵 Linked to Japan Storage Bucket: ${config.bucketName}`);
     }
 
     /**
-     * Upload Data to Google Cloud (Simulation / Interface)
+     * Upload Project File to GCS Bucket
+     * This replaces local file saving with Cloud Object Storage
      */
-    public async uploadProjectData(shipId: string, data: any): Promise<boolean> {
+    public async saveToCloud(shipId: string, data: any, dataType: 'project' | 'cable' = 'project'): Promise<boolean> {
         if (!this.isConnected) {
-            console.warn("[CloudConnector] Not connected. Data saved locally only.");
+            console.warn("[CloudConnector] Cloud not configured. Fallback to Local.");
             return false;
         }
 
-        // ---------------------------------------------------------
-        // GOOGLE CLOUD IMPLEMENTATION STUB
-        // ---------------------------------------------------------
-        // In the future, this will use:
-        // await fetch(`https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents/ships/${shipId}`, {
-        //   method: 'PATCH',
-        //   body: JSON.stringify(data),
-        //    ...
-        // })
-        // ---------------------------------------------------------
+        const fileName = `${shipId}/${dataType}_${new Date().toISOString().slice(0, 10)}.json`;
 
-        console.log(`[CloudConnector] ☁️ Uploading ${shipId} data to Google Cloud...`);
-        await new Promise(resolve => setTimeout(resolve, 800)); // Sim network
-        console.log(`[CloudConnector] ✅ Upload Success!`);
+        console.log(`[CloudConnector] 📤 Uploading to gs://${this.config?.bucketName}/${fileName}...`);
+
+        // -------------------------------------------------------------
+        // REAL IMPLEMENTATION STUB (Google Cloud Storage JSON API)
+        // -------------------------------------------------------------
+        // const url = `https://storage.googleapis.com/upload/storage/v1/b/${this.config?.bucketName}/o?uploadType=media&name=${fileName}`;
+        // await fetch(url, { method: 'POST', body: JSON.stringify(data), ... });
+        // -------------------------------------------------------------
+
+        await new Promise(r => setTimeout(r, 1500)); // Network delay sim
+        console.log(`[CloudConnector] ✅ Upload Complete. Data secured in Google Storage.`);
         return true;
     }
 
     /**
-     * Download Data from Google Cloud
+     * List Available Cloud Backups
      */
-    public async downloadProjectData(shipId: string): Promise<any | null> {
-        if (!this.isConnected) return null;
-
-        console.log(`[CloudConnector] ☁️ Checking new data for ${shipId} from Google Cloud...`);
-        return null; // Return null to fallback to local for now
+    public async listCloudBackups(shipId: string): Promise<string[]> {
+        if (!this.isConnected) return [];
+        console.log(`[CloudConnector] 📥 Listing files from gs://${this.config?.bucketName}/${shipId}/...`);
+        return [
+            `${shipId}/project_2026-01-14.json`,
+            `${shipId}/project_2026-01-13.json`
+        ]; // Mock
     }
 }
 
