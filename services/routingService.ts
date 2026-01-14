@@ -17,21 +17,24 @@ export class RoutingService {
   private buildGraph(nodes: Node[]) {
     this.graph = {};
     nodes.forEach(node => {
+      // Ensure node entry exists
       if (!this.graph[node.name]) {
         this.graph[node.name] = {};
       }
+
+      // Legacy HTML Logic Parser: Handles "NodeA, NodeB" format
       if (node.relation) {
-        // Handle relations separated by commas
         const neighbors = node.relation.split(',').map(n => n.trim()).filter(n => n);
         neighbors.forEach(neighbor => {
-          // Add edge - Default to distance 20m if not specified
-          const dist = node.linkLength && node.linkLength > 0 ? node.linkLength : 20;
+          // Add edge - Default to distance 20m if not specified or linkLength is 0
+          const dist = (node.linkLength && node.linkLength > 0) ? node.linkLength : 20;
           this.graph[node.name][neighbor] = dist;
 
-          // Bidirectional safety
+          // Bidirectional safety (Force create neighbor if not exists)
           if (!this.graph[neighbor]) {
             this.graph[neighbor] = {};
           }
+          // Ensure return path exists (Undirected Graph)
           this.graph[neighbor][node.name] = dist;
         });
       }
@@ -45,13 +48,13 @@ export class RoutingService {
     if (waypoints.length > 0) {
       return this.calculatePathWithWaypoints(start, end, waypoints);
     }
-    
+
     // Try level-aware routing first
     const levelRoute = this.levelMapService.findRoute(start, end);
     if (levelRoute.distance >= 0 && levelRoute.path.length > 0) {
       return levelRoute;
     }
-    
+
     // Fallback to original Dijkstra routing
     return this.dijkstra(start, end);
   }

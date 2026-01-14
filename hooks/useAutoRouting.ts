@@ -61,83 +61,105 @@ export const useAutoRouting = ({ nodes, cables, setCables, saveData }: AutoRouti
     }, [routingService, cables, setCables, saveData]);
 
     // Batch Routing (All)
-    const calculateAllRoutes = useCallback(() => {
+    const calculateAllRoutes = useCallback(async () => {
         if (!routingService) return;
         setIsRouting(true);
 
-        setTimeout(() => {
-            let calculatedCount = 0;
-            const updatedCables = cables.map(cable => {
-                // Skip if already routed (optional strategy, but for "Re-calc all" we might want to redo)
-                // Here we redo everything to be safe
-                if (cable.fromNode && cable.toNode) {
-                    const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                    if (result.path.length > 0) {
-                        calculatedCount++;
-                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                        const totalLength = result.distance + fromRest + toRest;
+        return new Promise<void>((resolve) => {
+            // Use setTimeout to allow UI to update to loading state
+            setTimeout(() => {
+                const chunkSize = 100;
+                let processed = 0;
+                let calculatedCount = 0;
+                const total = cables.length;
+                let currentCables = [...cables];
 
-                        return {
-                            ...cable,
-                            calculatedPath: result.path,
-                            calculatedLength: totalLength,
-                            length: totalLength,
-                            path: result.path.join(','),
-                            routeError: undefined
-                        };
-                    } else {
-                        return {
-                            ...cable,
-                            routeError: result.error || 'Unknown routing error'
-                        };
+                const processChunk = () => {
+                    const end = Math.min(processed + chunkSize, total);
+                    for (let i = processed; i < end; i++) {
+                        const cable = currentCables[i];
+                        if (cable.fromNode && cable.toNode) {
+                            const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
+                            if (result.path.length > 0) {
+                                calculatedCount++;
+                                const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
+                                const toRest = parseFloat(String(cable.toRest || 0)) || 0;
+                                const totalLength = result.distance + fromRest + toRest;
+
+                                currentCables[i] = {
+                                    ...cable,
+                                    calculatedPath: result.path,
+                                    calculatedLength: totalLength,
+                                    length: totalLength,
+                                    path: result.path.join(','),
+                                    routeError: undefined
+                                };
+                            } else {
+                                currentCables[i] = {
+                                    ...cable,
+                                    routeError: result.error || 'Unknown routing error'
+                                };
+                            }
+                        }
                     }
-                }
-                return cable;
-            });
 
-            setCables(updatedCables);
-            saveData(updatedCables);
-            setIsRouting(false);
-            alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
-        }, 100);
+                    processed = end;
+                    if (processed < total) {
+                        // Schedule next chunk
+                        setTimeout(processChunk, 10);
+                    } else {
+                        // Finished
+                        setCables(currentCables);
+                        saveData(currentCables);
+                        setIsRouting(false);
+                        alert(`Route Generation Complete. ${calculatedCount} routes updated.`);
+                        resolve();
+                    }
+                };
+
+                processChunk();
+            }, 100);
+        });
     }, [routingService, cables, setCables, saveData]);
 
     // Batch Routing (Selected)
-    const calculateSelectedRoutes = useCallback((selectedCables: Cable[]) => {
+    const calculateSelectedRoutes = useCallback(async (selectedCables: Cable[]) => {
         if (!routingService || selectedCables.length === 0) return;
         setIsRouting(true);
 
-        setTimeout(() => {
-            let calculatedCount = 0;
-            const selectedIds = new Set(selectedCables.map(c => c.id));
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                let calculatedCount = 0;
+                const selectedIds = new Set(selectedCables.map(c => c.id));
+                const updatedCables = cables.map(cable => {
+                    if (selectedIds.has(cable.id) && cable.fromNode && cable.toNode) {
+                        const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
+                        if (result.path.length > 0) {
+                            calculatedCount++;
+                            const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
+                            const toRest = parseFloat(String(cable.toRest || 0)) || 0;
+                            const totalLength = result.distance + fromRest + toRest;
 
-            const updatedCables = cables.map(cable => {
-                if (selectedIds.has(cable.id) && cable.fromNode && cable.toNode) {
-                    const result = routingService.findRoute(cable.fromNode, cable.toNode, cable.checkNode);
-                    if (result.path.length > 0) {
-                        calculatedCount++;
-                        const fromRest = parseFloat(String(cable.fromRest || 0)) || 0;
-                        const toRest = parseFloat(String(cable.toRest || 0)) || 0;
-                        const totalLength = result.distance + fromRest + toRest;
-
-                        return {
-                            ...cable,
-                            calculatedPath: result.path,
-                            calculatedLength: totalLength,
-                            length: totalLength,
-                            path: result.path.join(',')
-                        };
+                            return {
+                                ...cable,
+                                calculatedPath: result.path,
+                                calculatedLength: totalLength,
+                                length: totalLength,
+                                path: result.path.join(',')
+                            };
+                        }
                     }
-                }
-                return cable;
-            });
+                    return cable;
+                });
 
-            setCables(updatedCables);
-            setIsRouting(false);
-            alert(`Selected Route Generation Complete. ${calculatedCount} routes updated.`);
-        }, 100);
-    }, [routingService, cables, setCables]);
+                setCables(updatedCables);
+                saveData(updatedCables); // Save changes
+                setIsRouting(false);
+                alert(`Selected Route Generation Complete. ${calculatedCount} routes updated.`);
+                resolve();
+            }, 100);
+        });
+    }, [routingService, cables, setCables, saveData]);
 
     // Startup Auto-Routing Trigger
     useEffect(() => {

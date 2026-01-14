@@ -136,6 +136,7 @@ export const ExcelService = {
     const headers = rawData[0] as string[];
     const indices: { [key: string]: number } = {};
 
+    // 1. Map Known Columns
     for (const key in CABLE_COLUMNS) {
       indices[key] = getColumnIndex(headers, CABLE_COLUMNS[key]);
     }
@@ -146,13 +147,13 @@ export const ExcelService = {
       const row = rawData[i] as any[];
       if (!row || row.length === 0) continue;
 
-      const getVal = (key: string) => indices[key] !== -1 ? row[indices[key]] : undefined;
+      const getVal = (idx: number) => (idx !== -1 && row[idx] !== undefined) ? row[idx] : undefined;
       const getStr = (key: string) => {
-        const val = getVal(key);
+        const val = getVal(indices[key]);
         return (val !== undefined && val !== null) ? String(val).trim() : '';
       };
       const getNum = (key: string) => {
-        const val = getVal(key);
+        const val = getVal(indices[key]);
         if (val === undefined || val === null || val === "") return 0;
         const strVal = String(val).replace(/[^0-9.-]/g, '');
         const parsed = parseFloat(strVal);
@@ -164,14 +165,25 @@ export const ExcelService = {
 
       const rawId = getStr('id');
       const page = getStr('page');
-
       let uniqueId = rawId;
       if (rawId && page) uniqueId = `${page}_${rawId}`;
       else if (!rawId) uniqueId = name;
-
       if (!uniqueId) uniqueId = String(i);
 
+      // 2. Dynamic Property Mapping (Import ALL columns)
+      const dynamicProps: any = {};
+      headers.forEach((header, idx) => {
+        const val = row[idx];
+        if (val !== undefined && val !== null && val !== "") {
+          // Normalize header key (optional, keeps original header usually)
+          dynamicProps[header] = val;
+        }
+      });
+
       const cable: Cable = {
+        ...dynamicProps, // Spread ALL dynamic props first
+
+        // Overwrite standard props with parsed values ensures type safety
         id: uniqueId,
         name: name,
         type: getStr('type'),
@@ -200,7 +212,7 @@ export const ExcelService = {
         drum: getStr('drum'),
         remark: getStr('remark'),
 
-        ...Object.fromEntries(headers.map((h, idx) => [h, row[idx]]))
+        originalData: { ...dynamicProps } // Backup raw data
       };
       mapped.push(cable);
     }

@@ -42,6 +42,9 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+    // Click Guard - 동시 클릭 방지
+    const [isProcessing, setIsProcessing] = useState(false);
+
     // Stats
     const totalLength = useMemo(() => cables.reduce((sum, c) => sum + (c.calculatedLength || c.length || 0), 0), [cables]);
     const calculatedPaths = useMemo(() => cables.filter(c => c.calculatedPath).length, [cables]);
@@ -171,6 +174,11 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
     };
 
     const handleRowClick = (e: React.MouseEvent, cable: Cable, index: number) => {
+        // 3D View Integration: Trigger highlighting if available
+        if (onView3D) {
+            onView3D(cable);
+        }
+
         const id = cable.id;
         let newSet = new Set(selectedIds);
 
@@ -185,20 +193,12 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
             if (lastIndex !== -1) {
                 const start = Math.min(lastIndex, index);
                 const end = Math.max(lastIndex, index);
-                // If not holding Ctrl, we might want to clear previous unless standard behavior... 
-                // Standard OS behavior for Click -> Shift+Click is to select range.
-                // Usually it clears others unless Ctrl is also held. 
-                // User requirement: "Standard Ctrl/Shift". 
-                // Let's keep it additive to user's "last selected" anchor which is simpler for web.
 
-                // Correction: Shift-click usually selects range and *clears* non-range if not Ctrl. 
-                // maximizing usability: 
                 newSet = new Set(); // Clear others for pure Shift-Select
                 for (let i = start; i <= end; i++) {
                     if (filteredCables[i]) newSet.add(filteredCables[i].id);
                 }
             }
-            // If lastSelectedId not found, fallback to single
         } else {
             // Single select
             newSet = new Set();
@@ -216,9 +216,28 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
         setShowRawDataModal(true);
     };
 
-    const IconBtn = ({ icon: Icon, label, onClick, color = "text-gray-400" }: any) => (
-        <button onClick={onClick} className="flex flex-col items-center justify-center px-2 py-1 hover:bg-slate-700 rounded transition-colors group" title={label}>
-            <Icon size={16} className={`${color} group-hover:text-white transition-colors`} />
+    // --- CLICK GUARD WRAPPER ---
+    const safeHandler = (fn: Function) => async (...args: any[]) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+        try {
+            await fn(...args);
+        } catch (e) {
+            console.error("Action failed:", e);
+        } finally {
+            // Add slight delay to prevent instant re-click
+            setTimeout(() => setIsProcessing(false), 300);
+        }
+    };
+
+    const IconBtn = ({ icon: Icon, label, onClick, color = "text-gray-400", disabled }: any) => (
+        <button
+            onClick={onClick ? safeHandler(onClick) : undefined}
+            disabled={disabled || isProcessing}
+            className={`flex flex-col items-center justify-center px-2 py-1 rounded transition-colors group ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700'}`}
+            title={label}
+        >
+            <Icon size={16} className={`${disabled || isProcessing ? 'text-gray-600' : color} ${(!disabled && !isProcessing) && 'group-hover:text-white'} transition-colors`} />
         </button>
     );
 
@@ -234,17 +253,23 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
             {/* --- TOP TOOLBAR --- */}
             <div className="h-10 border-b border-slate-700 flex items-center px-2 shadow-md bg-slate-900/80 backdrop-blur select-none z-20">
-                <IconBtn icon={FilePlus} label="New" color="text-yellow-500" />
+                <IconBtn icon={FilePlus} label="New" color="text-yellow-500" disabled={false} />
                 <IconBtn icon={FolderOpen} label="Open Excel" onClick={triggerImport} color="text-yellow-500" />
-                <IconBtn icon={Save} label="Save" color="text-blue-500" />
+                <IconBtn icon={Save} label="Save" color="text-blue-500" onClick={onExport} />
                 <Divider />
                 <IconBtn icon={Search} label="Search" />
                 <Divider />
                 <button
-                    onClick={onCalculateAll}
-                    className="flex items-center gap-1 px-3 py-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded mx-1 shadow-lg shadow-blue-900/50 transition-all border border-blue-400"
+                    onClick={safeHandler(onCalculateAll)}
+                    disabled={isProcessing}
+                    className={`flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white rounded mx-1 shadow-lg shadow-blue-900/50 transition-all border ${isProcessing ? 'bg-gray-600 border-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 border-blue-400'}`}
                 >
-                    <Calculator size={14} /> ROUTE ALL
+                    {isProcessing ? (
+                        <span className="animate-spin">⏳</span>
+                    ) : (
+                        <Calculator size={14} />
+                    )}
+                    {isProcessing ? 'PROCESSING...' : 'ROUTE ALL'}
                 </button>
                 <div className="flex-1"></div>
 
@@ -273,9 +298,9 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         <button
-                            onClick={() => selectedCable && onView3D(selectedCable)}
-                            className={`w-full mb-3 text-xs font-bold py-2 rounded shadow-lg flex items-center justify-center gap-2 transition-all ${selectedCable ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
-                            disabled={!selectedCable}
+                            onClick={selectedCable ? safeHandler(() => onView3D(selectedCable)) : undefined}
+                            className={`w-full mb-3 text-xs font-bold py-2 rounded shadow-lg flex items-center justify-center gap-2 transition-all ${selectedCable && !isProcessing ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
+                            disabled={!selectedCable || isProcessing}
                         >
                             <Eye size={14} /> 3D ROUTE VIEW
                         </button>
