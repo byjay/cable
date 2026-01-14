@@ -470,10 +470,13 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                         className="flex-1 overflow-auto custom-scrollbar bg-transparent"
                         onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
                     >
-                        <div style={{ height: filteredCables.length * ROW_HEIGHT + 32, position: 'relative' }}>
+                        <div
+                            className="relative"
+                            style={{ height: `${filteredCables.length * ROW_HEIGHT + 32}px` }}
+                        >
                             <table className="w-full text-left border-collapse min-w-max">
                                 <thead className="sticky top-0 z-10 text-[11px]">
-                                    <tr style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' }}>
+                                    <tr className="bg-gradient-to-br from-blue-800 to-blue-500">
                                         <th className="px-2 py-2 w-8 font-bold text-center border-r border-blue-500 text-white shadow-lg">
                                             <input
                                                 type="checkbox"

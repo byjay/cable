@@ -24,11 +24,25 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
     // State for UI Overlay
     const [debugInfo, setDebugInfo] = useState<string>('');
     const [showLevels, setShowLevels] = useState(true);
+    const [showHeatmap, setShowHeatmap] = useState(false);
     const [autoRotate, setAutoRotate] = useState(false);
     const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
     // Mapped Positions
     const processedNodes = useRef<Map<string, { x: number, y: number, z: number, level: number }>>(new Map());
+
+    // Occupancy Calculation
+    const nodeOccupancy = useMemo(() => {
+        const occ = new Map<string, number>();
+        cables.forEach(c => {
+            if (c.calculatedPath) {
+                c.calculatedPath.forEach(nodeName => {
+                    occ.set(nodeName, (occ.get(nodeName) || 0) + (c.od || 10));
+                });
+            }
+        });
+        return occ;
+    }, [cables]);
 
     // --- 1. Position Calculation Logic (Robust Hybrid) ---
     const calculatePositions = () => {
@@ -133,6 +147,12 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
 
         const pathSet = new Set(highlightPath || []);
 
+        // Heatmap Materials
+        const heatSafe = new THREE.MeshLambertMaterial({ color: 0x22c55e }); // Green
+        const heatModerate = new THREE.MeshLambertMaterial({ color: 0x3b82f6 }); // Blue
+        const heatHeavy = new THREE.MeshLambertMaterial({ color: 0xf59e0b }); // Amber
+        const heatCritical = new THREE.MeshLambertMaterial({ color: 0xef4444 }); // Red
+
         // Draw Nodes
         nodes.forEach(node => {
             const pos = processedNodes.current.get(node.name);
@@ -143,7 +163,7 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
             const isEnd = highlightPath?.[highlightPath.length - 1] === node.name;
 
             // LOD: Hide non-route nodes if highlighting path, unless small total count
-            if (nodes.length > 200 && highlightPath && highlightPath.length > 0 && !isRoute) {
+            if (nodes.length > 200 && highlightPath && highlightPath.length > 0 && !isRoute && !showHeatmap) {
                 return; // Skip drawing irrelevant nodes to focus on route
             }
 
@@ -151,6 +171,15 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
             if (isStart) mesh = new THREE.Mesh(sphereGeo, matStart);
             else if (isEnd) mesh = new THREE.Mesh(sphereGeo, matEnd);
             else if (isRoute) mesh = new THREE.Mesh(nodeGeo, matSelected);
+            else if (showHeatmap) {
+                const occ = nodeOccupancy.get(node.name) || 0;
+                const capacity = node.maxCable || 300;
+                const ratio = occ / capacity;
+                if (ratio > 0.6) mesh = new THREE.Mesh(nodeGeo, heatCritical);
+                else if (ratio > 0.4) mesh = new THREE.Mesh(nodeGeo, heatHeavy);
+                else if (ratio > 0.2) mesh = new THREE.Mesh(nodeGeo, heatModerate);
+                else mesh = new THREE.Mesh(nodeGeo, heatSafe);
+            }
             else mesh = new THREE.Mesh(nodeGeo, matDefault); // Standard Node
 
             mesh.position.set(pos.x, pos.y, pos.z);
@@ -174,7 +203,7 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
             processedNodes.current.forEach(p => levels.add(p.level));
 
             levels.forEach(lvl => {
-                const nodesOnLevel = Array.from(processedNodes.current.values()).filter((p: { level: number }) => p.level === lvl) as { x: number, y: number, z: number, level: number }[];
+                const nodesOnLevel = Array.from(processedNodes.current.values()).filter((p: any) => p.level === lvl) as { x: number, y: number, z: number, level: number }[];
                 if (nodesOnLevel.length === 0) return;
 
                 // Calculate bounds
@@ -203,12 +232,6 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
 
                 scene.add(plane);
                 objectsRef.current.push(plane);
-
-                // Grid Helper on Plane
-                // const grid = new THREE.GridHelper(Math.max(width, depth), 10, 0x475569, 0x1e293b);
-                // grid.position.set(centerX, y - 4.9, centerZ);
-                // scene.add(grid);
-                // objectsRef.current.push(grid);
             });
         }
 
@@ -369,7 +392,7 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
     // Redraw when Props Change
     useEffect(() => {
         drawScene();
-    }, [nodes, highlightPath, showLevels, deckHeights]);
+    }, [nodes, highlightPath, showLevels, showHeatmap, deckHeights, nodeOccupancy]);
 
     // Update AutoRotate
     useEffect(() => {
@@ -405,6 +428,9 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
                     {hoveredNode && (
                         <div className="mt-2 p-2 bg-blue-500/20 border border-blue-500/50 rounded animate-pulse text-center text-blue-300 font-bold">
                             {hoveredNode}
+                            <div className="text-[9px] text-blue-400 mt-1">
+                                {nodeOccupancy.get(hoveredNode) || 0}mm / 300mm
+                            </div>
                         </div>
                     )}
                 </div>
@@ -415,6 +441,14 @@ const ThreeSceneUltra: React.FC<ThreeSceneUltraProps> = ({ nodes, cables = [], h
                         className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-xs transition-colors ${showLevels ? 'bg-blue-600/20 text-blue-400 border border-blue-600/50' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
                     >
                         <span className="flex items-center gap-2"><Layers size={14} /> Show Decks</span>
+                        <span className="w-2 h-2 rounded-full bg-current"></span>
+                    </button>
+
+                    <button
+                        onClick={() => setShowHeatmap(!showHeatmap)}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-xs transition-colors ${showHeatmap ? 'bg-orange-600/20 text-orange-400 border border-orange-600/50' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                    >
+                        <span className="flex items-center gap-2"><Activity size={14} /> Heatmap Mode</span>
                         <span className="w-2 h-2 rounded-full bg-current"></span>
                     </button>
 

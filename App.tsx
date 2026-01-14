@@ -10,7 +10,7 @@ import CableTypeManager from './components/CableTypeManager';
 import NodeManager from './components/NodeManager';
 import CableRequirementReport from './components/CableRequirementReport';
 import TrayAnalysis from './components/TrayAnalysis';
-import Dashboard from './components/Dashboard';
+import DashboardView from './components/DashboardView';
 import NodeListReport from './components/NodeListReport';
 import DrumScheduleReport from './components/DrumScheduleReport';
 import UserManagement from './components/UserManagement';
@@ -728,7 +728,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     const renderContent = () => {
         switch (currentView) {
             case MainView.DASHBOARD:
-                return <Dashboard cables={cables} nodes={nodes} onViewUnrouted={handleViewUnrouted} />;
+                return <DashboardView cables={cables} nodes={nodes} />;
             case MainView.SCHEDULE:
                 return (
                     <CableList
@@ -796,7 +796,7 @@ const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => 
     };
 
     return (
-        <div className="flex flex-col h-screen text-gray-100 font-sans overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+        <div className="flex flex-col h-screen text-gray-100 font-sans overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
             {/* <LoadingOverlay isVisible={isLoading || isProcessing} message={isRouting ? "Calculating Routes..." : "Processing Data..."} /> */}
 
             <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} title="Upload Excel Data" />
