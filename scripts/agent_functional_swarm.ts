@@ -4,12 +4,25 @@ import * as path from 'path';
 
 const REPORT_DIR = 'reports';
 
+const MASTER_LOG_FILE = path.join(REPORT_DIR, 'MASTER_SWARM_LOG.md');
+
 // Helper to write agent logs
 function logAgent(agentName: string, content: string) {
     if (!fs.existsSync(REPORT_DIR)) fs.mkdirSync(REPORT_DIR);
+
+    // 1. Individual File (Keep for backup/specific view)
     const filename = path.join(REPORT_DIR, `${agentName}.md`);
     fs.writeFileSync(filename, content);
-    console.log(`📝 ${agentName} Log Saved: ${filename}`);
+
+    // 2. Master Log (Append Mode)
+    const timestamp = new Date().toISOString();
+    const masterEntry = `
+---
+### 🕒 ${timestamp} | 🤖 ${agentName}
+${content}
+`;
+    fs.appendFileSync(MASTER_LOG_FILE, masterEntry);
+    console.log(`📝 Appended to MASTER LOG: ${MASTER_LOG_FILE}`);
 }
 
 async function runSwarm() {

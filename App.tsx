@@ -112,7 +112,7 @@ export interface AppProps {
 
 const App: React.FC<AppProps> = ({ initialShipId, integrationMode = false }) => {
     // Version Control
-    const DATA_VERSION = "6.0.0";
+    const DATA_VERSION = "2026-01-14 09:52:00";
 
     // Enforce "R" or "S" Ship Type Constraint for SDMS Integration
     // If strict integration is required, we can block access here.
