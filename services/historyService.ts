@@ -55,6 +55,21 @@ class HistoryServiceClass {
         }
     }
 
+    // Summarize diff between two states
+    summarizeDiff(oldCables: Cable[], newCables: Cable[], oldNodes: Node[], newNodes: Node[]): string {
+        const cableDiff = newCables.length - oldCables.length;
+        const nodeDiff = newNodes.length - oldNodes.length;
+
+        const parts = [];
+        if (cableDiff !== 0) parts.push(`Cables: ${oldCables.length} → ${newCables.length} (${cableDiff > 0 ? '+' : ''}${cableDiff})`);
+        else if (newCables.length > 0) parts.push(`Cables: ${newCables.length} (no change)`);
+
+        if (nodeDiff !== 0) parts.push(`Nodes: ${oldNodes.length} → ${newNodes.length} (${nodeDiff > 0 ? '+' : ''}${nodeDiff})`);
+        else if (newNodes.length > 0) parts.push(`Nodes: ${newNodes.length} (no change)`);
+
+        return parts.join(' | ') || "No data changes";
+    }
+
     // Record a snapshot of current state
     record(
         action: string,

@@ -46,19 +46,28 @@ export const useProjectData = () => {
             }
 
             const projectData = await response.json();
+            const newCables = projectData.cables || [];
+            const newNodes = projectData.nodes || [];
+            const newTypes = projectData.cableTypes || [];
 
-            // 2. Set Core State
-            if (projectData.cables) setCables(projectData.cables);
-            if (projectData.nodes) setNodes(projectData.nodes);
+            // 2. Calculate Diff for History
+            import('../services/historyService').then(({ HistoryService }) => {
+                const summary = HistoryService.summarizeDiff(cables, newCables, nodes, newNodes);
+                HistoryService.record('Load', `Cloud Auto-Load: ${summary}`, targetShipId, newCables, newNodes, newTypes);
+            });
+
+            // 3. Set Core State
+            setCables(newCables);
+            setNodes(newNodes);
             if (projectData.cableTypes) setCableTypes(projectData.cableTypes);
             if (projectData.deckHeights) setDeckHeights(projectData.deckHeights);
 
             setDataSource('cache');
-            console.log(`✅ Loaded Standardized Project: ${targetShipId} (${projectData.cables?.length} cables)`);
+            console.log(`✅ Loaded Standardized Project: ${targetShipId} (${newCables.length} cables)`);
 
-            // 3. Sync to LocalStorage for persistence
-            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_CABLES`, JSON.stringify(projectData.cables || []));
-            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_NODES`, JSON.stringify(projectData.nodes || []));
+            // 4. Sync to LocalStorage for persistence
+            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_CABLES`, JSON.stringify(newCables));
+            localStorage.setItem(`SEASTAR_SHIP_${targetShipId}_NODES`, JSON.stringify(newNodes));
 
         } catch (error) {
             console.warn("❌ Standardized Load Failed, falling back to local buffer:", error);

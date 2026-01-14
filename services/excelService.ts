@@ -27,7 +27,7 @@ const CABLE_COLUMNS: { [key: string]: string[] } = {
   length: ['POR_LENGTH', 'LENGTH', 'Length', 'Total Length'],
   // Critical: Cable Path (Excel source)
   path: ['CABLE_PATH', 'CABLE_ROUTE', 'PATH', 'Path'],
-  od: ['CABLE_OUTDIA', 'OUT_DIA', 'Diameter', 'OD', 'DIA'],
+  od: ['CABLE_OUTDIA', 'OUT_DIA', 'Diameter', 'OD', 'DIA', 'OUTDIA', 'EXTERNAL_DIA', 'Ext Dia'],
   checkNode: ['CHECK_NODE', 'Check Node', 'Check'],
   supplyDeck: ['SUPPLY_DECK', 'SUPPLY_DK', 'Supply'],
   weight: ['POR_WEIGHT', 'WEIGHT', 'Weight'],

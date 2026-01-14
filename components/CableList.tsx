@@ -16,6 +16,7 @@ interface CableListProps {
     onView3D: (cable: Cable) => void;
     triggerImport: () => void;
     onExport: () => void;
+    onLoadData?: () => void; // New prop for direct JSON load
     onUpdateCable?: (cable: Cable) => void;
     initialFilter?: 'missingLength' | 'unrouted' | null;
     selectedCableId?: string | null;
@@ -25,7 +26,7 @@ const ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 30;
 const BUFFER_ROWS = 10;
 
-const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, initialFilter, onUpdateCable, selectedCableId }) => {
+const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable, onCalculateRoute, onCalculateAll, onCalculateSelected, onView3D, triggerImport, onExport, onLoadData, initialFilter, onUpdateCable, selectedCableId }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
     const [scrollTop, setScrollTop] = useState(0);
@@ -267,14 +268,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     <List size={18} />
                 </button>
                 <div className="hidden md:flex items-center">
-                    <IconBtn icon={FilePlus} label="New" color="text-yellow-500" disabled={false} />
-                    <IconBtn icon={FolderOpen} label="Open Excel" onClick={triggerImport} color="text-yellow-500" />
-                    <IconBtn icon={FolderOpen} label="LOAD DATA" color="text-yellow-400" onClick={() => {
-                        const sid = localStorage.getItem('SEASTAR_CURRENT_SHIP');
-                        if (sid) onCalculateSelected([]); // Dummy call to trigger re-render or status
-                        window.location.reload(); // Temporary force reload to trigger useProjectData effect
-                    }} />
-                    <Divider />
                     <IconBtn icon={Upload} label="Open Excel" color="text-cyan-400" onClick={triggerImport} />
                     <Divider />
                 </div>
@@ -306,7 +299,7 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
 
                 {/* LOAD DATA BUTTON (NEW) */}
                 <button
-                    onClick={safeHandler(() => triggerImport())}
+                    onClick={safeHandler(() => onLoadData ? onLoadData() : window.location.reload())}
                     className="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white rounded mx-1 shadow-lg bg-cyan-600 hover:bg-cyan-500 border border-cyan-400 transition-all"
                 >
                     <FolderOpen size={14} />
@@ -340,13 +333,6 @@ const CableList: React.FC<CableListProps> = ({ cables, isLoading, onSelectCable,
                     />
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                    <button
-                        onClick={selectedCable ? safeHandler(() => onView3D(selectedCable)) : undefined}
-                        className={`w-full mb-3 text-xs font-bold py-2 rounded shadow-lg flex items-center justify-center gap-2 transition-all ${selectedCable && !isProcessing ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
-                        disabled={!selectedCable || isProcessing}
-                    >
-                        <Eye size={14} /> 3D ROUTE VIEW
-                    </button>
                     <div className="text-[10px] uppercase font-bold text-slate-500 mt-4 mb-2 px-2">Filters</div>
                     <button
                         onClick={() => setShowMissingLength(!showMissingLength)}

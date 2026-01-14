@@ -322,10 +322,28 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
         setShowColumnMapper(false);
         if (pendingFile?.type === 'cables') {
             const newCables = ExcelService.mapRawToCable(transformedData);
+
+            // Record History for Upload
+            import('./services/historyService').then(({ HistoryService }) => {
+                const summary = HistoryService.summarizeDiff(cables, newCables, nodes, nodes);
+                HistoryService.record('Upload', `Excel Import: ${summary}`, shipId, newCables, nodes, cableTypes);
+            });
+
             setCables(newCables);
             saveData(newCables, nodes, cableTypes, deckHeights);
+
+            // Auto-export JSON snapshot
+            const jsonData = JSON.stringify({ cables: newCables, nodes, cableTypes, deckHeights }, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${shipId}_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
             setCurrentView(MainView.SCHEDULE);
-            alert(`Imported ${newCables.length} cables.`);
+            alert(`Imported ${newCables.length} cables. JSON snapshot downloaded.`);
         }
         setPendingFile(null);
     };
@@ -343,6 +361,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
                 onCalculateSelected={calculateSelectedRoutes}
                 onView3D={(c) => { setRoutePath(c.calculatedPath || []); setCurrentView(MainView.THREE_D); }}
                 triggerImport={() => fileInputRef.current?.click()}
+                onLoadData={() => loadProjectData(shipId)}
                 onExport={handleExport}
                 onUpdateCable={(c) => {
                     const nc = cables.map(x => x.id === c.id ? c : x);
