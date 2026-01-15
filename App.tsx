@@ -19,6 +19,7 @@ import Settings from './components/Settings';
 import CableGroup from './components/CableGroup';
 import WDExtractionView from './components/WDExtractionView';
 import TrayFill from './components/TrayFill';
+import GlassCalendar from './components/calendar/GlassCalendar';
 import { SimpleModal } from './components/SimpleModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { TraySpecContent } from './components/StaticContent';
@@ -88,6 +89,7 @@ const MENU_STRUCTURE: MenuGroup[] = [
             { label: "케이블 그룹 (Cable Group)", action: "CableGroup", icon: Layers },
             { label: "드럼 스케줄 (Drum Schedule)", action: "Drum Schedule", icon: Circle },
             { label: "🧠 트레이 최적화 (Tray Fill)", action: "TrayFill", icon: Calculator },
+            { label: "📅 일정 (Calendar)", action: "Calendar", icon: Calendar },
             { label: "노드 리스트 (Node List)", action: "Node List", icon: MapPin },
             { label: "가져오기 (Import)", action: "Import", icon: Upload }
         ]
@@ -263,6 +265,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             case "Drum Schedule": setCurrentView('DRUM_SCHEDULE'); break;
             case "WD Extraction": setCurrentView(MainView.WD_EXTRACTION); break;
             case "TrayFill": setCurrentView('TRAY_FILL'); break;
+            case "Calendar": setCurrentView(MainView.CALENDAR); break;
             case "Import": fileInputRef.current?.click(); break;
 
             // [DEV] Tools
@@ -397,6 +400,7 @@ const MainApp: React.FC<AppProps> = ({ initialShipId, integrationMode = false })
             case 'CABLE_GROUP': return <CableGroup cables={cables} />;
             case 'DRUM_SCHEDULE': return <DrumScheduleReport cables={cables} />;
             case 'TRAY_FILL': return <TrayFill cables={cables} nodes={nodes} selectedNode={selectedNode} onNodeSelect={setSelectedNode} />;
+            case MainView.CALENDAR: return <GlassCalendar />;
 
             // [DEV] Tools
             case 'DEV_DATA_HEALTH': return <DataVerification cables={cables} nodes={nodes} />;

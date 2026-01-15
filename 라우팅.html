@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,36 +9,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #fff;
             overflow-x: hidden;
         }
-        .container { max-width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+        .container {
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
             padding: 20px 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        .header h1 { font-size: 28px; margin-bottom: 5px; }
-        .header .subtitle { font-size: 14px; opacity: 0.9; }
-        .main-content { flex: 1; display: flex; height: calc(100vh - 120px); }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+
         .sidebar {
             width: 320px;
-            background: rgba(15,23,42,0.95);
+            background: rgba(15, 23, 42, 0.95);
             border-right: 2px solid #334155;
             padding: 15px;
             overflow-y: auto;
         }
-        .content-area { flex: 1; display: flex; flex-direction: column; }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
         .tab-navigation {
             display: flex;
-            background: rgba(30,41,59,0.9);
+            background: rgba(30, 41, 59, 0.9);
             border-bottom: 2px solid #475569;
             overflow-x: auto;
         }
+
         .tab-button {
             padding: 12px 20px;
             background: transparent;
@@ -49,23 +83,43 @@
             border-bottom: 3px solid transparent;
             white-space: nowrap;
         }
-        .tab-button:hover { background: rgba(59,130,246,0.2); color: #fff; }
-        .tab-button.active { background: rgba(59,130,246,0.3); color: #fff; border-bottom-color: #3b82f6; }
+
+        .tab-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #fff;
+        }
+
+        .tab-button.active {
+            background: rgba(59, 130, 246, 0.3);
+            color: #fff;
+            border-bottom-color: #3b82f6;
+        }
+
         .tab-content {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: rgba(15,23,42,0.8);
+            background: rgba(15, 23, 42, 0.8);
         }
-        .hidden { display: none !important; }
+
+        .hidden {
+            display: none !important;
+        }
+
         .section {
-            background: rgba(30,41,59,0.9);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 15px;
             border: 1px solid #475569;
         }
-        .section h3 { color: #60a5fa; margin-bottom: 12px; font-size: 16px; }
+
+        .section h3 {
+            color: #60a5fa;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -76,30 +130,68 @@
             transition: all 0.3s;
             margin: 3px;
         }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-        .btn-primary:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-        .btn-success:hover { background: linear-gradient(135deg, #059669, #047857); }
-        .btn-secondary { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
-        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-        input[type="file"], input[type="text"], input[type="number"], select {
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="number"],
+        select {
             width: 100%;
             padding: 8px;
             border: 2px solid #475569;
             border-radius: 6px;
-            background: rgba(15,23,42,0.8);
+            background: rgba(15, 23, 42, 0.8);
             color: #fff;
             font-size: 13px;
             margin: 5px 0;
         }
-        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
         }
+
         .stat-card {
             background: linear-gradient(135deg, #1e293b, #334155);
             padding: 15px;
@@ -107,16 +199,33 @@
             text-align: center;
             border: 1px solid #475569;
         }
-        .stat-number { font-size: 24px; font-weight: 700; color: #60a5fa; margin-bottom: 3px; }
-        .stat-label { font-size: 12px; color: #cbd5e1; }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
         .table-container {
-            background: rgba(15,23,42,0.9);
+            background: rgba(15, 23, 42, 0.9);
             border-radius: 10px;
             overflow: auto;
             border: 1px solid #475569;
             max-height: 600px;
         }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
         .data-table th {
             background: linear-gradient(135deg, #1e40af, #3b82f6);
             color: white;
@@ -127,16 +236,30 @@
             top: 0;
             z-index: 10;
         }
-        .data-table td { padding: 8px 6px; border-bottom: 1px solid #334155; color: #e2e8f0; }
-        .data-table tbody tr:hover { background: rgba(59,130,246,0.1); }
+
+        .data-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
         .chart-container {
-            background: rgba(30,41,59,0.9);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 15px;
             border: 1px solid #475569;
         }
-        .chart-container h3 { margin-bottom: 10px; font-size: 15px; }
+
+        .chart-container h3 {
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
         .threejs-container {
             width: 100%;
             height: 500px;
@@ -144,6 +267,7 @@
             border: 2px solid #475569;
             background: #000;
         }
+
         .notification {
             position: fixed;
             top: 20px;
@@ -158,21 +282,49 @@
             transition: all 0.3s;
             max-width: 350px;
         }
-        .notification.show { opacity: 1; transform: translateX(0); }
-        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .notification.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
         .control-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
             margin-bottom: 15px;
         }
-        .checkbox-label { display: flex; align-items: center; gap: 5px; font-size: 13px; }
-        input[type="checkbox"] { width: auto; margin: 0; }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header class="header">
@@ -184,11 +336,14 @@
             <aside class="sidebar">
                 <div class="section">
                     <h3>📁 파일 업로드</h3>
-                    <label style="font-size:12px;color:#cbd5e1;">케이블 정보 (Excel)</label>
-                    <input type="file" id="cableFile" accept=".xlsx,.xls,.csv">
-                    <label style="font-size:12px;color:#cbd5e1;">노드 정보 (Excel)</label>
-                    <input type="file" id="nodeFile" accept=".xlsx,.xls,.csv">
-                    <button class="btn btn-primary" onclick="loadFiles()" style="width:100%;margin-top:8px;">파일 로드</button>
+                    <label style="font-size:12px;color:#cbd5e1;">케이블 정보 (Excel/JSON)</label>
+                    <input type="file" id="cableFile" accept=".xlsx,.xls,.csv,.json">
+                    <label style="font-size:12px;color:#cbd5e1;">노드 정보 (Excel/JSON)</label>
+                    <input type="file" id="nodeFile" accept=".xlsx,.xls,.csv,.json">
+                    <button class="btn btn-primary" onclick="loadFiles()" style="width:100%;margin-top:8px;">파일
+                        로드</button>
+                    <button class="btn btn-success" onclick="loadDefaultProject()" style="width:100%;margin-top:5px;">📂
+                        HK2401 프로젝트 로드</button>
                 </div>
 
                 <div class="section">
@@ -215,9 +370,12 @@
 
                 <div class="section">
                     <h3>🎛️ 제어 패널</h3>
-                    <button class="btn btn-success" onclick="exportAllData()" style="width:100%;margin:3px 0;">전체 데이터 내보내기</button>
-                    <button class="btn btn-secondary" onclick="refreshAll()" style="width:100%;margin:3px 0;">전체 새로고침</button>
-                    <button class="btn btn-warning" onclick="runAllTests()" style="width:100%;margin:3px 0;">시스템 테스트</button>
+                    <button class="btn btn-success" onclick="exportAllData()" style="width:100%;margin:3px 0;">전체 데이터
+                        내보내기</button>
+                    <button class="btn btn-secondary" onclick="refreshAll()" style="width:100%;margin:3px 0;">전체
+                        새로고침</button>
+                    <button class="btn btn-warning" onclick="runAllTests()" style="width:100%;margin:3px 0;">시스템
+                        테스트</button>
                 </div>
             </aside>
 
@@ -437,6 +595,35 @@
         }
 
         // File loading
+        async function loadDefaultProject() {
+            showNotification('HK2401 프로젝트 데이터를 로드 중입니다...', 'info');
+            try {
+                // Try fetching from public/data/HK2401.json
+                const response = await fetch('public/data/HK2401.json');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+                processJSONData(data);
+                updateAllData(); // Update UI after processing
+                showNotification('HK2401 프로젝트가 성공적으로 로드되었습니다.', 'success');
+            } catch (error) {
+                console.error('Auto-load failed:', error);
+
+                // Fallback attempt
+                try {
+                    const response = await fetch('./public/data/HK2401.json');
+                    if (!response.ok) throw new Error('Retry failed');
+                    const data = await response.json();
+                    processJSONData(data);
+                    updateAllData();
+                    showNotification('HK2401 프로젝트가 성공적으로 로드되었습니다.', 'success');
+                } catch (retryError) {
+                    // Silent fail or just log log, since user can click button to retry which shows error
+                    console.warn('Auto-load retry failed');
+                }
+            }
+        }
+
         async function loadFiles() {
             const cableFile = document.getElementById('cableFile').files[0];
             const nodeFile = document.getElementById('nodeFile').files[0];
@@ -446,22 +633,95 @@
                 return;
             }
 
-            if (cableFile) await loadExcelFile(cableFile, 'cable');
-            if (nodeFile) await loadExcelFile(nodeFile, 'node');
+            try {
+                if (cableFile) {
+                    if (cableFile.name.toLowerCase().endsWith('.json')) {
+                        await loadJSONFile(cableFile);
+                    } else {
+                        await loadExcelFile(cableFile, 'cable');
+                    }
+                }
 
-            updateAllData();
-            showNotification('파일이 성공적으로 로드되었습니다.', 'success');
+                if (nodeFile) {
+                    if (nodeFile.name.toLowerCase().endsWith('.json')) {
+                        if (!cableFile || cableFile.name !== nodeFile.name) {
+                            await loadJSONFile(nodeFile);
+                        }
+                    } else {
+                        await loadExcelFile(nodeFile, 'node');
+                    }
+                }
+
+                updateAllData();
+                showNotification('파일이 성공적으로 로드되었습니다.', 'success');
+            } catch (error) {
+                showNotification(`파일 로드 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function loadJSONFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        processJSONData(data);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function processJSONData(data) {
+            if (data.cables) {
+                cableData = data.cables.map(c => ({
+                    name: c.name || c.id || '',
+                    type: c.type || '',
+                    system: c.system || '',
+                    fromNode: c.fromNode || '',
+                    toNode: c.toNode || '',
+                    fromRoom: c.fromRoom || '',
+                    toRoom: c.toRoom || '',
+                    fromEquip: c.fromEquip || '',
+                    toEquip: c.toEquip || '',
+                    length: safeParseFloat(c.length),
+                    path: c.path || '',
+                    outDia: safeParseFloat(c.radius || c.outDia) * 2,
+                    checkNode: c.checkNode || '',
+                    calculatedLength: safeParseFloat(c.calculatedLength || c.length),
+                    calculatedPath: c.calculatedPath || c.path || ''
+                })).filter(c => c.name);
+                filteredCableData = [...cableData];
+                console.log('Loaded cables via JSON:', cableData.length);
+            }
+
+            if (data.nodes) {
+                nodeData = data.nodes.map(n => ({
+                    name: n.name || n.id || '',
+                    structure: n.structure || '',
+                    component: n.component || '',
+                    type: n.type || '',
+                    relation: n.relation || (Array.isArray(n.neighbors) ? n.neighbors.join(',') : ''),
+                    linkLength: safeParseFloat(n.linkLength || 1),
+                    areaSize: safeParseFloat(n.areaSize || 0),
+                    connectedCables: 0
+                })).filter(n => n.name);
+                console.log('Loaded nodes via JSON:', nodeData.length);
+            }
         }
 
         function loadExcelFile(file, type) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     try {
                         const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
+                        const workbook = XLSX.read(data, { type: 'array' });
                         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(sheet, {header: 1, blankrows: false});
+                        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
 
                         if (type === 'cable') processCableData(jsonData);
                         else if (type === 'node') processNodeData(jsonData);
@@ -484,7 +744,7 @@
 
             const headers = rawData[0];
             const indices = {};
-            
+
             for (const key in CABLE_COLUMNS) {
                 indices[key] = getColumnIndex(headers, CABLE_COLUMNS[key]);
             }
@@ -519,7 +779,7 @@
 
             const headers = rawData[0];
             const indices = {};
-            
+
             for (const key in NODE_COLUMNS) {
                 indices[key] = getColumnIndex(headers, NODE_COLUMNS[key]);
             }
@@ -564,7 +824,7 @@
 
         function calculatePath(fromNode, toNode, checkNodeStr = '') {
             const checkNodes = checkNodeStr ? checkNodeStr.split(',').map(s => s.trim()).filter(s => s) : [];
-            
+
             if (checkNodes.length > 0) {
                 return calculatePathWithCheckpoints(fromNode, toNode, checkNodes);
             } else {
@@ -580,7 +840,7 @@
             for (const checkpoint of checkNodes) {
                 const segment = calculateShortestPath(currentNode, checkpoint);
                 if (!segment) return null;
-                
+
                 fullPath.push(...segment.path.slice(1));
                 totalLength += segment.length;
                 currentNode = checkpoint;
@@ -588,7 +848,7 @@
 
             const finalSegment = calculateShortestPath(currentNode, toNode);
             if (!finalSegment) return null;
-            
+
             fullPath.push(...finalSegment.path.slice(1));
             totalLength += finalSegment.length;
 
@@ -623,7 +883,7 @@
             while (unvisited.size > 0) {
                 let currentNode = null;
                 let minDist = Infinity;
-                
+
                 unvisited.forEach(node => {
                     if (distances[node] < minDist) {
                         minDist = distances[node];
@@ -687,7 +947,7 @@
         function updateFilters() {
             const systemFilter = document.getElementById('systemFilter');
             const systems = [...new Set(cableData.map(c => c.system).filter(s => s))].sort();
-            
+
             systemFilter.innerHTML = '<option value="">모든 시스템</option>';
             systems.forEach(system => {
                 const option = document.createElement('option');
@@ -700,7 +960,7 @@
         function populateSelects() {
             const routeCableSelect = document.getElementById('routeCableSelect');
             routeCableSelect.innerHTML = '<option value="">케이블 선택</option>';
-            
+
             cableData.forEach((cable, index) => {
                 const option = document.createElement('option');
                 option.value = index;
@@ -771,7 +1031,7 @@
                 const isSelected = selectedRoutes.has(index);
                 const status = cable.calculatedPath ? '✓ 산출됨' : '-';
                 const displayLength = cable.calculatedLength > 0 ? cable.calculatedLength.toFixed(1) : (cable.length || 0).toFixed(1);
-                
+
                 row.innerHTML = `
                     <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleRouteSelection(${index})"></td>
                     <td>${cable.name}</td>
@@ -1023,7 +1283,7 @@
         // Search and filter
         function searchCables() {
             const searchTerm = document.getElementById('cableSearch').value.toLowerCase();
-            filteredCableData = cableData.filter(cable => 
+            filteredCableData = cableData.filter(cable =>
                 cable.name.toLowerCase().includes(searchTerm) ||
                 cable.type.toLowerCase().includes(searchTerm) ||
                 cable.system.toLowerCase().includes(searchTerm)
@@ -1033,7 +1293,7 @@
 
         function filterCables() {
             const systemFilter = document.getElementById('systemFilter').value;
-            filteredCableData = cableData.filter(cable => 
+            filteredCableData = cableData.filter(cable =>
                 !systemFilter || cable.system === systemFilter
             );
             updateCableTable();
@@ -1230,7 +1490,7 @@
         }
 
         // Window resize handler
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             if (renderer && camera) {
                 const container = document.getElementById('threejsContainer');
                 if (container) {
@@ -1242,10 +1502,15 @@
         });
 
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('🚢 SEASTAR Cable Management System V2 로드 완료');
             showNotification('시스템이 준비되었습니다.', 'info');
+
+            // Auto-load default project data
+            setTimeout(loadDefaultProject, 500);
         });
     </script>
 </body>
+
 </html>
